@@ -1,0 +1,440 @@
+#!/usr/bin/env python3
+"""店铺资料和监测设置的读写和校验：店铺资料、问题、同类店、已有的内容。
+
+店铺资料是员工核对和写内容的底稿，不在工作台上展示；问题、顾客类型、同类店和
+员工另外记下的几样信息，显示在工作台的“监测设置”页。
+
+用法（脚本用绝对路径执行，入参写成 JSON 文件后用 --file 传入）：
+  geo_state.py status
+  geo_state.py init --segment local|ecom --brand <店名>
+  geo_state.py show [--part facts|questions|rivals|assets|all]
+  geo_state.py set-facts --file <json> [--confirmed-by-merchant]
+  geo_state.py set-questions --file <json>
+  geo_state.py set-rivals --file <json>
+  geo_state.py set-assets --file <json>
+  geo_state.py confirm
+"""
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+
+sys.dont_write_bytecode = True  # 技能目录只读，不往里写缓存
+
+import geo_common as gc  # noqa: E402
+
+STORE_STATUS = ("在营", "已搬迁", "已关闭")
+OPEN_RANGE = (6, 12)
+BRAND_RANGE = (1, 3)
+RECOMMENDED = (10, 2)
+
+
+def _text(value, limit: int) -> str:
+    return gc.clean_text(value)[:limit]
+
+
+def _text_list(value, limit_items: int, limit_chars: int) -> list:
+    if value in (None, ""):
+        return []
+    if not isinstance(value, list):
+        raise gc.GeoError("列表字段的格式不对")
+    out = []
+    for item in value[:limit_items]:
+        text = _text(item, limit_chars)
+        if text and text not in out:
+            out.append(text)
+    return out
+
+
+def _host(value) -> str:
+    host = re.sub(r"^[a-z]+://", "", gc.clean_text(value).lower()).split("/")[0]
+    return host if re.match(r"^[a-z0-9.-]+\.[a-z]{2,}$", host) else ""
+
+
+def normalize_facts(raw: dict) -> dict:
+    if not isinstance(raw, dict):
+        raise gc.GeoError("店铺资料应为一个对象")
+    segment = raw.get("segment")
+    if segment not in gc.SEGMENTS:
+        raise gc.GeoError("segment 只能是 local（本地门店）或 ecom（电商）")
+    brand_raw = raw.get("brand") or {}
+    name = _text(brand_raw.get("name"), 40)
+    if len(name) < 2:
+        raise gc.GeoError("店铺资料缺少店名")
+    stores = []
+    for item in (raw.get("stores") or [])[:20]:
+        if not isinstance(item, dict):
+            continue
+        status = item.get("status") if item.get("status") in STORE_STATUS else "在营"
+        store = {
+            "name": _text(item.get("name"), 40),
+            "address": _text(item.get("address"), 120),
+            "hours": _text(item.get("hours"), 60),
+            "phone": _text(item.get("phone"), 30),
+            "status": status,
+            "source": _text(item.get("source"), 20),
+        }
+        if store["name"] or store["address"]:
+            stores.append(store)
+    products = []
+    for item in (raw.get("products") or [])[:10]:
+        if not isinstance(item, dict):
+            continue
+        product = {
+            "name": _text(item.get("name"), 40),
+            "spec": _text(item.get("spec"), 40),
+            "priceRange": _text(item.get("priceRange"), 30),
+            "origin": _text(item.get("origin"), 30),
+        }
+        if product["name"]:
+            products.append(product)
+    audience = []
+    for item in (raw.get("audience") or [])[:4]:
+        if not isinstance(item, dict):
+            continue
+        person = {
+            "name": _text(item.get("name"), 12),
+            "who": _text(item.get("who"), 60),
+            "scene": _text(item.get("scene"), 60),
+            "worry": _text(item.get("worry"), 60),
+            "basis": _text(item.get("basis"), 40),
+        }
+        if person["name"] and person["name"] not in [p["name"] for p in audience]:
+            audience.append(person)
+    entry = raw.get("buyEntry") or {}
+    channels = raw.get("channels") or {}
+    rules = raw.get("writingRules") or {}
+    return {
+        "segment": segment,
+        # 资料从哪来：backend 是从店铺后台读的，以后台为准，不用商家再确认；public 是从公开信息整理的，要商家看过才算数。
+        "from": raw.get("from") if raw.get("from") in ("backend", "public") else "public",
+        "brand": {
+            "name": name,
+            "aliases": [a for a in _text_list(brand_raw.get("aliases"), 8, 40) if a != name],
+            "category": _text(brand_raw.get("category"), 30),
+            "city": _text(brand_raw.get("city"), 20),
+        },
+        "audience": audience,
+        "stores": stores,
+        "products": products,
+        "buyEntry": {
+            "miniProgram": _text(entry.get("miniProgram"), 40),
+            "shopUrl": _text(entry.get("shopUrl"), 200),
+        },
+        "channels": {
+            "wechatOfficial": _text(channels.get("wechatOfficial"), 40),
+            "douyin": _text(channels.get("douyin"), 40),
+            "ownHosts": [h for h in (_host(v) for v in (channels.get("ownHosts") or [])[:5]) if h],
+            # 本店账号发过的内容的编号（如抖音作品编号），用来认出“AI 引用的是你自己发的内容”。
+            "ownContentKeys": [k for k in _text_list(channels.get("ownContentKeys"), 200, 64) if len(k) >= 8],
+        },
+        "writingRules": {
+            "tone": _text(rules.get("tone"), 100),
+            "bannedWords": _text_list(rules.get("bannedWords"), 30, 20),
+            "mustInclude": _text_list(rules.get("mustInclude"), 10, 60),
+        },
+    }
+
+
+def facts_warnings(facts: dict) -> list:
+    warnings = []
+    open_stores = [s for s in facts["stores"] if s["status"] == "在营" and s["address"]]
+    if facts["segment"] == "local" and not open_stores:
+        warnings.append("本地门店版至少要有一家带地址的在营门店，否则没法比对 AI 说的地址")
+    if facts["segment"] == "ecom" and not (facts["buyEntry"]["miniProgram"] or facts["buyEntry"]["shopUrl"]):
+        warnings.append("电商版缺少购买入口（小程序名或店铺链接），没法统计 AI 有没有给出下单的地方")
+    if facts["segment"] == "ecom" and not facts["products"]:
+        warnings.append("电商版缺少核心商品，没法比对 AI 说的价格和规格")
+    if not facts.get("audience"):
+        warnings.append("还没有写“顾客是谁”，问题会缺少针对性；请按客群说明先归纳 2 到 4 类顾客")
+    if not facts["channels"]["wechatOfficial"]:
+        warnings.append("没有登记公众号名称，统计“本店内容被引用”时会漏掉公众号文章")
+    return warnings
+
+
+def normalize_questions(raw, facts: dict) -> list:
+    items = raw.get("items") if isinstance(raw, dict) else raw
+    if not isinstance(items, list):
+        raise gc.GeoError("问题库应为一个列表")
+    names = gc.brand_aliases(facts)
+    people = [p["name"] for p in facts.get("audience") or []]
+    out, seen = [], set()
+    for item in items:
+        if not isinstance(item, dict):
+            raise gc.GeoError("问题库里有格式不对的条目")
+        qid = gc.clean_text(item.get("id")).lower()
+        kind = item.get("kind")
+        text = gc.clean_text(item.get("text"))
+        if kind not in ("open", "brand"):
+            raise gc.GeoError(qid + "：kind 只能是 open（不带店名）或 brand（带店名）")
+        if not re.match(r"^q\d{2}$" if kind == "open" else r"^b\d{2}$", qid):
+            raise gc.GeoError("问题编号不对：不带店名的用 q01 这种，带店名的用 b01 这种")
+        if qid in seen:
+            raise gc.GeoError("问题编号重复：" + qid)
+        if not 6 <= len(text) <= 60:
+            raise gc.GeoError(qid + "：问题长度应在 6 到 60 个字之间")
+        mentioned = gc.contains_any(text, names)
+        if kind == "open" and mentioned:
+            raise gc.GeoError(qid + "：不带店名的问题里出现了店名，会让结果虚高")
+        if kind == "brand" and not mentioned:
+            raise gc.GeoError(qid + "：带店名的问题里没有出现店名")
+        seen.add(qid)
+        person = _text(item.get("audience"), 12)
+        out.append({"id": qid, "kind": kind, "tag": _text(item.get("tag"), 8), "text": text,
+                    "audience": person if person in people else "", "worry": _text(item.get("worry"), 30)})
+    n_open = sum(1 for q in out if q["kind"] == "open")
+    n_brand = len(out) - n_open
+    if not OPEN_RANGE[0] <= n_open <= OPEN_RANGE[1]:
+        raise gc.GeoError("不带店名的问题应有 %d 到 %d 个，建议 %d 个" % (OPEN_RANGE + (RECOMMENDED[0],)))
+    if not BRAND_RANGE[0] <= n_brand <= BRAND_RANGE[1]:
+        raise gc.GeoError("带店名的问题应有 %d 到 %d 个，建议 %d 个" % (BRAND_RANGE + (RECOMMENDED[1],)))
+    return sorted(out, key=lambda q: (q["kind"] != "open", q["id"]))
+
+
+def normalize_rivals(raw, facts: dict) -> list:
+    items = raw.get("items") if isinstance(raw, dict) else raw
+    if not isinstance(items, list):
+        raise gc.GeoError("竞品应为一个列表")
+    own = gc.brand_aliases(facts)
+    out = []
+    for item in items[:5]:
+        if not isinstance(item, dict):
+            continue
+        name = _text(item.get("name"), 40)
+        if len(name) < 2 or gc.contains_any(name, own):
+            continue
+        aliases = [a for a in _text_list(item.get("aliases"), 6, 40) if a != name]
+        out.append({"name": name, "aliases": aliases})
+    return out
+
+
+def normalize_assets(raw) -> dict:
+    items = raw.get("items") if isinstance(raw, dict) else raw
+    if not isinstance(items, list):
+        raise gc.GeoError("内容资产应为一个列表")
+    out = []
+    for item in items[:12]:
+        if not isinstance(item, dict):
+            continue
+        platform = _text(item.get("platform"), 20)
+        if platform:
+            out.append({
+                "platform": platform,
+                "found": bool(item.get("found")),
+                "note": _text(item.get("note"), 160),
+                "url": _text(item.get("url"), 300),
+            })
+    return {"checkedAt": gc.now_iso(), "items": out}
+
+
+def _paths() -> dict:
+    root = gc.profile_dir()
+    return {name: root / (name + ".json") for name in ("facts", "questions", "rivals", "assets", "meta")}
+
+
+def _load() -> dict:
+    paths = _paths()
+    return {name: gc.read_json(path) for name, path in paths.items()}
+
+
+def _require_facts() -> dict:
+    facts = gc.read_json(_paths()["facts"])
+    if not facts:
+        raise gc.GeoError("还没有建档，请先执行 init")
+    return facts
+
+
+def _touch_meta(**changes) -> dict:
+    path = _paths()["meta"]
+    meta = gc.read_json(path, {}) or {}
+    meta.setdefault("createdAt", gc.now_iso())
+    meta.setdefault("confirmedAt", "")
+    meta.setdefault("pageUrl", "")
+    meta.update(changes)
+    gc.write_json(path, meta)
+    return meta
+
+
+def status_payload() -> dict:
+    data = _load()
+    facts, meta = data["facts"], data["meta"] or {}
+    if not facts:
+        return {"ok": True, "exists": False, "next": "还没有建档，请按 geo-profile 的步骤建档"}
+    questions = (data["questions"] or {}).get("items") or []
+    last_run = gc.latest_run_date()
+    workbench = gc.workbench_state()
+    hint = gc.sync_hint(workbench)
+    state = gc.confirm_state(facts, meta)
+    payload = {
+        "ok": True,
+        "exists": True,
+        "segment": facts["segment"],
+        "segmentName": gc.SEGMENT_NAMES[facts["segment"]],
+        "brand": facts["brand"]["name"],
+        "confirmed": bool(meta.get("confirmedAt")),
+        "confirmedAt": meta.get("confirmedAt", ""),
+        # 资料从哪来（backend 店铺后台 / public 公开信息）、有没有等商家确认的、现在能不能替商家写内容
+        "factsFrom": state["from"],
+        "pendingConfirm": state["pending"],
+        # 等商家确认的具体是哪几样。请他确认时点出来（“我搜到一个叫某某的抖音号，是你的吗”），这些也不能写进内容。
+        "toConfirm": gc.needs_confirm(facts) if state["pending"] else {},
+        "canWrite": state["canWrite"],
+        "openQuestions": sum(1 for q in questions if q["kind"] == "open"),
+        "brandQuestions": sum(1 for q in questions if q["kind"] == "brand"),
+        "questionsVersion": (data["questions"] or {}).get("version", 0),
+        "rivals": [r["name"] for r in (data["rivals"] or {}).get("items") or []],
+        "lastRun": last_run,
+        "pageUrl": meta.get("pageUrl", ""),
+        # 工作台是不是最新的。pending 不为空时，先同步再把链接发给商家。
+        "workbench": workbench,
+        "warnings": facts_warnings(facts),
+    }
+    if hint:
+        payload["next"] = hint
+    return payload
+
+
+def cmd_status(_args) -> None:
+    gc.emit(status_payload())
+
+
+def cmd_init(args) -> None:
+    paths = _paths()
+    if gc.read_json(paths["facts"]):
+        payload = status_payload()
+        payload["note"] = "已经建过档，没有改动"
+        gc.emit(payload)
+        return
+    facts = normalize_facts({"segment": args.segment, "brand": {"name": args.brand}})
+    gc.write_json(paths["facts"], facts)
+    gc.write_json(paths["questions"], {"version": 0, "updatedAt": "", "items": []})
+    gc.write_json(paths["rivals"], {"updatedAt": "", "items": []})
+    _touch_meta()
+    gc.log_event("profile", "读好店铺资料（%s）" % gc.SEGMENT_NAMES[args.segment], key="profile:init")
+    gc.mark_changed("店铺资料")
+    gc.emit(status_payload())
+
+
+def cmd_show(args) -> None:
+    data = _load()
+    if not data["facts"]:
+        raise gc.GeoError("还没有建档，请先执行 init")
+    parts = ("facts", "questions", "rivals", "assets", "meta") if args.part == "all" else (args.part,)
+    payload = {"ok": True}
+    for part in parts:
+        payload[part] = data[part]
+    gc.emit(payload)
+
+
+def cmd_set_facts(args) -> None:
+    current = _require_facts()
+    facts = normalize_facts(gc.load_input(args.file))
+    changed = facts != current
+    gc.write_json(_paths()["facts"], facts)
+    if changed:
+        # 商家亲口要求的修改视为已确认。员工自己改的：只有“要商家确认的那部分”变了才重新确认，
+        # 每期从店铺后台重读带来的变化（营业时间改了、多了一家店）不用商家再确认。
+        updates = {"factsUpdatedAt": gc.now_iso()}
+        if args.confirmed_by_merchant:
+            updates["confirmedAt"] = gc.now_iso()
+        elif gc.needs_confirm(facts) != gc.needs_confirm(current):
+            updates["confirmedAt"] = ""
+        _touch_meta(**updates)
+        if args.confirmed_by_merchant:
+            gc.log_event("confirm", "按商家说的更新了店铺资料", key="facts:merchant:" + gc.today())
+        elif "confirmedAt" in updates:
+            gc.log_event("profile", "记下了几样店铺后台里没有的信息，等商家确认" if facts.get("from") == "backend"
+                         else "从公开信息里整理了店铺信息，等商家确认", key="facts:auto:" + gc.today())
+        gc.mark_changed("店铺资料")
+    payload = status_payload()
+    payload["changed"] = changed
+    gc.emit(payload)
+
+
+def cmd_set_questions(args) -> None:
+    facts = _require_facts()
+    items = normalize_questions(gc.load_input(args.file), facts)
+    path = _paths()["questions"]
+    current = gc.read_json(path, {}) or {}
+    previous = current.get("items") or []
+    changed = items != previous
+    # 只有问题本身变了才算口径变化；只改“替谁问”这类标注不重置基线。
+    core = lambda rows: [(q["id"], q["kind"], q["text"]) for q in rows]  # noqa: E731
+    core_changed = core(items) != core(previous)
+    if changed:
+        version = int(current.get("version") or 0) + (1 if core_changed else 0)
+        gc.write_json(path, {"version": max(version, 1), "updatedAt": gc.now_iso(), "items": items})
+        if core_changed and gc.latest_run_date():
+            # 问题库变了，之前的数字不能和之后的连成一条线。
+            _touch_meta(baselineResetAt=gc.today())
+        if core_changed:
+            gc.log_event("questions", "出好 %d 道题（第 %d 版问题库）" % (len(items), max(version, 1)), key="questions:v%d" % max(version, 1))
+        gc.mark_changed("问题库")
+    payload = status_payload()
+    payload["changed"] = changed
+    n_open, n_brand = payload["openQuestions"], payload["brandQuestions"]
+    if (n_open, n_brand) != RECOMMENDED:
+        payload["warnings"].append("建议用 %d 个不带店名加 %d 个带店名的问题，现在是 %d 加 %d" % (RECOMMENDED + (n_open, n_brand)))
+    gc.emit(payload)
+
+
+def cmd_set_rivals(args) -> None:
+    facts = _require_facts()
+    items = normalize_rivals(gc.load_input(args.file), facts)
+    gc.write_json(_paths()["rivals"], {"updatedAt": gc.now_iso(), "items": items})
+    if items:
+        gc.log_event("rivals", "选定同类店：" + "、".join(r["name"] for r in items), key="rivals:" + gc.today())
+    gc.mark_changed("同类店")
+    payload = status_payload()
+    if gc.latest_run_date():
+        payload["next"] = "同类店已保存。已经体检过的话，请重新执行 geo_score.py score，再执行 " + gc.PUBLISH_COMMAND
+    gc.emit(payload)
+
+
+def cmd_set_assets(args) -> None:
+    _require_facts()
+    gc.write_json(_paths()["assets"], normalize_assets(gc.load_input(args.file)))
+    gc.mark_changed("已有的内容")
+    gc.emit(status_payload())
+
+
+def cmd_confirm(_args) -> None:
+    facts = _require_facts()
+    questions = (gc.read_json(_paths()["questions"], {}) or {}).get("items") or []
+    if not questions:
+        raise gc.GeoError("问题库还是空的，不能确认")
+    _touch_meta(confirmedAt=gc.now_iso())
+    gc.log_event("confirm", "商家确认了员工记下的信息", key="confirm:" + gc.today())
+    gc.mark_changed("商家的确认")
+    payload = status_payload()
+    payload["warnings"] = facts_warnings(facts)
+    gc.emit(payload)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="店铺资料和监测设置")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("status").set_defaults(func=cmd_status)
+    p = sub.add_parser("init")
+    p.add_argument("--segment", required=True, choices=gc.SEGMENTS)
+    p.add_argument("--brand", required=True)
+    p.set_defaults(func=cmd_init)
+    p = sub.add_parser("show")
+    p.add_argument("--part", default="all", choices=("facts", "questions", "rivals", "assets", "meta", "all"))
+    p.set_defaults(func=cmd_show)
+    p = sub.add_parser("set-facts")
+    p.add_argument("--file", required=True)
+    p.add_argument("--confirmed-by-merchant", action="store_true")
+    p.set_defaults(func=cmd_set_facts)
+    for name, func in (("set-questions", cmd_set_questions), ("set-rivals", cmd_set_rivals), ("set-assets", cmd_set_assets)):
+        p = sub.add_parser(name)
+        p.add_argument("--file", required=True)
+        p.set_defaults(func=func)
+    sub.add_parser("confirm").set_defaults(func=cmd_confirm)
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    gc.run_cli(main)

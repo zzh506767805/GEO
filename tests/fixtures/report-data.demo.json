@@ -1,0 +1,3707 @@
+{
+ "kind": "report",
+ "generatedAt": "2026-10-05T11:41:00+08:00",
+ "store": {
+  "name": "禾木烘焙",
+  "segment": "local",
+  "segmentName": "本地门店",
+  "demo": true
+ },
+ "providers": [
+  {
+   "id": "hunyuan",
+   "name": "元宝"
+  },
+  {
+   "id": "doubao",
+   "name": "豆包"
+  },
+  {
+   "id": "deepseek",
+   "name": "DeepSeek"
+  }
+ ],
+ "aliases": [
+  "HEMU BAKERY",
+  "禾木烘焙",
+  "禾木面包"
+ ],
+ "period": {
+  "date": "2026-10-05",
+  "no": 5,
+  "latest": true
+ },
+ "workbenchUrl": "https://claw-cloud.youzan.com/f/mock/ai-visibility-employee/pages/ai-visibility.html",
+ "workbenchFile": "ai-visibility.html",
+ "summary": {
+  "mention": {
+   "hits": 7,
+   "valid": 60,
+   "byProvider": {
+    "hunyuan": {
+     "hits": 3,
+     "valid": 20
+    },
+    "doubao": {
+     "hits": 3,
+     "valid": 20
+    },
+    "deepseek": {
+     "hits": 1,
+     "valid": 20
+    }
+   },
+   "byQuestion": {
+    "q01": {
+     "hits": 0,
+     "valid": 6
+    },
+    "q02": {
+     "hits": 2,
+     "valid": 6
+    },
+    "q03": {
+     "hits": 2,
+     "valid": 6
+    },
+    "q04": {
+     "hits": 0,
+     "valid": 6
+    },
+    "q05": {
+     "hits": 0,
+     "valid": 6
+    },
+    "q06": {
+     "hits": 0,
+     "valid": 6
+    },
+    "q07": {
+     "hits": 2,
+     "valid": 6
+    },
+    "q08": {
+     "hits": 1,
+     "valid": 6
+    },
+    "q09": {
+     "hits": 0,
+     "valid": 6
+    },
+    "q10": {
+     "hits": 0,
+     "valid": 6
+    }
+   }
+  },
+  "refs": {
+   "total": 366,
+   "own": 7,
+   "storePages": 19,
+   "aboutStore": 4
+  },
+  "buyEntry": null,
+  "expected": 36,
+  "returned": 36,
+  "complete": true,
+  "memoryFlagged": 0,
+  "judged": true
+ },
+ "compare": {
+  "previous": "2026-09-28",
+  "mention": {
+   "now": "7/60",
+   "before": "5/60"
+  },
+  "ownRefs": {
+   "now": 7,
+   "before": 6
+  },
+  "trend": "up",
+  "baselineReset": false
+ },
+ "actions": {
+  "brief": "提到你的回答比上一期又多了一些，连续两期往上走。现在只剩营业时间这一处还没改过来。",
+  "todos": [
+   {
+    "text": "看一下《带孩子买面包，配料表该怎么看》，没问题就回复“确认”",
+    "why": "“适合带孩子去的面包店”这道题还没有平台提到你",
+    "done": false,
+    "doneAt": ""
+   },
+   {
+    "text": "把抖音和点评门店页上的营业时间改成 08:00–20:00",
+    "why": "这是现在唯一还没改过来的一处",
+    "done": false,
+    "doneAt": ""
+   }
+  ],
+  "gaps": [
+   {
+    "where": "抖音",
+    "note": "豆包八成的引用来自抖音。你的抖音号最近一个月没有发过视频。"
+   },
+   {
+    "where": "知乎",
+    "note": "DeepSeek 常读知乎，这几道题下面还没有提到你的回答。"
+   }
+  ],
+  "contentNote": ""
+ },
+ "questions": [
+  {
+   "id": "q01",
+   "kind": "open",
+   "text": "杭州城西有什么好吃的面包店？",
+   "tag": "地段",
+   "audience": "面包爱好者",
+   "worry": "哪几家值得去"
+  },
+  {
+   "id": "q02",
+   "kind": "open",
+   "text": "运河边附近有没有适合买早餐面包的店？",
+   "tag": "地段",
+   "audience": "附近的上班族",
+   "worry": "几点开门"
+  },
+  {
+   "id": "q03",
+   "kind": "open",
+   "text": "杭州拱墅区哪家社区面包店值得去？",
+   "tag": "地段",
+   "audience": "附近的年轻家庭",
+   "worry": "离家近不近"
+  },
+  {
+   "id": "q04",
+   "kind": "open",
+   "text": "杭州有哪些适合带孩子去的面包店？",
+   "tag": "场合",
+   "audience": "附近的年轻家庭",
+   "worry": "配料干不干净"
+  },
+  {
+   "id": "q05",
+   "kind": "open",
+   "text": "周末想找个能坐下来喝咖啡的面包店，杭州有推荐吗？",
+   "tag": "场合",
+   "audience": "面包爱好者",
+   "worry": "有没有座位"
+  },
+  {
+   "id": "q06",
+   "kind": "open",
+   "text": "杭州哪里能买到适合送人的面包礼盒？",
+   "tag": "场合",
+   "audience": "附近的年轻家庭",
+   "worry": "拿得出手"
+  },
+  {
+   "id": "q07",
+   "kind": "open",
+   "text": "杭州哪家的全麦吐司好吃？",
+   "tag": "单品",
+   "audience": "面包爱好者",
+   "worry": "是不是真全麦"
+  },
+  {
+   "id": "q08",
+   "kind": "open",
+   "text": "杭州哪家的贝果值得买？",
+   "tag": "单品",
+   "audience": "面包爱好者",
+   "worry": "做得扎不扎实"
+  },
+  {
+   "id": "q09",
+   "kind": "open",
+   "text": "杭州有没有可以小程序下单、当天送到的面包店？",
+   "tag": "渠道",
+   "audience": "附近的上班族",
+   "worry": "能不能当天送"
+  },
+  {
+   "id": "q10",
+   "kind": "open",
+   "text": "杭州哪家面包店可以提前预订、到店自取？",
+   "tag": "渠道",
+   "audience": "附近的上班族",
+   "worry": "能不能提前订"
+  },
+  {
+   "id": "b01",
+   "kind": "brand",
+   "text": "杭州的禾木烘焙这家店怎么样？",
+   "tag": "口碑",
+   "audience": "",
+   "worry": ""
+  },
+  {
+   "id": "b02",
+   "kind": "brand",
+   "text": "禾木烘焙在哪里，几点开门，有什么招牌？",
+   "tag": "门店",
+   "audience": "",
+   "worry": ""
+  }
+ ],
+ "dots": {
+  "b01": {
+   "deepseek": "hh",
+   "doubao": "hh",
+   "hunyuan": "hh"
+  },
+  "b02": {
+   "deepseek": "hh",
+   "doubao": "hh",
+   "hunyuan": "hh"
+  },
+  "q01": {
+   "deepseek": "nn",
+   "doubao": "nn",
+   "hunyuan": "nn"
+  },
+  "q02": {
+   "deepseek": "nn",
+   "doubao": "hh",
+   "hunyuan": "nn"
+  },
+  "q03": {
+   "deepseek": "nn",
+   "doubao": "nn",
+   "hunyuan": "hh"
+  },
+  "q04": {
+   "deepseek": "nn",
+   "doubao": "nn",
+   "hunyuan": "nn"
+  },
+  "q05": {
+   "deepseek": "nn",
+   "doubao": "nn",
+   "hunyuan": "nn"
+  },
+  "q06": {
+   "deepseek": "nn",
+   "doubao": "nn",
+   "hunyuan": "nn"
+  },
+  "q07": {
+   "deepseek": "hn",
+   "doubao": "nn",
+   "hunyuan": "hn"
+  },
+  "q08": {
+   "deepseek": "nn",
+   "doubao": "hn",
+   "hunyuan": "nn"
+  },
+  "q09": {
+   "deepseek": "nn",
+   "doubao": "nn",
+   "hunyuan": "nn"
+  },
+  "q10": {
+   "deepseek": "nn",
+   "doubao": "nn",
+   "hunyuan": "nn"
+  }
+ },
+ "answers": {
+  "b01_deepseek": [
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：每天营业到晚上 22:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。\n\n口碑上，喜欢扎实口感和低糖的人评价比较好；想吃甜口软面包的可能会觉得偏素。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "禾木烘焙探店：晚上十点还亮着灯的面包店",
+      "s": "本地生活笔记",
+      "u": "https://www.demo-notes.cn/p/hemu-late-night",
+      "k": "其他网站",
+      "r": "about"
+     },
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：每天营业到晚上 22:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。\n\n口碑上，喜欢扎实口感和低糖的人评价比较好；想吃甜口软面包的可能会觉得偏素。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "禾木烘焙探店：晚上十点还亮着灯的面包店",
+      "s": "本地生活笔记",
+      "u": "https://www.demo-notes.cn/p/hemu-late-night",
+      "k": "其他网站",
+      "r": "about"
+     },
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "b01_doubao": [
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：08:00–20:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。\n\n口碑上，喜欢扎实口感和低糖的人评价比较好；想吃甜口软面包的可能会觉得偏素。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：08:00–20:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。\n\n口碑上，喜欢扎实口感和低糖的人评价比较好；想吃甜口软面包的可能会觉得偏素。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "b01_hunyuan": [
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：08:00–20:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。\n\n口碑上，喜欢扎实口感和低糖的人评价比较好；想吃甜口软面包的可能会觉得偏素。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙门店信息（2026 年 9 月更新）",
+      "s": "禾木烘焙",
+      "u": "https://mp.weixin.qq.com/s?demo=hemu-store-info",
+      "k": "微信公众号",
+      "r": "own"
+     },
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：08:00–20:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。\n\n口碑上，喜欢扎实口感和低糖的人评价比较好；想吃甜口软面包的可能会觉得偏素。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙门店信息（2026 年 9 月更新）",
+      "s": "禾木烘焙",
+      "u": "https://mp.weixin.qq.com/s?demo=hemu-store-info",
+      "k": "微信公众号",
+      "r": "own"
+     },
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "b02_deepseek": [
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：每天营业到晚上 22:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "禾木烘焙探店：晚上十点还亮着灯的面包店",
+      "s": "本地生活笔记",
+      "u": "https://www.demo-notes.cn/p/hemu-late-night",
+      "k": "其他网站",
+      "r": "about"
+     },
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：每天营业到晚上 22:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "禾木烘焙探店：晚上十点还亮着灯的面包店",
+      "s": "本地生活笔记",
+      "u": "https://www.demo-notes.cn/p/hemu-late-night",
+      "k": "其他网站",
+      "r": "about"
+     },
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "b02_doubao": [
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：08:00–20:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：08:00–20:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "b02_hunyuan": [
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：08:00–20:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙门店信息（2026 年 9 月更新）",
+      "s": "禾木烘焙",
+      "u": "https://mp.weixin.qq.com/s?demo=hemu-store-info",
+      "k": "微信公众号",
+      "r": "own"
+     },
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "禾木烘焙是杭州拱墅区的一家社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。\n\n**门店**：拱墅店在演示路 18 号。\n**营业时间**：08:00–20:00。\n**招牌**：全麦吐司、原味贝果、海盐卷。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙门店信息（2026 年 9 月更新）",
+      "s": "禾木烘焙",
+      "u": "https://mp.weixin.qq.com/s?demo=hemu-store-info",
+      "k": "微信公众号",
+      "r": "own"
+     },
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     },
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q01_deepseek": [
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q01_doubao": [
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q01_hunyuan": [
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q02_deepseek": [
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q02_doubao": [
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n**禾木烘焙**：就在运河边，早上八点开门，全麦吐司和贝果是招牌，适合买早餐。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     },
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     }
+    ]
+   },
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n**禾木烘焙**：就在运河边，早上八点开门，全麦吐司和贝果是招牌，适合买早餐。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     },
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     }
+    ]
+   }
+  ],
+  "q02_hunyuan": [
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q03_deepseek": [
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q03_doubao": [
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q03_hunyuan": [
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n**禾木烘焙**：拱墅区的社区店，主打全麦和低糖，现烤现卖，可以小程序预订。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙门店信息（2026 年 9 月更新）",
+      "s": "禾木烘焙",
+      "u": "https://mp.weixin.qq.com/s?demo=hemu-store-info",
+      "k": "微信公众号",
+      "r": "own"
+     },
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     }
+    ]
+   },
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**禾木烘焙**：拱墅区的社区店，主打全麦和低糖，现烤现卖，可以小程序预订。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "禾木烘焙门店信息（2026 年 9 月更新）",
+      "s": "禾木烘焙",
+      "u": "https://mp.weixin.qq.com/s?demo=hemu-store-info",
+      "k": "微信公众号",
+      "r": "own"
+     },
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     }
+    ]
+   }
+  ],
+  "q04_deepseek": [
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q04_doubao": [
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q04_hunyuan": [
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q05_deepseek": [
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q05_doubao": [
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q05_hunyuan": [
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q06_deepseek": [
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q06_doubao": [
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q06_hunyuan": [
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q07_deepseek": [
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n**禾木烘焙**：全麦吐司是招牌，每天上午出炉，不加糖。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     },
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     }
+    ]
+   },
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q07_doubao": [
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q07_hunyuan": [
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n**禾木烘焙**：全麦吐司是招牌，每天上午出炉，不加糖。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "拱墅区哪里能买到现烤的全麦吐司",
+      "s": "禾木烘焙",
+      "u": "https://mp.weixin.qq.com/s?demo=hemu-wholewheat",
+      "k": "微信公众号",
+      "r": "own"
+     },
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     }
+    ]
+   },
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q08_deepseek": [
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q08_doubao": [
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n**禾木烘焙**：原味和海盐贝果做得扎实，下午容易卖完。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": true,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     },
+     {
+      "t": "禾木烘焙(拱墅店)",
+      "s": "大众点评",
+      "u": "https://m.dianping.com/shop/demo-hemu-gongshu",
+      "k": "大众点评和美团",
+      "r": "store"
+     }
+    ]
+   },
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q08_hunyuan": [
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q09_deepseek": [
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q09_doubao": [
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q09_hunyuan": [
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q10_deepseek": [
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "根据公开的探店内容和门店信息，可以考虑：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州有哪些值得去的面包店？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo1",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "全麦吐司怎么挑？",
+      "s": "知乎",
+      "u": "https://www.zhihu.com/question/demo2",
+      "k": "知乎",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊(拱墅店)",
+      "s": "高德地图",
+      "u": "https://www.amap.com/place/demo-maitian",
+      "k": "地图",
+      "r": ""
+     },
+     {
+      "t": "杭州烘焙店盘点",
+      "s": "百家号",
+      "u": "https://baijiahao.baidu.com/s?id=demo",
+      "k": "百度系",
+      "r": ""
+     },
+     {
+      "t": "本地面包店榜单",
+      "s": "吃喝榜",
+      "u": "https://www.demo-food.cn/list",
+      "k": "其他网站",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q10_doubao": [
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "帮你挑了几家，按顺路程度排：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州面包脑袋必吃的 6 家店 #杭州美食",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo1",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "运河边散步顺路买面包 #探店",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo2",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "暖炉面包新品测评",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo3",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "巷口烘焙的贝果到底值不值",
+      "s": "www.iesdouyin.com",
+      "u": "https://www.iesdouyin.com/share/video/demo4",
+      "k": "抖音",
+      "r": ""
+     },
+     {
+      "t": "杭州周末吃喝路线",
+      "s": "携程旅行",
+      "u": "https://m.ctrip.com/webapp/you/demo",
+      "k": "携程",
+      "r": ""
+     }
+    ]
+   }
+  ],
+  "q10_hunyuan": [
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n**巷口烘焙**：贝果和咖啡都不错，店里有座位。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   },
+   {
+    "text": "先说结论，下面几家口碑比较稳：\n\n**麦田工坊**：老牌社区店，全麦和欧包做得稳，早上七点半开门。\n**暖炉面包**：软面包和甜口的选择多，适合带孩子去。\n\n需要的话，我可以按离你近的顺序再排一遍。",
+    "mentioned": false,
+    "memory": false,
+    "refs": [
+     {
+      "t": "杭州社区面包店地图：这 8 家值得专门去",
+      "s": "杭城吃喝指南",
+      "u": "https://mp.weixin.qq.com/s?demo=a1",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "麦田工坊十周年：一家社区店的坚持",
+      "s": "麦田工坊",
+      "u": "https://mp.weixin.qq.com/s?demo=a2",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "带娃友好的 5 家面包店",
+      "s": "亲子周末",
+      "u": "https://mp.weixin.qq.com/s?demo=a3",
+      "k": "微信公众号",
+      "r": ""
+     },
+     {
+      "t": "杭州面包店推荐合集",
+      "s": "搜狐",
+      "u": "https://www.sohu.com/a/demo-bread",
+      "k": "搜狐",
+      "r": ""
+     },
+     {
+      "t": "全麦面包",
+      "s": "百度百科",
+      "u": "https://baike.baidu.com/item/demo",
+      "k": "百度系",
+      "r": ""
+     }
+    ]
+   }
+  ]
+ },
+ "rivals": [
+  {
+   "name": "麦田工坊",
+   "count": 60,
+   "byProvider": {
+    "deepseek": 20,
+    "doubao": 20,
+    "hunyuan": 20
+   }
+  },
+  {
+   "name": "暖炉面包",
+   "count": 50,
+   "byProvider": {
+    "deepseek": 10,
+    "doubao": 20,
+    "hunyuan": 20
+   }
+  },
+  {
+   "name": "巷口烘焙",
+   "count": 50,
+   "byProvider": {
+    "deepseek": 20,
+    "doubao": 20,
+    "hunyuan": 10
+   }
+  }
+ ],
+ "sources": {
+  "hunyuan": [
+   {
+    "type": "微信公众号",
+    "count": 79,
+    "pct": 63
+   },
+   {
+    "type": "搜狐",
+    "count": 20,
+    "pct": 16
+   },
+   {
+    "type": "百度系",
+    "count": 20,
+    "pct": 16
+   },
+   {
+    "type": "大众点评和美团",
+    "count": 7,
+    "pct": 6
+   }
+  ],
+  "doubao": [
+   {
+    "type": "抖音",
+    "count": 92,
+    "pct": 77
+   },
+   {
+    "type": "携程",
+    "count": 20,
+    "pct": 17
+   },
+   {
+    "type": "大众点评和美团",
+    "count": 7,
+    "pct": 6
+   }
+  ],
+  "deepseek": [
+   {
+    "type": "知乎",
+    "count": 48,
+    "pct": 40
+   },
+   {
+    "type": "其他网站",
+    "count": 24,
+    "pct": 20
+   },
+   {
+    "type": "地图",
+    "count": 24,
+    "pct": 20
+   },
+   {
+    "type": "百度系",
+    "count": 20,
+    "pct": 17
+   },
+   {
+    "type": "大众点评和美团",
+    "count": 5,
+    "pct": 4
+   }
+  ]
+ },
+ "related": {
+  "own": [
+   {
+    "type": "微信公众号",
+    "relation": "own",
+    "title": "禾木烘焙门店信息（2026 年 9 月更新）",
+    "source": "禾木烘焙",
+    "url": "https://mp.weixin.qq.com/s?demo=hemu-store-info",
+    "no": 1,
+    "usedIn": [
+     "b01_hunyuan#1",
+     "b01_hunyuan#2",
+     "b02_hunyuan#1",
+     "b02_hunyuan#2",
+     "q03_hunyuan#1",
+     "q03_hunyuan#2"
+    ]
+   },
+   {
+    "type": "微信公众号",
+    "relation": "own",
+    "title": "拱墅区哪里能买到现烤的全麦吐司",
+    "source": "禾木烘焙",
+    "url": "https://mp.weixin.qq.com/s?demo=hemu-wholewheat",
+    "no": 1,
+    "usedIn": [
+     "q07_hunyuan#1"
+    ]
+   }
+  ],
+  "store": [
+   {
+    "type": "大众点评和美团",
+    "relation": "store",
+    "title": "禾木烘焙(拱墅店)",
+    "source": "大众点评",
+    "url": "https://m.dianping.com/shop/demo-hemu-gongshu",
+    "no": 1,
+    "usedIn": [
+     "b01_deepseek#1",
+     "b01_deepseek#2",
+     "b01_doubao#1",
+     "b01_doubao#2",
+     "b01_hunyuan#1",
+     "b01_hunyuan#2",
+     "b02_deepseek#1",
+     "b02_deepseek#2",
+     "b02_doubao#1",
+     "b02_doubao#2",
+     "b02_hunyuan#1",
+     "b02_hunyuan#2",
+     "q02_doubao#1",
+     "q02_doubao#2",
+     "q03_hunyuan#1",
+     "q03_hunyuan#2",
+     "q07_deepseek#1",
+     "q07_hunyuan#1",
+     "q08_doubao#1"
+    ]
+   }
+  ],
+  "about": [
+   {
+    "type": "其他网站",
+    "relation": "about",
+    "title": "禾木烘焙探店：晚上十点还亮着灯的面包店",
+    "source": "本地生活笔记",
+    "url": "https://www.demo-notes.cn/p/hemu-late-night",
+    "no": 2,
+    "usedIn": [
+     "b01_deepseek#1",
+     "b01_deepseek#2",
+     "b02_deepseek#1",
+     "b02_deepseek#2"
+    ]
+   }
+  ]
+ },
+ "descriptions": {
+  "hunyuan": "拱墅区的社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。",
+  "doubao": "运河边的社区店，全麦和贝果是招牌，适合买早餐。",
+  "deepseek": "主打低糖全麦的社区面包店，喜欢扎实口感的人评价比较好。"
+ },
+ "issues": [
+  {
+   "id": "hours-closing-time",
+   "fact": "hours",
+   "aiSays": "DeepSeek 说每天营业到晚上 22:00。",
+   "truth": "店铺档案里拱墅店的营业时间是 08:00–20:00。",
+   "fix": "这是一篇两年前的探店笔记，原文改不了。门店信息说明里已经写了现在的营业时间；再把抖音和点评门店页上的营业时间补全，让 AI 有更多一致的依据。",
+   "evidence": [
+    "b02_deepseek#1",
+    "b02_deepseek#2"
+   ],
+   "platforms": [
+    "deepseek"
+   ],
+   "sourceType": "note",
+   "sourceTitle": "禾木烘焙探店：晚上十点还亮着灯的面包店",
+   "sourceUrl": "https://www.demo-notes.cn/p/hemu-late-night",
+   "no": 2,
+   "status": "open",
+   "firstSeen": "2026-09-07",
+   "lastSeen": "2026-10-05",
+   "seenThisRun": true
+  }
+ ],
+ "contents": [
+  {
+   "no": 4,
+   "type": "text",
+   "title": "带孩子买面包，配料表该怎么看",
+   "status": "preview",
+   "origin": "weekly",
+   "period": "2026-10-05",
+   "forQuestion": "q04",
+   "reason": "“适合带孩子去的面包店”这道题没提到你，评价里家长最在意配料。",
+   "summary": "用顾客的问法起标题，开头两句直接给答案，写清地址、营业时间和小程序名称。",
+   "whereToPost": "知乎，同一篇也可以发头条号",
+   "tip": "",
+   "tags": [],
+   "previewUrl": "",
+   "channels": [],
+   "ref": "",
+   "createdAt": "2026-10-05T09:19:00+08:00",
+   "updatedAt": "2026-10-05T09:19:00+08:00",
+   "typeName": "长文",
+   "bodyChars": 247
+  },
+  {
+   "no": 5,
+   "type": "xhs",
+   "title": "拱墅区带娃买面包｜配料表我是这么看的",
+   "status": "preview",
+   "origin": "asked",
+   "period": "2026-10-05",
+   "forQuestion": "",
+   "reason": "你点名要一条小红书笔记，用的是同一个主题。",
+   "summary": "",
+   "whereToPost": "",
+   "tip": "配 3 到 4 张图：门头、全麦吐司切面、配料表特写。",
+   "tags": [
+    "杭州面包店",
+    "拱墅区探店",
+    "全麦吐司",
+    "带娃吃什么"
+   ],
+   "previewUrl": "",
+   "channels": [],
+   "ref": "",
+   "createdAt": "2026-10-05T11:40:00+08:00",
+   "updatedAt": "2026-10-05T11:40:00+08:00",
+   "typeName": "小红书笔记",
+   "bodyChars": 147
+  }
+ ],
+ "factsFrom": "backend",
+ "factsConfirmed": true,
+ "notes": []
+}

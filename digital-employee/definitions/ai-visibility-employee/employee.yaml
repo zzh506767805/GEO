@@ -1,0 +1,20 @@
+employee_code: ai-visibility-employee
+name: AI 曝光专员
+description: 每周替你问一遍各个 AI 助手：顾客来问的时候，它们提不提你的店、提了谁、读的是哪里的内容。每期出一份体检报告，并按平台备好内容。
+version: 0.1.0
+model: ""
+
+inclusions:
+  skills:
+    - geo-profile
+    - geo-check
+    - geo-weekly
+
+exclusions:
+  skills: []
+  tools:
+    - mcp__agent__send_capability_menu
+    - mcp__agent__list_skills
+    - mcp__agent__whoami
+  subagents:
+    - youzan-image

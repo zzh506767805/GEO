@@ -1,0 +1,67 @@
+{
+ "descriptions": {
+  "hunyuan": "日式社区烘焙小店，主打软面包、抹茶甜点和小蛋糕；说它不是欧包和碱水路线，爱吃恰巴塔的人别去。",
+  "doubao": "社区手作面包店，低甜、用料扎实，抹茶系列是招牌；说冰面包不是它的强项。",
+  "deepseek": "主打健康低卡、低 GI 的社区面包店，招牌是贝贝南瓜面包和恰巴塔。"
+ },
+ "issues": [
+  {
+   "id": "address-tieye-road",
+   "fact": "address",
+   "aiSays": "把上城区铁冶路 7-2 号列为常见门店，叫它“吴山/清波店”或“老店”。",
+   "truth": "我整理的店铺资料里只有江城店和西溪店两家在营门店，没有铁冶路这一家。",
+   "evidence": [
+    "b01_hunyuan#1",
+    "b01_hunyuan#2",
+    "b02_hunyuan#1",
+    "b02_hunyuan#2"
+   ],
+   "sourceType": "note",
+   "sourceTitle": "杭州梧桐树下的面包店探秘",
+   "sourceUrl": "https://mbd.baidu.com/newspage/data/dtlandingsuper?nid=dt_4539808740959850956",
+   "fix": "这是别人写的探店内容，原文改不了，你不用管它。如果铁冶路店确实已经搬走或关闭，告诉我一声，我记下来；地图和点评上要是还留着铁冶路的门店页，可以标记为已关闭。"
+  },
+  {
+   "id": "address-qingbo-street",
+   "fact": "address",
+   "aiSays": "地址位于上城区清波街 109 号（五洋假日酒店大堂）。",
+   "truth": "我整理的店铺资料里没有这个地址。",
+   "evidence": [
+    "b01_deepseek#1"
+   ],
+   "sourceType": "map",
+   "sourceTitle": "Apple 地图上的地点页：麦的日尝",
+   "sourceUrl": "https://maps.apple.com/place?auid=1118496272187665&lsp=57879",
+   "fix": "这是地图上一个还在线的地点页，你自己能改。如果这家店已经不在了，在 Apple 地图里打开这个地点，用“报告问题”把它标记为已搬迁或已关闭；高德和大众点评上如果也有，同样处理。"
+  },
+  {
+   "id": "address-tangziqiao",
+   "fact": "address",
+   "aiSays": "提到城西棠子桥 32 号还有一家店，同时提醒“去之前先确认是否仍在营业”。",
+   "truth": "我整理的店铺资料里没有这个地址。",
+   "evidence": [
+    "b02_hunyuan#1",
+    "b02_hunyuan#2"
+   ],
+   "sourceType": "note",
+   "sourceTitle": "杭城藏在社区里的宝藏面包店,面包脑袋们的",
+   "sourceUrl": "https://m.ctrip.com/webapp/you/community/detail?articleId=53915821&isHideNavBar=YES&seo=0",
+   "fix": "这是一篇旧的探店笔记，原文改不了，你不用管它。如果棠子桥店确实已经不营业了，告诉我一声，我记下来。"
+  },
+  {
+   "id": "hours-not-on-file",
+   "fact": "hours",
+   "aiSays": "DeepSeek 说营业时间是 9:00–21:30；元宝和豆包说江城店 09:00–21:00、西溪店 09:30–20:30。",
+   "truth": "我整理的店铺资料里还没有登记营业时间，现在判断不了哪个对。",
+   "evidence": [
+    "b01_deepseek#1",
+    "b02_hunyuan#2",
+    "b02_doubao#1"
+   ],
+   "sourceType": "unknown",
+   "sourceTitle": "",
+   "sourceUrl": "",
+   "fix": "把两家店的营业时间告诉我，我记下来。之后每期体检都会核对 AI 说的营业时间。"
+  }
+ ]
+}
