@@ -58,10 +58,10 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .nav-label { padding: 14px 10px 6px; font-size: 12px; color: var(--ink-3); }
 .sec-label { margin-top: 20px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
 .note-gap { margin-top: 12px; }
-.work-recent { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
-/* 体检报告：单独的页面，没有侧栏，从上到下一节一节看 */
+/* 体检报告：每期一份独立的文件。单独打开时自带标题；嵌在工作台里时（地址带 #embed）不带标题，靠左对齐，和工作台的其他页面一致 */
 .app.report { display: block; }
 .rpt { max-width: 1080px; margin: 0 auto; }
+.app.report.embedded .rpt { max-width: none; margin: 0; }
 .rpt-head { display: flex; align-items: center; padding: 20px 28px 12px; }
 .rpt-head .mascot { width: 40px; height: 40px; margin-right: 12px; }
 .rpt-title { min-width: 0; }
@@ -90,8 +90,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .nav a svg { flex: none; margin-right: 10px; }
 .nav .cnt { min-width: 20px; margin-left: auto; border-radius: 10px; padding: 0 6px; background: var(--hover); color: var(--ink-2); font-size: 12px; font-weight: 600; line-height: 20px; text-align: center; }
 .nav .cnt.bad { background: var(--bad-soft); color: var(--bad); }
-.nav .rpt-link { display: flex; align-items: center; height: 34px; margin-bottom: 2px; padding: 0 10px; border-radius: 8px; color: var(--ink-2); font-size: 13px; }
-.nav .rpt-link svg { flex: none; margin-right: 10px; }
+.nav .rpt-link { height: 34px; font-size: 13px; }
 .nav .rpt-link .cnt { background: var(--brand-soft); color: var(--brand); }
 .side-foot { margin-top: auto; padding: 16px 8px 0; font-size: 12px; line-height: 1.6; color: var(--ink-3); }
 .main { flex: 1; min-width: 0; }
@@ -101,6 +100,12 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .topbar .upd { margin-left: 8px; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
 .topbar .sp { flex: 1; min-width: 8px; }
 .topbar .pill { margin-left: 8px; }
+.topbar .act { margin-left: 14px; font-size: 13px; white-space: nowrap; }
+/* 在工作台里看报告：顶栏和侧栏不动，内容区整个交给报告（一个内嵌的页面），只有它自己滚动 */
+.main.host { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+.content.host { display: flex; flex: 1; flex-direction: column; min-height: 0; max-width: none; padding: 0; }
+.rpt-frame { display: block; flex: 1; width: 100%; min-height: 0; border: 0; background: var(--bg); }
+.frame-hint { padding: 8px 28px; border-bottom: 1px solid var(--line); background: var(--subtle); font-size: 13px; color: var(--ink-2); }
 .psel { height: 34px; max-width: 190px; margin-left: 8px; border: 1px solid var(--line-2); border-radius: 8px; padding: 0 8px; background: var(--canvas); font-size: 13px; }
 .menu-btn { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; margin: 0 8px 0 -6px; border: 0; border-radius: 8px; background: none; cursor: pointer; }
 .menu-btn:hover { background: var(--hover); }
@@ -113,6 +118,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
   .menu-btn { display: inline-flex; }
   .topbar { padding: 8px 16px; }
   .topbar .sub, .topbar .upd, .topbar .pill { display: none; }
+  .frame-hint { padding: 8px 16px; }
   .psel { max-width: 172px; }
   .content { padding: 16px 16px 48px; }
 }
@@ -201,11 +207,6 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .banner .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .banner .acts .btn { margin: 0; }
 .banner.plain { border-color: var(--line); background: var(--canvas); }
-.strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 12px; }
-@media (min-width: 901px) { .strip { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-.strip > div { padding-left: 12px; border-left: 2px solid var(--line); }
-.strip b { display: block; font-size: 22px; font-weight: 700; line-height: 1.3; font-variant-numeric: tabular-nums; }
-.strip span { font-size: 12px; color: var(--ink-2); }
 .steps { margin: 0; padding: 0; list-style: none; }
 .steps li { position: relative; display: flex; align-items: center; min-height: 40px; padding: 6px 0 6px 34px; font-size: 14px; }
 .steps li::before { content: ''; position: absolute; left: 10px; top: 30px; bottom: -10px; width: 1px; background: var(--line); }
@@ -239,11 +240,6 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .todos li::before { counter-increment: todo; content: counter(todo); position: absolute; left: 0; top: 12px; width: 22px; height: 22px; border-radius: 50%; background: var(--brand); color: #fff; font-size: 12px; font-weight: 700; line-height: 22px; text-align: center; }
 .todos li:first-child::before { top: 3px; }
 .todos .t { font-weight: 600; }
-.todos li.done::before { background: var(--ok-soft); color: transparent; }
-.todos li.done .tick { position: absolute; left: 0; top: 12px; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; color: var(--ok); }
-.todos li.done:first-child .tick { top: 3px; }
-.todos li.done .t { color: var(--ink-3); font-weight: 400; text-decoration: line-through; }
-.todos li.done .w { color: var(--ink-4); }
 .todos .w { margin-top: 1px; font-size: 13px; color: var(--ink-2); }
 .mini-issue { display: flex; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--line); }
 .mini-issue:first-of-type { border-top: 0; padding-top: 2px; }
@@ -351,7 +347,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .gap-row:last-child { padding-bottom: 0; }
 .gap-row .tag { flex: none; margin-top: 2px; }
 
-/* ───────── 监测设置、员工做过的工作 ───────── */
+/* ───────── 监测设置 ───────── */
 .persona .nm { display: flex; flex-wrap: wrap; align-items: center; font-weight: 700; }
 .persona .nm .tag { margin: 0 0 0 8px; }
 .persona dl { margin: 6px 0 0; font-size: 13px; }
@@ -382,18 +378,6 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
   .art-body { margin: 12px 20px 0; }
   .art-foot { padding: 12px 20px 18px; }
 }
-.tl-day { margin: 16px 0 8px; font-size: 12px; font-weight: 700; color: var(--ink-3); }
-.tl-day:first-child { margin-top: 0; }
-.tl { margin: 0; padding: 0; list-style: none; }
-.tl li { position: relative; display: flex; align-items: flex-start; min-height: 26px; padding: 2px 0 14px 36px; }
-.tl li::before { content: ''; position: absolute; left: 12px; top: 28px; bottom: 2px; width: 1px; background: var(--line); }
-.tl li:last-child { padding-bottom: 0; }
-.tl li:last-child::before { display: none; }
-.tl .ico { position: absolute; left: 0; top: 0; display: flex; align-items: center; justify-content: center; width: 25px; height: 25px; border-radius: 50%; background: var(--hover); color: var(--ink-2); }
-.tl .ico.k-check, .tl .ico.k-content, .tl .ico.k-page { background: var(--brand-soft); color: var(--brand); }
-.tl .ico.k-fixed, .tl .ico.k-confirm { background: var(--ok-soft); color: var(--ok); }
-.tl .tx { flex: 1; min-width: 0; font-size: 14px; }
-.tl .tm { flex: none; margin-left: 10px; font-size: 12px; line-height: 22px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
 /* ───────── 点开一格：AI 的原话 ───────── */
 .sheet { position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; background: rgba(15, 18, 21, .5); }
@@ -427,7 +411,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
 <noscript><p class="noscript">这个页面需要开启 JavaScript 才能显示。</p></noscript>
 <div id="app" class="app"></div>
 <div id="sheet" class="sheet" hidden><div class="sheet-panel" role="dialog" aria-modal="true" aria-label="AI 的原话"></div></div>
-<script type="application/json" id="geo-data">{"kind":"workbench","generatedAt":"2026-10-08T21:50:00+08:00","runDate":"2026-10-08","store":{"name":"麦的日尝","segment":"local","segmentName":"本地门店","demo":false},"providers":[{"id":"hunyuan","name":"元宝"},{"id":"doubao","name":"豆包"},{"id":"deepseek","name":"DeepSeek"}],"progress":{},"latest":{"date":"2026-10-08","no":1,"questionsVersion":1,"mention":{"hits":1,"valid":69,"byProvider":{"hunyuan":{"hits":0,"valid":24},"doubao":{"hits":1,"valid":21},"deepseek":{"hits":0,"valid":24}}},"refs":{"total":733,"own":1,"storePages":14,"aboutStore":22},"expected":42,"returned":42,"answers":84,"complete":true,"judged":true,"content":{"count":0,"status":"","title":"","note":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"reportFile":"report-2026-10-08.html","reportUrl":"https://claw-cloud.youzan.com/f/mock/ai-visibility-employee/pages/report-2026-10-08.html","buyEntry":null,"rivals":[{"name":"Cycle \u0026 Cycle","count":17},{"name":"猫咪面团","count":15},{"name":"红跑车","count":14},{"name":"可莎蜜儿","count":14}]},"actions":{"brief":"顾客没点名的时候，69 个回答里只有 1 个提到你（豆包，“留下附近”那道题）；AI 最常提的是 Cycle \u0026 Cycle，17 次。豆包主要读抖音、元宝主要读公众号，而讲你的视频和文章，只在顾客点名问你时才被读到。先请你看一眼“监测设置”：店铺信息是我从公开信息里整理的，你确认以后我就开始替你写内容。","todos":[{"text":"看一眼“监测设置”里我整理的店铺信息：两家门店的地址对不对，“面包脑袋Yolanda”是不是你的抖音号","why":"这些是我从公开信息里整理的。你确认以后，我才能开始替你写内容","done":false,"doneAt":""},{"text":"告诉我你有没有公众号，叫什么","why":"元宝三分之一的引用来自公众号文章，我没有搜到和你同名的号","done":false,"doneAt":""},{"text":"如果清波街 109 号那家店已经不在了，在 Apple 地图上把它标记为已搬迁或已关闭","why":"DeepSeek 介绍你时用的是这个地址。它出自地图上一个还在线的地点页，你自己能改","done":false,"doneAt":""}],"gaps":[{"where":"公众号","note":"元宝回答这批问题时，三分之一的引用来自公众号文章。我没有搜到和你同名的公众号；别人写你的两篇公众号文章，只在顾客点名问你时才被读到。"},{"where":"抖音","note":"豆包七成的引用来自抖音。讲你的视频有 3 条被引用，其中 1 条出自“面包脑袋Yolanda”这个账号，也都是在顾客点名问你的时候。"},{"where":"地图和点评","note":"DeepSeek 常读地图上的门店页，会直接用上面的地址。你的两家店在大众点评都有门店页；Apple 地图上还有一个清波街的地点页。"}],"contentNote":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"periods":[{"date":"2026-10-08","no":1,"questionsVersion":1,"mention":{"hits":1,"valid":69,"byProvider":{"hunyuan":{"hits":0,"valid":24},"doubao":{"hits":1,"valid":21},"deepseek":{"hits":0,"valid":24}}},"refs":{"total":733,"own":1,"storePages":14,"aboutStore":22},"expected":42,"returned":42,"answers":84,"complete":true,"judged":true,"content":{"count":0,"status":"","title":"","note":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"reportFile":"report-2026-10-08.html","reportUrl":"https://claw-cloud.youzan.com/f/mock/ai-visibility-employee/pages/report-2026-10-08.html"}],"contents":[],"contentTypes":{"wechat":"公众号文章","xhs":"小红书笔记","text":"长文"},"questions":[{"id":"q01","kind":"open","tag":"品类","text":"杭州有哪些好吃的面包店推荐？","audience":"面包爱好者","worry":"哪几家最值得去"},{"id":"q02","kind":"open","tag":"地段","text":"杭州西湖边南山路附近有什么好吃的面包店或甜品店？","audience":"来杭州玩的游客","worry":"逛街顺不顺路"},{"id":"q03","kind":"open","tag":"单品","text":"杭州哪家的冰面包好吃？","audience":"面包爱好者","worry":"冰面包做得好不好"},{"id":"q04","kind":"open","tag":"单品","text":"杭州哪里能买到好吃的碱水面包？","audience":"面包爱好者","worry":"碱水正不正宗"},{"id":"q05","kind":"open","tag":"场景","text":"来杭州旅游，有什么值得带走的烘焙类伴手礼？","audience":"来杭州玩的游客","worry":"能不能带走、放不放得住"},{"id":"q06","kind":"open","tag":"场景","text":"杭州有哪些适合坐下来喝下午茶的面包店？","audience":"来杭州玩的游客","worry":"有没有座位"},{"id":"q07","kind":"open","tag":"场景","text":"杭州生日蛋糕哪家好吃，可以配送的？","audience":"附近的居民和上班族","worry":"能不能配送"},{"id":"q08","kind":"open","tag":"渠道","text":"杭州有没有可以在微信小程序下单、同城配送的面包店？","audience":"附近的居民和上班族","worry":"能不能线上下单"},{"id":"q09","kind":"open","tag":"场景","text":"杭州哪里能买到低GI面包？适合控糖的人吃的面包店有推荐吗？","audience":"控糖和减脂的人","worry":"是不是真的低 GI"},{"id":"q10","kind":"open","tag":"单品","text":"杭州哪家的恰巴塔和欧包好吃？","audience":"面包爱好者","worry":"恰巴塔和欧包做得好不好"},{"id":"q11","kind":"open","tag":"地段","text":"杭州西溪路留下附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"q12","kind":"open","tag":"地段","text":"杭州上城区江城路望江门附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"b01","kind":"brand","tag":"口碑","text":"杭州的麦的日尝这家面包店怎么样？值得去吗？","audience":"","worry":""},{"id":"b02","kind":"brand","tag":"门店","text":"麦的日尝有哪些招牌产品？门店在哪里？","audience":"","worry":""}],"settings":{"from":"public","confirmed":false,"pending":true,"canWrite":false,"questions":[{"id":"q01","kind":"open","tag":"品类","text":"杭州有哪些好吃的面包店推荐？","audience":"面包爱好者","worry":"哪几家最值得去"},{"id":"q02","kind":"open","tag":"地段","text":"杭州西湖边南山路附近有什么好吃的面包店或甜品店？","audience":"来杭州玩的游客","worry":"逛街顺不顺路"},{"id":"q03","kind":"open","tag":"单品","text":"杭州哪家的冰面包好吃？","audience":"面包爱好者","worry":"冰面包做得好不好"},{"id":"q04","kind":"open","tag":"单品","text":"杭州哪里能买到好吃的碱水面包？","audience":"面包爱好者","worry":"碱水正不正宗"},{"id":"q05","kind":"open","tag":"场景","text":"来杭州旅游，有什么值得带走的烘焙类伴手礼？","audience":"来杭州玩的游客","worry":"能不能带走、放不放得住"},{"id":"q06","kind":"open","tag":"场景","text":"杭州有哪些适合坐下来喝下午茶的面包店？","audience":"来杭州玩的游客","worry":"有没有座位"},{"id":"q07","kind":"open","tag":"场景","text":"杭州生日蛋糕哪家好吃，可以配送的？","audience":"附近的居民和上班族","worry":"能不能配送"},{"id":"q08","kind":"open","tag":"渠道","text":"杭州有没有可以在微信小程序下单、同城配送的面包店？","audience":"附近的居民和上班族","worry":"能不能线上下单"},{"id":"q09","kind":"open","tag":"场景","text":"杭州哪里能买到低GI面包？适合控糖的人吃的面包店有推荐吗？","audience":"控糖和减脂的人","worry":"是不是真的低 GI"},{"id":"q10","kind":"open","tag":"单品","text":"杭州哪家的恰巴塔和欧包好吃？","audience":"面包爱好者","worry":"恰巴塔和欧包做得好不好"},{"id":"q11","kind":"open","tag":"地段","text":"杭州西溪路留下附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"q12","kind":"open","tag":"地段","text":"杭州上城区江城路望江门附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"b01","kind":"brand","tag":"口碑","text":"杭州的麦的日尝这家面包店怎么样？值得去吗？","audience":"","worry":""},{"id":"b02","kind":"brand","tag":"门店","text":"麦的日尝有哪些招牌产品？门店在哪里？","audience":"","worry":""}],"audience":[{"name":"附近的居民和上班族","who":"住在或上班在门店周边的人","scene":"想在家或公司附近找一家常去的面包店","worry":"离得近不近、当天还有没有货","basis":"推测"},{"name":"来杭州玩的游客","who":"在西湖一带游玩的外地游客","scene":"逛街途中想买面包，或者找能带走的伴手礼","worry":"顺不顺路、放不放得住","basis":"推测"},{"name":"控糖和减脂的人","who":"在意糖分和升糖的顾客","scene":"给自己或家人挑日常吃的主食面包","worry":"是不是真的低糖、低 GI","basis":"推测"},{"name":"面包爱好者","who":"冲着某一种面包专门找店的人","scene":"想吃冰面包、碱水、恰巴塔这类具体品种","worry":"这一款做得正不正宗","basis":"推测"}],"rivals":[{"name":"Cycle \u0026 Cycle"},{"name":"猫咪面团"},{"name":"红跑车"},{"name":"可莎蜜儿"}],"extras":{"aliases":["麦の日尝","Wheat daily","wheatdaily","麦的日尝·daily"],"wechatOfficial":"","douyin":"面包脑袋Yolanda","stores":[{"name":"江城店","address":"杭州市上城区江城路410号-5室","status":"在营","source":"抖音门店页"},{"name":"西溪店","address":"杭州市西湖区留下街道西溪路596号701室-2","status":"在营","source":"抖音门店页"}],"tone":"","bannedWords":[],"mustInclude":[]}},"log":[{"at":"2026-10-08T21:50:00+08:00","date":"2026-10-08","kind":"issue","text":"核对完 AI 怎么介绍本店，有 4 处和店铺资料对不上，记在报告里"},{"at":"2026-10-08T21:50:00+08:00","date":"2026-10-08","kind":"check","text":"完成体检：42 条查询返回 42 条；顾客没点名时 69 个回答里有 1 个提到本店"},{"at":"2026-10-08T21:50:00+08:00","date":"","kind":"page","text":"开通了工作台"},{"at":"2026-10-08T21:50:00+08:00","date":"","kind":"rivals","text":"选定同类店：Cycle \u0026 Cycle、猫咪面团、红跑车、可莎蜜儿"},{"at":"2026-10-08T21:50:00+08:00","date":"","kind":"questions","text":"出好 14 道题（第 1 版问题库）"},{"at":"2026-10-08T21:50:00+08:00","date":"","kind":"profile","text":"从公开信息里整理了店铺信息，等商家确认"},{"at":"2026-10-08T21:50:00+08:00","date":"","kind":"profile","text":"读好店铺资料（本地门店）"}],"totals":{"periods":1,"since":"2026-10-08","answers":84,"questions":14,"contents":0,"contentsWaiting":0,"contentsPublished":0},"compare":{"previous":"","mention":{"now":"1/69","before":""},"ownRefs":{"now":1,"before":null},"trend":"observe","baselineReset":false},"notes":["这是第一期，或者问题库刚改过，没有可比的上一期；这一期就是基线"]}</script>
+<script type="application/json" id="geo-data">{"kind":"workbench","generatedAt":"2026-10-08T21:50:00+08:00","runDate":"2026-10-08","store":{"name":"麦的日尝","segment":"local","segmentName":"本地门店","demo":false},"providers":[{"id":"hunyuan","name":"元宝"},{"id":"doubao","name":"豆包"},{"id":"deepseek","name":"DeepSeek"}],"progress":{},"latest":{"date":"2026-10-08","no":1,"questionsVersion":1,"mention":{"hits":1,"valid":69,"byProvider":{"hunyuan":{"hits":0,"valid":24},"doubao":{"hits":1,"valid":21},"deepseek":{"hits":0,"valid":24}}},"refs":{"total":733,"own":1,"storePages":14,"aboutStore":22},"expected":42,"returned":42,"complete":true,"judged":true,"content":{"count":0,"status":"","title":"","note":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"reportFile":"report-2026-10-08.html","reportUrl":"https://claw-cloud.youzan.com/f/mock/ai-visibility-employee/pages/report-2026-10-08.html","buyEntry":null,"rivals":[{"name":"Cycle \u0026 Cycle","count":17},{"name":"猫咪面团","count":15},{"name":"红跑车","count":14},{"name":"可莎蜜儿","count":14}]},"actions":{"brief":"顾客没点名的时候，69 个回答里只有 1 个提到你（豆包，“留下附近”那道题）；AI 最常提的是 Cycle \u0026 Cycle，17 次。豆包主要读抖音、元宝主要读公众号，而讲你的视频和文章，只在顾客点名问你时才被读到。先请你看一眼“监测设置”：店铺信息是我从公开信息里整理的，你确认以后我就开始替你写内容。","todos":[{"text":"看一眼“监测设置”里我整理的店铺信息：两家门店的地址对不对，“面包脑袋Yolanda”是不是你的抖音号","why":"这些是我从公开信息里整理的。你确认以后，我才能开始替你写内容"},{"text":"告诉我你有没有公众号，叫什么","why":"元宝三分之一的引用来自公众号文章，我没有搜到和你同名的号"},{"text":"如果清波街 109 号那家店已经不在了，在 Apple 地图上把它标记为已搬迁或已关闭","why":"DeepSeek 介绍你时用的是这个地址。它出自地图上一个还在线的地点页，你自己能改"}],"gaps":[{"where":"公众号","note":"元宝回答这批问题时，三分之一的引用来自公众号文章。我没有搜到和你同名的公众号；别人写你的两篇公众号文章，只在顾客点名问你时才被读到。"},{"where":"抖音","note":"豆包七成的引用来自抖音。讲你的视频有 3 条被引用，其中 1 条出自“面包脑袋Yolanda”这个账号，也都是在顾客点名问你的时候。"},{"where":"地图和点评","note":"DeepSeek 常读地图上的门店页，会直接用上面的地址。你的两家店在大众点评都有门店页；Apple 地图上还有一个清波街的地点页。"}],"contentNote":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"periods":[{"date":"2026-10-08","no":1,"questionsVersion":1,"mention":{"hits":1,"valid":69,"byProvider":{"hunyuan":{"hits":0,"valid":24},"doubao":{"hits":1,"valid":21},"deepseek":{"hits":0,"valid":24}}},"refs":{"total":733,"own":1,"storePages":14,"aboutStore":22},"expected":42,"returned":42,"complete":true,"judged":true,"content":{"count":0,"status":"","title":"","note":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"reportFile":"report-2026-10-08.html","reportUrl":"https://claw-cloud.youzan.com/f/mock/ai-visibility-employee/pages/report-2026-10-08.html"}],"contents":[],"contentTypes":{"wechat":"公众号文章","xhs":"小红书笔记","text":"长文"},"questions":[{"id":"q01","kind":"open","tag":"品类","text":"杭州有哪些好吃的面包店推荐？","audience":"面包爱好者","worry":"哪几家最值得去"},{"id":"q02","kind":"open","tag":"地段","text":"杭州西湖边南山路附近有什么好吃的面包店或甜品店？","audience":"来杭州玩的游客","worry":"逛街顺不顺路"},{"id":"q03","kind":"open","tag":"单品","text":"杭州哪家的冰面包好吃？","audience":"面包爱好者","worry":"冰面包做得好不好"},{"id":"q04","kind":"open","tag":"单品","text":"杭州哪里能买到好吃的碱水面包？","audience":"面包爱好者","worry":"碱水正不正宗"},{"id":"q05","kind":"open","tag":"场景","text":"来杭州旅游，有什么值得带走的烘焙类伴手礼？","audience":"来杭州玩的游客","worry":"能不能带走、放不放得住"},{"id":"q06","kind":"open","tag":"场景","text":"杭州有哪些适合坐下来喝下午茶的面包店？","audience":"来杭州玩的游客","worry":"有没有座位"},{"id":"q07","kind":"open","tag":"场景","text":"杭州生日蛋糕哪家好吃，可以配送的？","audience":"附近的居民和上班族","worry":"能不能配送"},{"id":"q08","kind":"open","tag":"渠道","text":"杭州有没有可以在微信小程序下单、同城配送的面包店？","audience":"附近的居民和上班族","worry":"能不能线上下单"},{"id":"q09","kind":"open","tag":"场景","text":"杭州哪里能买到低GI面包？适合控糖的人吃的面包店有推荐吗？","audience":"控糖和减脂的人","worry":"是不是真的低 GI"},{"id":"q10","kind":"open","tag":"单品","text":"杭州哪家的恰巴塔和欧包好吃？","audience":"面包爱好者","worry":"恰巴塔和欧包做得好不好"},{"id":"q11","kind":"open","tag":"地段","text":"杭州西溪路留下附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"q12","kind":"open","tag":"地段","text":"杭州上城区江城路望江门附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"b01","kind":"brand","tag":"口碑","text":"杭州的麦的日尝这家面包店怎么样？值得去吗？","audience":"","worry":""},{"id":"b02","kind":"brand","tag":"门店","text":"麦的日尝有哪些招牌产品？门店在哪里？","audience":"","worry":""}],"settings":{"from":"public","confirmed":false,"pending":true,"canWrite":false,"questions":[{"id":"q01","kind":"open","tag":"品类","text":"杭州有哪些好吃的面包店推荐？","audience":"面包爱好者","worry":"哪几家最值得去"},{"id":"q02","kind":"open","tag":"地段","text":"杭州西湖边南山路附近有什么好吃的面包店或甜品店？","audience":"来杭州玩的游客","worry":"逛街顺不顺路"},{"id":"q03","kind":"open","tag":"单品","text":"杭州哪家的冰面包好吃？","audience":"面包爱好者","worry":"冰面包做得好不好"},{"id":"q04","kind":"open","tag":"单品","text":"杭州哪里能买到好吃的碱水面包？","audience":"面包爱好者","worry":"碱水正不正宗"},{"id":"q05","kind":"open","tag":"场景","text":"来杭州旅游，有什么值得带走的烘焙类伴手礼？","audience":"来杭州玩的游客","worry":"能不能带走、放不放得住"},{"id":"q06","kind":"open","tag":"场景","text":"杭州有哪些适合坐下来喝下午茶的面包店？","audience":"来杭州玩的游客","worry":"有没有座位"},{"id":"q07","kind":"open","tag":"场景","text":"杭州生日蛋糕哪家好吃，可以配送的？","audience":"附近的居民和上班族","worry":"能不能配送"},{"id":"q08","kind":"open","tag":"渠道","text":"杭州有没有可以在微信小程序下单、同城配送的面包店？","audience":"附近的居民和上班族","worry":"能不能线上下单"},{"id":"q09","kind":"open","tag":"场景","text":"杭州哪里能买到低GI面包？适合控糖的人吃的面包店有推荐吗？","audience":"控糖和减脂的人","worry":"是不是真的低 GI"},{"id":"q10","kind":"open","tag":"单品","text":"杭州哪家的恰巴塔和欧包好吃？","audience":"面包爱好者","worry":"恰巴塔和欧包做得好不好"},{"id":"q11","kind":"open","tag":"地段","text":"杭州西溪路留下附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"q12","kind":"open","tag":"地段","text":"杭州上城区江城路望江门附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"b01","kind":"brand","tag":"口碑","text":"杭州的麦的日尝这家面包店怎么样？值得去吗？","audience":"","worry":""},{"id":"b02","kind":"brand","tag":"门店","text":"麦的日尝有哪些招牌产品？门店在哪里？","audience":"","worry":""}],"audience":[{"name":"附近的居民和上班族","who":"住在或上班在门店周边的人","scene":"想在家或公司附近找一家常去的面包店","worry":"离得近不近、当天还有没有货","basis":"推测"},{"name":"来杭州玩的游客","who":"在西湖一带游玩的外地游客","scene":"逛街途中想买面包，或者找能带走的伴手礼","worry":"顺不顺路、放不放得住","basis":"推测"},{"name":"控糖和减脂的人","who":"在意糖分和升糖的顾客","scene":"给自己或家人挑日常吃的主食面包","worry":"是不是真的低糖、低 GI","basis":"推测"},{"name":"面包爱好者","who":"冲着某一种面包专门找店的人","scene":"想吃冰面包、碱水、恰巴塔这类具体品种","worry":"这一款做得正不正宗","basis":"推测"}],"rivals":[{"name":"Cycle \u0026 Cycle"},{"name":"猫咪面团"},{"name":"红跑车"},{"name":"可莎蜜儿"}],"extras":{"aliases":["麦の日尝","Wheat daily","wheatdaily","麦的日尝·daily"],"wechatOfficial":"","douyin":"面包脑袋Yolanda","stores":[{"name":"江城店","address":"杭州市上城区江城路410号-5室","status":"在营","source":"抖音门店页"},{"name":"西溪店","address":"杭州市西湖区留下街道西溪路596号701室-2","status":"在营","source":"抖音门店页"}],"tone":"","bannedWords":[],"mustInclude":[]}},"totals":{"periods":1,"contents":0,"contentsWaiting":0,"contentsPublished":0},"compare":{"previous":"","mention":{"now":"1/69","before":""},"ownRefs":{"now":1,"before":null},"trend":"observe","baselineReset":false}}</script>
 <script>
 (function () {
   'use strict';
@@ -445,8 +429,10 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   /* 本机直接打开文件时，工作台和报告用同目录的文件名互相跳转；线上用云盘给的链接 */
   var LOCAL = typeof location !== 'undefined' && location.protocol === 'file:';
   var BASE = KIND === 'report' ? (LOCAL ? (DATA.workbenchFile || '') : (DATA.workbenchUrl || '')) : '';
+  /* 报告嵌在工作台里打开时，工作台给它的地址带 #embed。不用“是不是在别的页面里”来判断：云盘自己也可能把网页套一层 */
+  var EMBED = KIND === 'report' && /^#embed(\/|$)/.test(String((typeof location !== 'undefined' && location.hash) || ''));
   var page = 'overview';
-  var side, scrim, content, titleEl, subEl, navLinks = {}, lastFocus = null;
+  var side, scrim, mainEl, content, titleEl, subEl, actEl, navLinks = {}, lastFocus = null;
 
   /* ── 小工具 ── */
   function el(tag, cls, text) {
@@ -501,16 +487,19 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   /* 内容：不发了的不算；等确认的要提醒 */
   function liveContents() { return (DATA.contents || []).filter(function (a) { return a.status !== 'dropped'; }); }
   function waitingContents() { return liveContents().filter(function (a) { return a.status === 'preview'; }); }
-  function todoLeft() { return (DATA.actions.todos || []).filter(function (t) { return !t.done; }).length; }
-  function todoCountText() {
-    var all = (DATA.actions.todos || []).length, left = todoLeft();
-    return !all ? '' : (left === all ? all + ' 件' : all + ' 件，做完 ' + (all - left) + ' 件');
+  /* 另开一页打开某个文件。线上是云盘链接，本机直接打开文件时是同目录的文件名 */
+  function fileLink(text, url, cls) {
+    if (!url) { return el('span', cls || '', text); }
+    var a = el('a', cls || '', text);
+    a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    return a;
   }
   /* 去工作台的某个页面。在报告里要带上工作台的地址；拿不到地址时退成普通文字 */
   function nav(text, target, cls) {
     if (KIND === 'report' && !BASE) { return el('span', cls || '', text); }
     var a = el('a', cls || '', text);
     a.href = BASE + '#/' + target;
+    if (EMBED) { a.target = '_top'; }  /* 嵌在工作台里时，去工作台的别的页面要让外面那一层跳，不是在小窗口里跳 */
     return a;
   }
   function pill(kind, text) { return el('span', 'pill ' + kind, text); }
@@ -699,10 +688,11 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   /* ── 两种页面共用的小块 ── */
   function mascot() { var img = el('img', 'mascot'); img.src = MASCOT; img.alt = ''; return img; }
   function kv(list, key, value) { if (value) { add(list, el('dt', '', key), el('dd', '', value)); } }
-  /* 某一期报告的地址。本机直接打开文件时用同目录的文件名，线上用云盘给的链接。 */
-  function reportHref(period, section) {
-    var base = period ? (LOCAL ? (period.reportFile || '') : (period.reportUrl || '')) : '';
-    return base ? base + (section ? '#' + section : '') : '';
+  /* 某一期报告的文件。本机直接打开文件时用同目录的文件名，线上用云盘给的链接。 */
+  function reportFile(period) { return period ? (LOCAL ? (period.reportFile || '') : (period.reportUrl || '')) : ''; }
+  /* 在工作台里打开某一期报告（可以直接到某一节）。报告还没传上去时没有地址。 */
+  function reportRoute(period, section) {
+    return reportFile(period) ? '#/report/' + period.date + (section ? '/' + section : '') : '';
   }
   function verdict(mention) {
     var node = el('div', 'verdict');
@@ -712,13 +702,13 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     return node;
   }
   /* 一个数的卡片。给了 href 就能点（去报告里对应的那一节），没给就是静态的 */
-  function kpi(iconName, tone, label, value, unit, hint, href, values, isText) {
+  function kpi(iconName, tone, label, value, unit, hint, href, values, tips, isText) {
     var node = el(href ? 'a' : 'div', 'card kpi' + (href ? '' : ' static'));
     if (href) { node.href = href; }
     var num = el('span', 'kpi-num' + (isText ? ' text' : ''), value);
     if (unit) { num.appendChild(el('small', '', ' ' + unit)); }
     add(node, add(el('span', 'kpi-top'), add(el('span', 'kpi-ico ' + tone), icon(iconName, 15)), label), num, el('span', 'kpi-hint', hint));
-    if (values && values.length > 1) { node.appendChild(barChart(values, values.map(String), 'spark')); }
+    if (values && values.length > 1) { node.appendChild(barChart(values, tips || values.map(String), 'spark')); }
     return node;
   }
   function demoStrip() { return DATA.store.demo ? el('div', 'demo-strip', '演示数据：这家店和页面上的内容都是虚构的，只用来检查页面。') : null; }
@@ -801,30 +791,21 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     root.appendChild(add(box, wrap));
   }
 
+  /* 员工建议商家做的事。只在报告里列出来，不是一张要打勾的清单 */
   function todoList(box) {
-    var todos = DATA.actions.todos || [];
-    if (!todos.length) { box.appendChild(el('div', 'empty', HAS_RESULT ? '这一期没有需要你做的事。' : '第一次体检完成后，这里会列出建议你做的事。')); return; }
     var list = el('ol', 'todos');
-    todos.forEach(function (todo) {
-      var item = add(el('li', todo.done ? 'done' : ''), el('div', 't', todo.text), todo.why ? el('div', 'w', todo.why) : null);
-      if (todo.done) { item.appendChild(add(el('span', 'tick'), icon('check', 13))); }
-      list.appendChild(item);
+    (DATA.actions.todos || []).forEach(function (todo) {
+      list.appendChild(add(el('li'), el('div', 't', todo.text), todo.why ? el('div', 'w', todo.why) : null));
     });
     box.appendChild(list);
   }
-  /* 首页上的内容小卡：最新的一篇；没有时说明为什么 */
-  function contentBlock() {
-    var box = el('div');
-    var item = liveContents()[0];
-    if (!item) {
-      box.appendChild(el('div', 'empty', DATA.actions.contentNote || (DATA.settings.canWrite ? '还没有写过内容。' : '你确认过店铺信息以后，才会开始替你写内容。')));
-      return box;
-    }
-    var label = CONTENT_LABEL[item.status] || CONTENT_LABEL.preview;
-    add(box, add(el('div'), el('span', 'ino', '第 ' + item.no + ' 篇'), ' ', pill('brand', item.typeName), ' ', pill(label[0], label[1])), el('div', 't-strong', item.title));
-    if (item.summary) { box.appendChild(el('div', 'small', item.summary)); }
-    if (item.reason) { box.appendChild(el('div', 'small muted', item.reason)); }
-    box.appendChild(nav('去看这一篇', 'content', 'small'));
+  /* 首页上只在有内容等商家确认时才出现的一块：每条一行，点了去内容页 */
+  function waitingCard(items) {
+    var box = card('等你确认的内容', items.length + ' 篇', nav('去确认', 'content', 'more'));
+    items.slice(0, 3).forEach(function (item) {
+      box.appendChild(add(el('div', 'gap-row'), el('span', 'tag', item.typeName),
+        add(el('span'), el('span', 'ino', '第 ' + item.no + ' 篇'), ' ', el('b', '', item.title), item.reason ? el('div', 'small muted', item.reason) : null)));
+    });
     return box;
   }
   /* 复制出去的文字：小红书笔记是“标题 + 正文 + 话题”，其他类型去掉小标题和加粗的记号 */
@@ -947,29 +928,24 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     root.appendChild(sayBlock(lines));
   }
 
-  var LOG_ICON = { profile: 'store', questions: 'list', rivals: 'users', confirm: 'check', check: 'play', issue: 'eye', reopen: 'refresh', fixed: 'check', content: 'doc', page: 'home' };
-  function timeline(box, events) {
-    if (!events.length) { box.appendChild(el('div', 'empty', '还没有工作记录。')); return; }
-    var lastDay = '', list = null;
-    events.forEach(function (event) {
-      var day = String(event.at).slice(0, 10);
-      if (day !== lastDay) { box.appendChild(el('div', 'tl-day', cnDate(day))); list = el('ul', 'tl'); box.appendChild(list); lastDay = day; }
-      list.appendChild(add(el('li'), add(el('span', 'ico k-' + event.kind), icon(LOG_ICON[event.kind] || 'check', 13)), el('span', 'tx', event.text), el('span', 'tm', String(event.at).slice(11, 16))));
-    });
-  }
-
   /* ══════════ 工作台：只放跨期的东西 ══════════
-     最新结论、几个数的走势、每一期报告的入口、没做完的待办、替商家写的内容、监测设置。
-     某一期分析出来的东西（提没提到、提到了谁、读了哪里、有没有说错）都在那一期的报告里，不占这里的导航。 */
+     最新结论、几个数的走势、每一期报告的入口、替商家写的内容、监测设置。
+     某一期分析出来的东西（提没提到、提到了谁、读了哪里、怎么介绍）都在那一期的报告里。
+     报告是每期一份独立的文件；在工作台里看它时，内容区直接把那个文件嵌进来，不用跳到别的页面。 */
   var NAV = [
     { items: [['overview', '工作台', 'home'], ['content', '内容', 'doc'], ['settings', '监测设置', 'list']] }
   ];
   var SUBTITLE = {
-    overview: '最新的结论、该做的事，和每一期的报告',
+    overview: '最新的结论，和每一期的体检报告',
     content: '员工替你写的内容：公众号文章、小红书笔记、长文',
     settings: '员工每周替你问什么、和谁比'
   };
+  var frameTimer = null, frameHint = null;
   function closeSide() { side.className = 'side'; scrim.className = 'scrim'; }
+  function periodByDate(date) {
+    for (var i = 0; i < PERIODS.length; i++) { if (PERIODS[i].date === date) { return PERIODS[i]; } }
+    return null;
+  }
   function renderShell() {
     side = el('aside', 'side');
     add(side, add(el('div', 'side-brand'), mascot(), add(el('div'), el('div', 't1', 'AI 曝光专员'), el('div', 't2', DATA.store.name || '本店'))));
@@ -987,48 +963,95 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
         navBox.appendChild(a);
       });
     });
-    /* 每一期一份报告，是单独的页面。侧栏列最近几期，全部的在首页。 */
+    /* 每一期一份报告。侧栏列最近几期，点了就在右边打开；全部的在首页。 */
     if (PERIODS.length) {
       navBox.appendChild(el('div', 'nav-label', '体检报告'));
       PERIODS.slice().reverse().slice(0, 6).forEach(function (period, index) {
-        var href = reportHref(period);
-        var a = el(href ? 'a' : 'span', 'rpt-link');
-        if (href) { a.href = href; }
+        var a = el('a', 'rpt-link');
+        a.href = '#/report/' + period.date;
         add(a, icon('clock', 17), el('span', '', '第 ' + period.no + ' 期 · ' + cnDate(period.date)));
         if (index === 0) { a.appendChild(el('span', 'cnt', '最新')); }
+        a.onclick = closeSide;
+        navLinks['report/' + period.date] = a;
         navBox.appendChild(a);
       });
     }
     add(side, navBox, add(el('div', 'side-foot'), '有赞龙虾 · AI 曝光专员', el('br'), '更新于 ' + updatedAt()));
     scrim = el('div', 'scrim');
     scrim.onclick = closeSide;
-    var main = el('div', 'main');
+    mainEl = el('div', 'main');
     var bar = el('header', 'topbar');
     var menu = button('menu-btn', null, function () { side.className = 'side open'; scrim.className = 'scrim open'; });
     menu.setAttribute('aria-label', '打开导航');
     menu.appendChild(icon('menu', 20));
     titleEl = el('h1');
     subEl = el('span', 'sub');
-    add(bar, menu, titleEl, subEl, el('span', 'sp'), el('span', 'upd', '更新于 ' + updatedAt()));
+    actEl = el('span', 'act');
+    add(bar, menu, titleEl, subEl, el('span', 'sp'), actEl, el('span', 'upd', '更新于 ' + updatedAt()));
     content = el('div', 'content');
-    add(app, side, scrim, add(main, bar, content));
+    add(app, side, scrim, add(mainEl, bar, content));
   }
   function navTitle(id) {
     for (var g = 0; g < NAV.length; g++) { for (var i = 0; i < NAV[g].items.length; i++) { if (NAV[g].items[i][0] === id) { return NAV[g].items[i][1]; } } }
     return '';
   }
+  /* 地址末尾：#/overview、#/content、#/settings，或者 #/report/<日期>[/<小节>] */
   function route() {
-    var name = String(location.hash || '').replace(/^#\/?/, '').split('?')[0];
-    page = PAGES[name] ? name : 'overview';
-    for (var id in navLinks) { if (navLinks.hasOwnProperty(id)) { navLinks[id].className = id === page ? 'on' : ''; } }
-    titleEl.textContent = navTitle(page);
-    subEl.textContent = SUBTITLE[page] || '';
+    var parts = String(location.hash || '').replace(/^#\/?/, '').split('?')[0].split('/');
+    var period = parts[0] === 'report' ? (periodByDate(parts[1]) || (parts[1] ? null : PERIODS[PERIODS.length - 1] || null)) : null;
+    page = period ? 'report' : (PAGES[parts[0]] ? parts[0] : 'overview');
+    var current = period ? 'report/' + period.date : page;
+    for (var id in navLinks) {
+      if (navLinks.hasOwnProperty(id)) { navLinks[id].className = (id.indexOf('report/') === 0 ? 'rpt-link' : '') + (id === current ? ' on' : ''); }
+    }
+    if (frameTimer) { clearTimeout(frameTimer); frameTimer = null; }
+    frameHint = null;
     content.textContent = '';
-    content.className = 'content stack';
-    add(content, demoStrip());
-    PAGES[page](content);
-    document.title = navTitle(page) + ' · ' + (DATA.store.name || '本店') + ' · AI 曝光工作台';
+    actEl.textContent = '';
+    if (period) {
+      titleEl.textContent = '第 ' + period.no + ' 期体检报告';
+      subEl.textContent = cnDate(period.date) + '体检' + (period === PERIODS[PERIODS.length - 1] ? ' · 最新一期' : '');
+      document.title = '第 ' + period.no + ' 期体检报告 · ' + (DATA.store.name || '本店') + ' · AI 曝光工作台';
+      pageReport(period, parts[2] || '');
+    } else {
+      mainEl.className = 'main';
+      content.className = 'content stack';
+      titleEl.textContent = navTitle(page);
+      subEl.textContent = SUBTITLE[page] || '';
+      add(content, demoStrip());
+      PAGES[page](content);
+      document.title = navTitle(page) + ' · ' + (DATA.store.name || '本店') + ' · AI 曝光工作台';
+    }
     window.scrollTo(0, 0);
+  }
+  /* 在工作台里看某一期的报告：把那一期的报告文件嵌进内容区。报告文件是独立的，也可以单独打开。 */
+  function pageReport(period, section) {
+    var file = reportFile(period);
+    if (!file) {
+      mainEl.className = 'main';
+      content.className = 'content stack';
+      content.appendChild(add(card('第 ' + period.no + ' 期体检报告'), el('div', 'empty', '这一期的报告还没有传上来。员工下次同步以后，就能在这里看。')));
+      return;
+    }
+    mainEl.className = 'main host';
+    content.className = 'content host';
+    actEl.appendChild(fileLink('单独打开', file));
+    var frame = el('iframe', 'rpt-frame');
+    frame.title = '第 ' + period.no + ' 期体检报告';
+    frame.src = file + '#embed' + (section ? '/' + section : '');
+    /* 报告显示出来以后会打个招呼。等了几秒还没动静，就在上面给一个单独打开的入口，免得商家对着空白发呆 */
+    var hint = el('div', 'frame-hint');
+    hint.hidden = true;
+    add(hint, '如果下面一直是空白，可以', fileLink('单独打开这份报告', file), '。');
+    frameHint = hint;
+    add(content, hint, frame);
+    frameTimer = setTimeout(function () { if (frameHint === hint) { hint.hidden = false; } }, 6000);
+  }
+  function onFrameMessage(event) {
+    var data = event && event.data;
+    if (!data || data.geo !== 'report-ready') { return; }
+    if (frameTimer) { clearTimeout(frameTimer); frameTimer = null; }
+    if (frameHint) { frameHint.hidden = true; }
   }
 
   /* ── 工作台首页 ── */
@@ -1080,35 +1103,38 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (!LATEST) { firstRun(root); return; }
     if (DATA.progress && DATA.progress.date) { root.appendChild(progressBanner()); }
     var totals = DATA.totals || {};
-    var before = DATA.compare && DATA.compare.previous ? DATA.compare : null;
-    var recent = PERIODS.slice(-12);
+    var compare = DATA.compare || {};
+    var before = compare.previous ? compare : null;
     var mention = LATEST.mention, refs = LATEST.refs;
-    /* 第一屏：这一期的结论和四个数。数的明细在报告里，点了去报告对应的那一节 */
-    root.appendChild(summaryBanner(reportHref(LATEST)));
+    /* 走势只画和最新一期用同一套问题测的那几期：问题改过以后，之前的数不能和之后的连成一条线 */
+    var comparable = PERIODS.filter(function (p) { return p.questionsVersion === LATEST.questionsVersion; }).slice(-12);
+    /* 单独一期的涨跌不下结论；连续两期同方向才说 */
+    var trend = compare.trend === 'up' ? '，连续上升' : (compare.trend === 'down' ? '，连续下降' : '');
     var byProvider = DATA.providers.map(function (p) { return p.name + ' ' + ratio(mention.byProvider[p.id]); }).join(' · ');
+    var mentionHint = before ? '上一期 ' + before.mention.before + trend : (compare.baselineReset ? '问题改过了，从这一期重新比' : byProvider);
+    /* 第一屏：最新一期的结论和四个数。数的明细在报告里，点了就在这里打开报告对应的那一节 */
+    root.appendChild(summaryBanner(reportRoute(LATEST)));
     var third = LATEST.buyEntry
-      ? kpi('cart', LATEST.buyEntry.count ? 'ok' : 'plain', '给出购买入口', LATEST.buyEntry.count, '/ ' + LATEST.buyEntry.valid, '回答里出现了你的小程序名或店铺链接', reportHref(LATEST, 'mentions'))
+      ? kpi('cart', LATEST.buyEntry.count ? 'ok' : 'plain', '给出购买入口', LATEST.buyEntry.count, '/ ' + LATEST.buyEntry.valid, '回答里出现了你的小程序名或店铺链接', reportRoute(LATEST, 'mentions'))
       : ((LATEST.rivals || []).length
-        ? kpi('users', 'plain', '最常被提到的店', LATEST.rivals[0].name, '', LATEST.rivals[0].count + ' 次，你 ' + mention.hits + ' 次', reportHref(LATEST, 'rivals'), null, true)
-        : kpi('list', 'plain', '这一期拿到的回答', LATEST.returned, '/ ' + LATEST.expected, LATEST.complete ? '数据完整' : '这一期数据不全', reportHref(LATEST, 'mentions')));
+        ? kpi('users', 'plain', '最常被提到的店', LATEST.rivals[0].name, '', LATEST.rivals[0].count + ' 次，你 ' + mention.hits + ' 次', reportRoute(LATEST, 'rivals'), null, null, true)
+        : kpi('list', 'plain', '这一期拿到的回答', LATEST.returned, '/ ' + LATEST.expected, LATEST.complete ? '数据完整' : '这一期数据不全', reportRoute(LATEST, 'mentions')));
     root.appendChild(row('c4',
-      kpi('eye', 'brand', '没点名时提到你', mention.hits, '/ ' + mention.valid, before ? '上一期 ' + before.mention.before : byProvider, reportHref(LATEST, 'mentions'), recent.map(function (p) { return p.mention.valid ? p.mention.hits / p.mention.valid : 0; })),
-      kpi('ext', refs.own ? 'ok' : 'plain', '你的内容被引用', refs.own, '次', before && before.ownRefs.before !== null ? '上一期 ' + before.ownRefs.before + ' 次' : '门店页 ' + refs.storePages + ' 次 · 别人写你 ' + refs.aboutStore + ' 次', reportHref(LATEST, 'sources'), recent.map(function (p) { return p.refs.own; })),
+      kpi('eye', 'brand', '没点名时提到你', mention.hits, '/ ' + mention.valid, mentionHint, reportRoute(LATEST, 'mentions'),
+        comparable.map(function (p) { return p.mention.valid ? p.mention.hits / p.mention.valid : 0; }),
+        comparable.map(function (p) { return '第 ' + p.no + ' 期 ' + ratio(p.mention); })),
+      kpi('ext', refs.own ? 'ok' : 'plain', '你的内容被引用', refs.own, '次', before && before.ownRefs.before !== null ? '上一期 ' + before.ownRefs.before + ' 次' : '门店页 ' + refs.storePages + ' 次 · 别人写你 ' + refs.aboutStore + ' 次', reportRoute(LATEST, 'sources'),
+        comparable.map(function (p) { return p.refs.own; }),
+        comparable.map(function (p) { return '第 ' + p.no + ' 期 ' + p.refs.own + ' 次'; })),
       third,
       kpi('doc', totals.contentsWaiting ? 'brand' : 'plain', '替你写的内容', totals.contents || 0, '篇', totals.contentsWaiting ? totals.contentsWaiting + ' 篇等你确认' : (totals.contentsPublished ? totals.contentsPublished + ' 篇已发布' : (totals.contents ? '都确认过了' : '还没有写')), '#/content')));
-    /* 第二屏：该做什么、替你写了什么 */
-    var todos = card('现在该做的', todoCountText());
-    todoList(todos);
-    var written = card('内容', liveContents().length ? liveContents().length + ' 篇' + (waitingContents().length ? '，' + waitingContents().length + ' 篇等你确认' : '') : '', nav('全部', 'content', 'more'));
-    written.appendChild(contentBlock());
-    root.appendChild(row('c2', todos, written));
-    /* 第三屏：每一期的报告、员工做过的工作 */
+    /* 有内容等商家点头时才多出一块；没有就不占地方 */
+    if (waitingContents().length) { root.appendChild(waitingCard(waitingContents())); }
+    /* 每一期的报告 */
     root.appendChild(reportsCard(8));
-    root.appendChild(workCard());
-    add(root, notesCard('这一期要知道的'));
-    root.appendChild(sayBlock((DATA.actions.todos || []).length ? ['第 1 件我做完了', '第 2 件我做不了，换一件', '这周怎么样', '重新体检一次'] : ['这周怎么样', '重新体检一次', '你都做了哪些事']));
+    root.appendChild(sayBlock(['这周怎么样', '重新体检一次', '你都做了哪些事']));
   }
-  /* 每一期的报告：工作台聚合的方式就是这张表，一行一期，点进去是那一期的报告 */
+  /* 每一期的报告：工作台聚合的方式就是这张表，一行一期，点了就在这里打开那一期的报告 */
   function reportsCard(limit) {
     var list = PERIODS.slice().reverse();
     var total = (DATA.totals || {}).periods || PERIODS.length;
@@ -1117,20 +1143,23 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     var box = card('每一期的报告', '共 ' + total + ' 期', more);
     box.className = 'card flush';
     var t = table([['期次'], ['日期'], ['没点名时提到你'], ['你的内容被引用', 'r'], ['写的内容'], ['数据'], ['', 'r']]);
+    /* 问题改过以后，之前几期是按旧问题测的，标出来，免得和现在的数放在一起比 */
+    var hasOld = list.some(function (period) { return period.questionsVersion !== LATEST.questionsVersion; });
     function fill(count) {
       t.body.textContent = '';
       list.slice(0, count).forEach(function (period, index) {
         var written = period.content || {};
         var label = CONTENT_LABEL[written.status] || CONTENT_LABEL.preview;
-        var href = reportHref(period);
+        var href = reportRoute(period);
         var tr = el('tr', href ? 'click' : '');
         var open = href ? el('a', '', '看报告') : el('span', 'muted', '还没传上去');
         if (href) {
           open.href = href;
-          tr.onclick = function () { location.href = href; };
+          tr.onclick = function () { location.hash = href; };
         }
         cells(tr, { node: add(document.createDocumentFragment(), '第 ' + period.no + ' 期', index === 0 ? ' ' : '', index === 0 ? pill('brand', '最新') : null), cls: 'nw' },
-          { node: cnDate(period.date), cls: 'nw' }, { node: el('b', 'tnum', ratio(period.mention)) },
+          { node: cnDate(period.date), cls: 'nw' },
+          { node: add(document.createDocumentFragment(), el('b', 'tnum', ratio(period.mention)), period.questionsVersion !== LATEST.questionsVersion ? el('span', 'small muted', ' 旧问题') : null), cls: 'nw' },
           { node: period.refs.own + ' 次', cls: 'r nw' },
           { node: written.count ? add(document.createDocumentFragment(), pill(label[0], label[1]), written.count > 1 ? ' 共 ' + written.count + ' 篇' : '') : el('span', 'muted', '—'), cls: 'nw' },
           { node: period.complete ? el('span', 'muted', '完整') : pill('warn', '不全') },
@@ -1139,22 +1168,10 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       });
     }
     fill(limit);
-    return add(box, add(el('div', 'tbl-wrap'), t), el('div', 'pad small muted', total > 1
-      ? '每期体检出一份报告，记的是当时的情况。单独一期的涨跌不说明问题，连续两期同方向才算变化。'
-      : '每期体检出一份报告。这是第一期，也是之后对比的基线；从第二期开始，上面的数会带上变化。'));
-  }
-  function workCard() {
-    var totals = DATA.totals || {};
-    var box = card('员工已经做了的工作', totals.since ? '从 ' + cnDate(totals.since) + '开始' : '');
-    var strip = el('div', 'strip');
-    [[totals.periods, '次体检'], [totals.answers, '个 AI 回答已收集'], [totals.questions, '个问题在监测'],
-      [totals.contents, '篇内容备好'], [totals.contentsPublished, '篇已经发布']].forEach(function (item) {
-      strip.appendChild(add(el('div'), el('b', '', item[0] || 0), el('span', '', item[1])));
-    });
-    box.appendChild(strip);
-    var recent = el('div', 'work-recent');
-    timeline(recent, (DATA.log || []).slice(0, 8));
-    return add(box, recent);
+    return add(box, add(el('div', 'tbl-wrap'), t), el('div', 'pad small muted', (total > 1
+      ? '每期体检出一份报告，记的是当时的情况。上面的数是最新一期的，不是累计；单独一期的涨跌不说明问题，连续两期同方向才算变化。'
+      : '每期体检出一份报告。这是第一期，也是之后对比的基线；从第二期开始，上面的数会带上和上一期的对比。')
+      + (hasOld ? '标着“旧问题”的几期是问题改之前测的，不和现在的数比。' : '')));
   }
 
   /* ── 监测设置：每周替商家问什么、和谁比，以及员工另外记下的几样信息 ──
@@ -1238,14 +1255,14 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     var rivals = DATA.rivals || [];
     var third = S.buyEntry
       ? kpi('cart', S.buyEntry.count ? 'ok' : 'plain', '给出购买入口', S.buyEntry.count, '/ ' + S.buyEntry.valid, '回答里出现了你的小程序名或店铺链接')
-      : (rivals.length ? kpi('users', 'plain', '最常被提到的店', rivals[0].name, '', rivals[0].count + ' 次，你 ' + S.mention.hits + ' 次', null, null, true) : null);
+      : (rivals.length ? kpi('users', 'plain', '最常被提到的店', rivals[0].name, '', rivals[0].count + ' 次，你 ' + S.mention.hits + ' 次', null, null, null, true) : null);
     root.appendChild(row('c4',
       kpi('eye', 'brand', '没点名时提到你', S.mention.hits, '/ ' + S.mention.valid, before ? '上一期 ' + before.mention.before : byProvider),
       kpi('ext', S.refs.own ? 'ok' : 'plain', '你的内容被引用', S.refs.own, '次', before && before.ownRefs.before !== null ? '上一期 ' + before.ownRefs.before + ' 次' : '门店页 ' + S.refs.storePages + ' 次 · 别人写你 ' + S.refs.aboutStore + ' 次'),
       third,
       kpi('list', 'plain', '这一期拿到的回答', S.returned, '/ ' + S.expected, S.complete ? '数据完整' : '这一期数据不全')));
     if ((DATA.actions.todos || []).length) {
-      var todos = card('这一期建议你做的', todoCountText());
+      var todos = card('这一期建议你做的', DATA.actions.todos.length + ' 件');
       todoList(todos);
       root.appendChild(todos);
     }
@@ -1409,14 +1426,25 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       '点一句可以复制，回到龙虾发给员工。'));
     root.appendChild(el('div', 'rpt-foot', '这份报告记的是第 ' + P.no + ' 期体检当时的情况，生成于 ' + updatedAt() + '。之后做了什么、改了什么，在工作台上看。'));
   }
+  /* 嵌在工作台里时，显示出来以后跟外面打个招呼（外面据此知道报告显示成功了）。一层一层往上说，中间隔着别的壳也能传到 */
+  function tellAncestors(message) {
+    try {
+      var w = window;
+      for (var i = 0; i < 4 && w.parent && w.parent !== w; i++) { w = w.parent; w.postMessage(message, '*'); }
+    } catch (error) { /* 说不出去不影响报告本身 */ }
+  }
   function renderReport() {
     var S = DATA.summary;
     var wrap = el('div', 'rpt');
-    var head = el('header', 'rpt-head');
-    var back = null;
-    if (BASE) { back = el('a', 'btn', '回工作台'); back.href = BASE + '#/overview'; }
-    add(head, mascot(), add(el('div', 'rpt-title'), el('div', 't1', (DATA.store.name || '本店') + ' · AI 曝光体检报告'),
-      el('div', 't2', '第 ' + P.no + ' 期 · ' + cnDate(P.date) + '体检')), el('span', 'sp'), back);
+    var head = null;
+    if (!EMBED) {
+      /* 单独打开时自带标题和回工作台的入口；嵌在工作台里时这些由工作台的顶栏和侧栏负责 */
+      head = el('header', 'rpt-head');
+      var back = null;
+      if (BASE) { back = el('a', 'btn', '回工作台'); back.href = BASE + '#/overview'; }
+      add(head, mascot(), add(el('div', 'rpt-title'), el('div', 't1', (DATA.store.name || '本店') + ' · AI 曝光体检报告'),
+        el('div', 't2', '第 ' + P.no + ' 期 · ' + cnDate(P.date) + '体检')), el('span', 'sp'), back);
+    }
     var toc = el('nav', 'rpt-toc');
     SECTIONS.forEach(function (section) { var a = el('a', '', section[1]); a.href = '#' + section[0]; toc.appendChild(a); });
     content = el('main', 'content stack');
@@ -1428,10 +1456,13 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     reportSays(content, S);
     reportFooter(content);
     add(app, add(wrap, head, toc, content));
-    app.className = 'app report';
+    app.className = 'app report' + (EMBED ? ' embedded' : '');
     document.title = '第 ' + P.no + ' 期体检报告 · ' + (DATA.store.name || '本店');
-    var target = location.hash ? document.getElementById(String(location.hash).slice(1)) : null;
+    var hash = String(location.hash || '');
+    var jump = EMBED ? (hash.split('/')[1] || '') : hash.slice(1);
+    var target = jump ? document.getElementById(jump) : null;
     if (target && target.scrollIntoView) { target.scrollIntoView(); }
+    if (EMBED) { tellAncestors({ geo: 'report-ready', date: P.date }); }
   }
 
   if (KIND === 'report') {
@@ -1439,6 +1470,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   } else {
     renderShell();
     window.addEventListener('hashchange', route);
+    window.addEventListener('message', onFrameMessage);
     route();
   }
 })();

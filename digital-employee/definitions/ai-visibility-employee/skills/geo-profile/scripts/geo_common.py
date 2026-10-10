@@ -148,29 +148,6 @@ def load_input(file_path: str):
     return data
 
 
-LOG_LIMIT = 400
-
-
-def log_event(kind: str, text: str, key: str = "", date: str = "") -> None:
-    """工作记录：员工做过的事，工作台的“做过的工作”从这里读。
-
-    同一个 key 只记一条，重复执行同一步时更新文字、不重复追加。记录失败不影响主流程。
-    """
-    try:
-        path = data_root() / "log.json"
-        events = (read_json(path, {}) or {}).get("events") or []
-        entry = {"at": now_iso(), "date": date, "kind": kind, "text": clean_text(text)[:140], "key": key}
-        for index, old in enumerate(events):
-            if key and old.get("key") == key:
-                events[index] = dict(entry, at=old.get("at") or entry["at"])
-                break
-        else:
-            events.append(entry)
-        write_json(path, {"events": events[-LOG_LIMIT:]})
-    except Exception:  # noqa: BLE001
-        pass
-
-
 # ── 工作台有没有跟上最新的数据 ──
 # 每个改了数据的命令调 mark_changed 记一笔；geo_report.py publish 同步成功后清掉。
 # 这样“工作台是不是最新的”是一个查得到的状态，不靠员工记得去同步。

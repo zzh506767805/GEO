@@ -9,7 +9,7 @@
    "id": "address-tieye-road",
    "fact": "address",
    "aiSays": "把上城区铁冶路 7-2 号列为常见门店，叫它“吴山/清波店”或“老店”。",
-   "truth": "我整理的店铺资料里只有江城店和西溪店两家在营门店，没有铁冶路这一家。",
+   "truth": "只有江城店和西溪店两家在营门店，没有铁冶路这一家。",
    "evidence": [
     "b01_hunyuan#1",
     "b01_hunyuan#2",
@@ -25,7 +25,7 @@
    "id": "address-qingbo-street",
    "fact": "address",
    "aiSays": "地址位于上城区清波街 109 号（五洋假日酒店大堂）。",
-   "truth": "我整理的店铺资料里没有这个地址。",
+   "truth": "两家门店是江城路 410 号和西溪路 596 号，没有清波街这个地址。",
    "evidence": [
     "b01_deepseek#1"
    ],
@@ -38,7 +38,7 @@
    "id": "address-tangziqiao",
    "fact": "address",
    "aiSays": "提到城西棠子桥 32 号还有一家店，同时提醒“去之前先确认是否仍在营业”。",
-   "truth": "我整理的店铺资料里没有这个地址。",
+   "truth": "两家门店是江城路 410 号和西溪路 596 号，没有棠子桥这个地址。",
    "evidence": [
     "b02_hunyuan#1",
     "b02_hunyuan#2"
@@ -52,7 +52,7 @@
    "id": "hours-not-on-file",
    "fact": "hours",
    "aiSays": "DeepSeek 说营业时间是 9:00–21:30；元宝和豆包说江城店 09:00–21:00、西溪店 09:30–20:30。",
-   "truth": "我整理的店铺资料里还没有登记营业时间，现在判断不了哪个对。",
+   "truth": "没有记营业时间，现在判断不了哪个对。",
    "evidence": [
     "b01_deepseek#1",
     "b02_hunyuan#2",

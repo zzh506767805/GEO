@@ -4,27 +4,29 @@
 两种网页，都用 assets/page.html 这一个模板，样式都在模板里，这里只负责准备数据：
 
   工作台    <数据目录>/pages/ai-visibility.html      一个固定的链接，只放跨期的东西：
-            最新结论、几个数的走势、历次报告的列表、没做完的待办、替商家写的内容、监测设置。
-  体检报告  <数据目录>/pages/report-<日期>.html      每期一份，有自己的链接，带这一期的全部证据：
-            问了什么、AI 提没提到、提到了谁、读了哪里的内容、怎么介绍这家店。周报里发的就是它。
+            最新结论、几个数的走势、每一期报告的入口、替商家写的内容、监测设置。
+  体检报告  <数据目录>/pages/report-<日期>.html      每期一份独立的文件，带这一期的全部证据：
+            问了什么、AI 提没提到、提到了谁、读了哪里的内容、怎么介绍这家店。
+
+商家看报告不用跳到别的页面：工作台把那一期的报告文件嵌在自己的内容区里（地址是 工作台链接#/report/<日期>）。
+发给商家的就是这个地址（输出里的 reportUrl）。报告文件自己的链接是 reportFileUrl，商家要单独转发给别人时才用。
 
 同一路径重复上传时云盘链接不变，所以商家收藏一次工作台，就能一直看到最新的内容和每一期的报告。
 
 员工日常只用 publish 这一条：重新生成这一期的报告和工作台、传到云盘、保存链接。
-任何一步改了数据（建档、体检、核对、商家确认、标记已改、写内容），都要再执行一次 publish。
+任何一步改了数据（建档、体检、核对、商家确认、写内容），都要再执行一次 publish。
 
 用法（脚本用绝对路径执行）：
   geo_report.py publish [--date D]        生成并同步工作台和这一期的报告（最常用）
-  geo_report.py links                      工作台各页面和这一期报告的链接，以及它们是不是最新的
-  geo_report.py show                       最新一期的小结、待办和最近的内容（商家说“第 2 件”“第 2 篇”时先看这里）
+  geo_report.py links                      工作台各页面和每一期报告的链接，以及它们是不是最新的
+  geo_report.py show                       最新一期的小结、建议和最近的内容（商家说“第 2 篇”时先看这里）
   geo_report.py compare [--date D]         和上一期对比
-  geo_report.py set-actions --file <json> [--date D]   本期小结、待办、缺的内容、这一期没写内容的原因
-  geo_report.py mark-todo --no <第几件> [--undo]       商家说某件待办做完了
+  geo_report.py set-actions --file <json> [--date D]   本期小结、建议商家做的事、缺的内容、这一期没写内容的原因
   geo_report.py add-content --file <json>              登记一条内容（公众号文章、小红书笔记、长文……）；带 no 是改稿
   geo_report.py contents [--no N]                      内容清单；带 --no 时给出那一条的全文
   geo_report.py mark-content [--no N] [--status S] [--channel 放到了哪] [--ref 交付凭据]
   geo_report.py build [--date D]           只在本地生成，不上传
-  geo_report.py set-page-url --url <云盘链接>
+  geo_report.py set-page-url --url <云盘链接> [--report 日期]
   geo_report.py render --data <页面数据.json> --out <输出.html>
 
 内容按类型登记。稿子本身跟着类型走：公众号文章是带排版的长文（公众号技能产出，登记排版预览链接），
@@ -64,9 +66,8 @@ WEEKLY_CONTENT_CAP = 2     # 每一期主动写的内容上限。批量铺稿是
 ACTION_KEYS = ("brief", "todos", "gaps", "contentNote")
 EXPECTED_PAGE_HOST = "claw-cloud.youzan.com"
 PERIOD_LIMIT = 26
-LOG_SHOWN = 150
 UPLOAD_TIMEOUT = 50  # 一次同步要传报告和工作台两个文件，加起来要比 Bash 工具默认的 2 分钟短
-# 工作台只有三个页面，放跨期的东西。某一期分析出来的东西（提没提到、提到了谁、读了哪里、有没有说错）
+# 工作台只有三个页面，放跨期的东西。某一期分析出来的东西（提没提到、提到了谁、读了哪里、怎么介绍）
 # 都在那一期的报告里，不占工作台的导航：放上导航，就等于把它当成了每家店都需要的核心功能。
 PAGES = (("工作台", "overview"), ("内容", "content"), ("监测设置", "settings"))
 # 每期报告里的小节，顺序和模板里的一致。
@@ -171,7 +172,6 @@ def _period(day: str, number: int, written: dict, reports: dict):
         "refs": {k: summary["refs"][k] for k in ("total", "own", "storePages", "aboutStore")},
         "expected": summary["expected"],
         "returned": summary["returned"],
-        "answers": sum(len(flags) for flags in (summary.get("answers") or {}).values()),
         "complete": summary["complete"],
         "judged": (folder / "judgement.json").is_file(),
         "content": {"count": len(contents), "status": contents[-1]["status"] if contents else "",
@@ -238,23 +238,36 @@ def compare_payload(date: str) -> dict:
         "mention": {"now": _ratio(current["mention"]), "before": _ratio(previous["mention"]) if previous else ""},
         "ownRefs": {"now": current["refs"]["own"], "before": previous["refs"]["own"] if previous else None},
         "storePages": {"now": current["refs"]["storePages"], "before": previous["refs"]["storePages"] if previous else None},
-        "issuesOpen": sum(1 for i in _issues() if i["status"] == "open"),
         "questionChanges": changes,
+        # 上一期建议过商家做的事。这一期写建议时先看一眼：做过的不再提，没理会的最多再提一次
+        "previousTodos": [t.get("text", "") for t in ((gc.read_json(gc.run_dir(previous_date) / "actions.json") or {}).get("todos") or [])] if previous_date else [],
         "trend": _direction([_share(p["mention"]) for p in same]),
         "complete": current["complete"],
+        # notes 是给员工的提示（周报该怎么写）；readerNotes 是页面上给商家看的说明。两套话不能混用：
+        # 写给员工的“周报里不要写成……”如果原样出现在商家的报告里，就成了把内部提示漏给商家。
         "notes": [],
+        "readerNotes": [],
     }
     if not previous:
-        payload["notes"].append("这是第一期，或者问题库刚改过，没有可比的上一期；这一期就是基线")
+        if payload["baselineReset"]:
+            payload["notes"].append("问题改过了，之前的数不能和这一期比；这一期重新作为基线，周报里不和之前的比")
+            payload["readerNotes"].append("每周问的问题改过了，之前的数不能和这一期比。这一期重新作为之后对比的基线")
+        else:
+            payload["notes"].append("这是第一期，没有可比的上一期；这一期就是基线")
+            payload["readerNotes"].append("这是第一期，没有可比的上一期。这一期的数是之后对比的基线")
     elif payload["trend"] == "observe":
         payload["notes"].append("提及情况还没有连续两期同方向变化，周报里不要写成“上升”或“下降”，写“继续观察”")
+        payload["readerNotes"].append("和上一期比有出入，但还没有连续两期朝同一个方向变。单独一期的涨跌说明不了问题，先继续观察")
     if not current["complete"]:
         payload["notes"].append("本期缺失的查询超过四分之一，周报要注明“本周数据不全”，不和上一期比")
+        payload["readerNotes"].append("这一期有超过四分之一的提问没有拿到回答，数据不全，不和上一期比")
     return payload
 
 
 def cmd_compare(args) -> None:
-    gc.emit(compare_payload(gc.resolve_date(args.date)))
+    payload = compare_payload(gc.resolve_date(args.date))
+    payload.pop("readerNotes", None)  # 那是页面上给商家看的，员工照 notes 做就行
+    gc.emit(payload)
 
 
 def _clean_block(value) -> str:
@@ -275,15 +288,15 @@ def normalize_actions(raw: dict) -> dict:
         text = gc.clean_text(item.get("text") if isinstance(item, dict) else item)[:120]
         if text:
             entry = item if isinstance(item, dict) else {}
-            todos.append({"text": text, "why": gc.clean_text(entry.get("why"))[:120],
-                          "done": bool(entry.get("done")), "doneAt": str(entry.get("doneAt") or "")[:25]})
+            todos.append({"text": text, "why": gc.clean_text(entry.get("why"))[:120]})
     gaps = []
     for item in (raw.get("gaps") or [])[:5]:
         if isinstance(item, dict) and gc.clean_text(item.get("where")):
             gaps.append({"where": gc.clean_text(item.get("where"))[:20], "note": gc.clean_text(item.get("note"))[:160]})
     return {
-        # 员工写给商家的本期小结，显示在工作台最上面。两三句话，只说存档里有的事实。
+        # 员工写给商家的本期小结，显示在工作台最上面和报告的开头。两三句话，只说存档里有的事实。
         "brief": gc.clean_text(raw.get("brief"))[:240],
+        # 建议商家做的事，最多三件，列在这一期报告的结论里。只是建议，不是要打勾的清单。
         "todos": todos,
         "gaps": gaps,
         # 这一期没有写内容时的原因。写了就用 add-content 登记，这里留空。
@@ -302,31 +315,31 @@ def cmd_set_actions(args) -> None:
     previous = gc.read_json(gc.run_dir(date) / "actions.json") or {}
     # 只传要改的部分：没传的 brief、todos、gaps、contentNote 保持这一期原来的内容。
     actions = normalize_actions({key: raw[key] if key in raw else previous.get(key) for key in ACTION_KEYS})
-    # 同一期重复保存时，商家已经打过勾的待办不能丢。
-    done = {t["text"]: t for t in previous.get("todos") or [] if t.get("done")}
-    for todo in actions["todos"]:
-        if todo["text"] in done and not todo["done"]:
-            todo.update(done=True, doneAt=done[todo["text"]].get("doneAt", ""))
     gc.write_json(gc.run_dir(date) / "actions.json", actions)
-    gc.mark_changed("本期小结和待办")
+    gc.mark_changed("本期小结和建议")
     warnings = []
     if not actions["brief"]:
         warnings.append("没有写本期小结（brief），工作台最上面会用一句自动生成的话代替")
     gc.emit({"ok": True, "date": date, "todos": len(actions["todos"]), "brief": bool(actions["brief"]),
-             "warnings": warnings, "next": "请执行 publish，把这些内容同步到工作台"})
+             "warnings": warnings, "next": "请执行 publish，生成这一期的报告并同步工作台"})
 
 
 def cmd_show(_args) -> None:
-    """最新一期写了什么（小结、待办、缺的内容）、最近的内容，以及工作台是不是最新的。商家说“第 2 件”“第 2 篇”时先看这里。"""
+    """最新一期写了什么（小结、建议、缺的内容）、最近的内容，以及页面是不是最新的。商家说“第 2 篇”时先看这里。"""
     dates = _scored_dates()
     actions = normalize_actions((gc.read_json(gc.run_dir(dates[-1]) / "actions.json") if dates else None) or {})
-    items = sorted(_load_contents()["items"], key=lambda a: -a["no"])
+    ledger = _load_contents()["items"]
+    items = sorted(ledger, key=lambda a: -a["no"])
+    live = [a for a in ledger if a["status"] != "dropped"]
     state = gc.workbench_state()
     payload = {"ok": True, "date": dates[-1] if dates else "", "brief": actions["brief"],
-               "todos": [dict(todo, no=index) for index, todo in enumerate(actions["todos"], 1)],
-               "gaps": actions["gaps"], "contentNote": actions["contentNote"],
+               "todos": actions["todos"], "gaps": actions["gaps"], "contentNote": actions["contentNote"],
                "contents": [_content_view(item) for item in items[:5]],
-               "workbench": state, "links": links(state["url"], _latest_report_url())}
+               # 商家问“你都做了哪些事”时用这几个数回答
+               "totals": {"periods": len(dates), "contents": len(live),
+                          "contentsWaiting": sum(1 for a in live if a["status"] == "preview"),
+                          "contentsPublished": sum(1 for a in live if a["status"] == "published")},
+               "workbench": state, "links": links(state["url"], _linkable(dates))}
     hint = gc.sync_hint(state)
     if hint:
         payload["next"] = hint
@@ -415,8 +428,6 @@ def cmd_add_content(args) -> None:
         if changed and current["status"] == "confirmed":
             # 商家确认的是上一版。改过以后要重新确认，才能发或者存草稿。
             current["status"], reset = "preview", True
-        if changed:
-            gc.log_event("content", "改了%s《%s》" % (name, title), key="content:%d:edit:%s" % (number, gc.today()), date=current.get("period", ""))
     else:
         same = next((a for a in items if a["type"] == kind and a["title"] == title and a["status"] != "dropped"), None)
         if same:
@@ -434,7 +445,6 @@ def cmd_add_content(args) -> None:
                        origin=origin, period=period, channels=[], ref="", createdAt=gc.now_iso(), updatedAt=gc.now_iso())
         items.append(current)
         ledger["nextNo"] = number + 1  # 序号给出后不变、不重复使用：商家说“第 2 篇可以发”时靠它对上
-        gc.log_event("content", "写好%s《%s》，等商家确认" % (name, title), key="content:%d:preview" % number, date=period)
     _save_contents(ledger)
     gc.mark_changed("内容")
     payload = dict(_content_view(current), ok=True,
@@ -489,38 +499,8 @@ def cmd_mark_content(args) -> None:
         item["ref"] = ref  # 放进去以后对方给的编号（比如公众号草稿的编号）。以后改稿时原样交还给那个技能
     item["updatedAt"] = gc.now_iso()
     _save_contents(ledger)
-    name = CONTENT_TYPES.get(item["type"], {}).get("name", "内容")
-    if channel and not args.status:
-        text = "%s《%s》已放进%s" % (name, item["title"], channel)
-    else:
-        text = {"preview": "%s《%s》改回待确认", "confirmed": "商家确认了%s《%s》", "dropped": "%s《%s》不发了",
-                "published": "%s《%s》已发布"}[status] % (name, item["title"])
-        if status == "published" and item["channels"]:
-            text += "（%s）" % "、".join(item["channels"])
-    gc.log_event("content", text, key="content:%d:%s:%s" % (item["no"], args.status or "channel", channel), date=item.get("period", ""))
     gc.mark_changed("内容")
     gc.emit(dict(_content_view(item), ok=True, next=gc.sync_hint()))
-
-
-def cmd_mark_todo(args) -> None:
-    """商家说某件待办做完了：在最新一期的待办里打勾。"""
-    dates = _scored_dates()
-    if not dates:
-        raise gc.GeoError("还没有体检过，没有待办")
-    path = gc.run_dir(dates[-1]) / "actions.json"
-    actions = gc.read_json(path) or normalize_actions({})
-    todos = actions.get("todos") or []
-    if not 1 <= args.no <= len(todos):
-        raise gc.GeoError("没有第 %d 件待办，现在一共 %d 件" % (args.no, len(todos)))
-    todo = todos[args.no - 1]
-    todo["done"] = not args.undo
-    todo["doneAt"] = gc.now_iso() if todo["done"] else ""
-    gc.write_json(path, actions)
-    if todo["done"]:
-        gc.log_event("fixed", "商家做完了：" + todo["text"][:50], key="todo:%s:%d" % (dates[-1], args.no), date=dates[-1])
-    gc.mark_changed("待办")
-    gc.emit({"ok": True, "no": args.no, "done": todo["done"], "left": sum(1 for t in todos if not t.get("done")),
-             "next": gc.sync_hint()})
 
 
 def _answers(date: str, summary: dict) -> dict:
@@ -543,11 +523,6 @@ def _answers(date: str, summary: dict) -> dict:
                          "memory": bool(flag.get("memory")), "refs": refs})
         out[key] = rows
     return out
-
-
-def _log() -> list:
-    events = (gc.read_json(gc.data_root() / "log.json", {}) or {}).get("events") or []
-    return [{k: e.get(k, "") for k in ("at", "date", "kind", "text")} for e in reversed(events[-LOG_SHOWN:])]
 
 
 def _store(facts: dict) -> dict:
@@ -611,7 +586,6 @@ def workbench_data(date: str = "") -> dict:
     actions = normalize_actions((gc.read_json(gc.run_dir(current) / "actions.json") if current else None) or {})
     periods = _periods(current) if current else []
     latest = None
-    notes = []
     compare = {"previous": "", "mention": {}, "ownRefs": {}, "trend": "observe", "baselineReset": False}
     if current:
         summary = _summary(current)
@@ -619,7 +593,6 @@ def workbench_data(date: str = "") -> dict:
                       rivals=[{"name": r["name"], "count": r["count"]} for r in summary.get("rivals") or []])
         full = compare_payload(current)
         compare = {k: full[k] for k in compare}
-        notes = list(full["notes"])
     contents = _contents_for_page()
     live = [c for c in contents if c["status"] != "dropped"]
     return {
@@ -636,18 +609,13 @@ def workbench_data(date: str = "") -> dict:
         "contentTypes": {key: spec["name"] for key, spec in CONTENT_TYPES.items()},
         "questions": questions,
         "settings": _settings(facts, meta, questions, rivals),
-        "log": _log(),
         "totals": {
             "periods": len(scored),
-            "since": scored[0] if scored else "",
-            "answers": sum(p["answers"] for p in periods),
-            "questions": len(questions),
             "contents": len(live),
             "contentsWaiting": sum(1 for c in live if c["status"] == "preview"),
             "contentsPublished": sum(1 for c in live if c["status"] == "published"),
         },
         "compare": compare,
-        "notes": notes,
     }
 
 
@@ -677,9 +645,9 @@ def report_data(day: str) -> dict:
             "m" if flag.get("memory") else ("h" if flag.get("mentioned") else "n") for flag in flags)
     seen = set(judgement.get("issueIds") or [])
     compare = compare_payload(day)
-    notes = list(compare["notes"])
+    notes = list(compare["readerNotes"])
     if summary["memoryFlagged"]:
-        notes.append("有 %d 个回答带着之前对话的痕迹，已从统计里剔除" % summary["memoryFlagged"])
+        notes.append("有 %d 个回答带着之前对话的痕迹（AI 记得之前有人问过这家店），没有计入统计" % summary["memoryFlagged"])
     confirm = gc.confirm_state(facts, meta)
     if confirm["from"] != "backend" and not confirm["confirmed"]:
         notes.append("这家店的资料是员工从公开信息里整理的，还没有经过你确认；AI 的说法和它对不上，不一定是 AI 说错")
@@ -731,17 +699,29 @@ def render_html(data: dict) -> str:
     return template.replace(PLACEHOLDER, embed_json(data))
 
 
-def links(url: str, report_url: str = "") -> dict:
-    """员工跟商家说到某件事时给的链接：工作台的三个页面，加这一期的报告。"""
+def report_link(url: str, day: str) -> str:
+    """在工作台里打开某一期报告的地址：商家点开看到的是工作台的框架，右边是这一期的报告。"""
+    return "%s#/report/%s" % (url, day) if url and day else ""
+
+
+def links(url: str, report_day: str = "") -> dict:
+    """员工跟商家说到某件事时给的链接：工作台的三个页面，加“在工作台里打开这一期的报告”。"""
     out = {name: url + "#/" + page for name, page in PAGES} if url else {}
-    if report_url:
-        out["这一期的报告"] = report_url
+    if url and report_day:
+        out["这一期的报告"] = report_link(url, report_day)
     return out
 
 
 def _latest_report_url() -> str:
+    """最新一期报告文件自己的云盘链接。没传上去时是空的。"""
     scored = _scored_dates()
     return _report_urls().get(scored[-1], "") if scored else ""
+
+
+def _linkable(dates: list = None) -> str:
+    """最新一期的日期。它的报告文件已经传上云盘才算数：没传上去的话，工作台里也打不开它。"""
+    dates = _scored_dates() if dates is None else dates
+    return dates[-1] if dates and _report_urls().get(dates[-1]) else ""
 
 
 def _write_page(name: str, data: dict) -> Path:
@@ -790,7 +770,7 @@ def cmd_build(args) -> None:
     built = _build_workbench(date)
     gc.mark_built()
     url = (gc.read_json(gc.profile_dir() / "meta.json", {}) or {}).get("pageUrl", "")
-    gc.emit(dict(built, ok=True, pageUrl=url, links=links(url, _latest_report_url()),
+    gc.emit(dict(built, ok=True, pageUrl=url, links=links(url, _linkable()),
                  reportFiles=[str(path) for _, path in reports],
                  next="这一步只在本地生成，没有上传。要让商家看到最新内容，请执行 publish"))
 
@@ -801,8 +781,6 @@ def _save_url(url: str) -> bool:
     first_time = not meta.get("pageUrl")
     meta.update(pageUrl=url, pageUrlUpdatedAt=gc.now_iso())
     gc.write_json(path, meta)
-    if first_time:
-        gc.log_event("page", "开通了工作台", key="page:url")
     return first_time
 
 
@@ -875,8 +853,10 @@ def cmd_publish(args) -> None:
             warnings.append(uploaded["warning"])
     else:
         failures.insert(0, "工作台：" + uploaded["error"])
-    payload = dict(built, ok=True, pageUrl=saved, reportUrl=urls.get(current, ""), links=links(saved, urls.get(current, "")),
-                   reportFiles=[str(path) for _, path in reports])
+    shown = current if urls.get(current) else ""  # 这一期的报告文件传上去了，工作台里才打得开
+    # reportUrl：在工作台里打开这一期的报告，发给商家用它；reportFileUrl：报告文件自己的链接，商家要单独转发时才用
+    payload = dict(built, ok=True, pageUrl=saved, reportUrl=report_link(saved, shown), reportFileUrl=urls.get(current, ""),
+                   links=links(saved, shown), reportFiles=[str(path) for _, path in reports])
     payload.setdefault("warnings", [])
     payload["warnings"] += warnings
     if not payload["warnings"]:
@@ -890,10 +870,10 @@ def cmd_publish(args) -> None:
     synced = gc.mark_published()
     hint = "这是第一次开通工作台，请把 pageUrl 发给商家，告诉他以后都在这个链接看。" if first_time else "工作台和报告已同步。"
     if payload["reportUrl"]:
-        hint += "这一期的结果给 reportUrl（这一期的报告）；"
+        hint += "这一期的结果给 reportUrl（在工作台里打开这一期的报告）；"
     # synced：这次同步上去的变化，可以据此告诉商家哪里更新了
     payload.update(published=True, firstTime=first_time, synced=synced,
-                   next=hint + "说到待办、内容、监测设置时给 links 里对应页面的链接。链接逐字照抄")
+                   next=hint + "说到内容、监测设置时给 links 里对应页面的链接。商家要把报告单独转发给别人时，才给 reportFileUrl。链接逐字照抄")
     if urlparse(saved).netloc != EXPECTED_PAGE_HOST:
         payload["hostWarning"] = "链接的域名不是 %s" % EXPECTED_PAGE_HOST
     gc.emit(payload)
@@ -903,8 +883,14 @@ def cmd_links(_args) -> None:
     state = gc.workbench_state()
     if not state["url"]:
         raise gc.GeoError("工作台还没有链接，请先执行 publish")
-    payload = {"ok": True, "pageUrl": state["url"], "reportUrl": _latest_report_url(),
-               "links": links(state["url"], _latest_report_url()), "reports": _report_urls(),
+    files = _report_urls()
+    payload = {"ok": True, "pageUrl": state["url"],
+               # 在工作台里打开最新一期报告；reports 是每一期各自的这个地址。发给商家用这两样
+               "reportUrl": report_link(state["url"], _linkable()),
+               "links": links(state["url"], _linkable()),
+               "reports": {day: report_link(state["url"], day) for day in sorted(files)},
+               # 报告文件自己的链接，商家要单独转发给别人时才用
+               "reportFileUrl": _latest_report_url(), "reportFiles": files,
                "upToDate": state["upToDate"], "pending": state["pending"], "publishedAt": state["publishedAt"]}
     if not state["upToDate"]:
         payload["next"] = "页面还没同步这些变化：%s。先执行 publish，再把链接发给商家" % "、".join(state["pending"])
@@ -922,12 +908,12 @@ def cmd_set_page_url(args) -> None:
         if day not in _scored_dates():
             raise gc.GeoError("没有 %s 这一期" % day)
         _save_report_urls(dict(_report_urls(), **{day: url}))
-        payload = {"ok": True, "report": day, "reportUrl": url,
-                   "next": "报告的链接存好了。请重新生成工作台并传上去（publish，或 build 后用 youzan-oss 上传再 set-page-url），工作台里才有这份报告的入口"}
+        payload = {"ok": True, "report": day, "reportFileUrl": url,
+                   "next": "报告文件的链接存好了。请重新生成工作台并传上去（publish，或 build 后用 youzan-oss 上传再 set-page-url），工作台里才打得开这份报告"}
     else:
         _save_url(url)
         gc.mark_published()
-        payload = {"ok": True, "pageUrl": url, "links": links(url, _latest_report_url())}
+        payload = {"ok": True, "pageUrl": url, "links": links(url, _linkable())}
     if parsed.netloc != EXPECTED_PAGE_HOST:
         payload["warning"] = "链接的域名不是 %s，请确认是不是云盘返回的原始链接" % EXPECTED_PAGE_HOST
     gc.emit(payload)
@@ -975,10 +961,6 @@ def main() -> None:
     p.add_argument("--channel", default="")
     p.add_argument("--ref", default="")
     p.set_defaults(func=cmd_mark_content)
-    p = sub.add_parser("mark-todo")
-    p.add_argument("--no", type=int, required=True)
-    p.add_argument("--undo", action="store_true")
-    p.set_defaults(func=cmd_mark_todo)
     p = sub.add_parser("set-page-url")
     p.add_argument("--url", required=True)
     p.add_argument("--report", default="")

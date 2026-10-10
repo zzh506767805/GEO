@@ -299,8 +299,6 @@ def cmd_score(args) -> None:
     summary = build_summary(date)
     gc.write_json(gc.run_dir(date) / "summary.json", summary)
     mention = summary["mention"]
-    gc.log_event("check", "完成体检：%d 条查询返回 %d 条；顾客没点名时 %d 个回答里有 %d 个提到本店" % (
-        summary["expected"], summary["returned"], mention["valid"], mention["hits"]), key="check:" + date, date=date)
     gc.mark_changed("体检结果")
     digest = {
         "ok": True,
@@ -444,18 +442,11 @@ def cmd_set_judgement(args) -> None:
     gc.write_json(gc.run_dir(date) / "judgement.json",
                   {"date": date, "descriptions": descriptions, "issueIds": [i["id"] for i in issues],
                    "issuesFound": len(issues), "issuesOpenAfter": open_after})
-    # 这是一条工作记录，不是一项成绩：对不上的说法只是核对顺带的发现，明细在这一期的报告里。
-    gc.log_event("issue", "核对完 AI 怎么介绍本店" + (("，有 %d 处和店铺资料对不上，记在报告里" % len(issues)) if issues else "，没有发现和店铺资料对不上的说法"),
-                 key="issue:" + date, date=date)
     gc.mark_changed("对回答的核对")
-    for issue_id, entry in items.items():
-        if entry.get("reopened") and entry["lastSeen"] == date:
-            gc.log_event("reopen", "标记已改的一条，AI 这一期还在这么说：" + entry["aiSays"][:40],
-                         key="reopen:%s:%s" % (issue_id, date), date=date)
     gc.emit({"ok": True, "date": date, "issuesThisRun": len(issues),
              "issuesOpen": sum(1 for e in items.values() if e["status"] == "open"),
              "reopened": [k for k, e in items.items() if e.get("reopened") and e["lastSeen"] == date],
-             "next": "核对结果已保存。接着按 geo-weekly 写本期小结和待办（set-actions），再执行 %s 生成这一期的报告" % gc.PUBLISH_COMMAND})
+             "next": "核对结果已保存。接着按 geo-weekly 写本期小结和建议（set-actions），再执行 %s 生成这一期的报告" % gc.PUBLISH_COMMAND})
 
 
 def _issue_rows(items: dict) -> list:
@@ -487,11 +478,9 @@ def cmd_mark_issue(args) -> None:
     items[issue_id]["reopened"] = False
     if args.status == "done":
         items[issue_id]["doneAt"] = gc.now_iso()
-        gc.log_event("fixed", "商家已改：" + items[issue_id]["aiSays"][:40], key="fixed:%s:%s" % (issue_id, gc.today()))
     elif args.status == "dismissed":
         # 商家说 AI 这句其实没说错（是店铺资料不全或写错了）。先改资料，再用这个状态把它从待处理里拿掉。
         items[issue_id]["doneAt"] = gc.now_iso()
-        gc.log_event("fixed", "核实后不算错：" + items[issue_id]["aiSays"][:40], key="dismissed:%s:%s" % (issue_id, gc.today()))
     gc.write_json(ledger_path, dict(ledger, items=items, updatedAt=gc.now_iso()))
     gc.mark_changed("对回答的核对")
     gc.emit({"ok": True, "id": issue_id, "no": items[issue_id].get("no"), "status": args.status,

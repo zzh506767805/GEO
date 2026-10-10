@@ -212,6 +212,8 @@ def test_synthetic():
 
         compared = call(REPORT, "compare", "--date", DATE, env=env)
         check("第一期没有可比的上一期", compared["previous"] == "" and compared["trend"] == "observe", compared)
+        check("对比结果只带给员工的提示，不带页面上给商家看的说明；也不把“还有几处对不上”当成一项来报",
+              compared["notes"] and "readerNotes" not in compared and "issuesOpen" not in compared, sorted(compared))
         error = call(REPORT, "set-actions", "--date", DATE, "--file",
                      write(tmp, "a-old.json", {"brief": "x", "article": {"status": "preview", "title": "测试文章"}}), env=env, expect=2)
         check("写好的内容不能再塞进本期动作里，要单独登记", "add-content" in error.get("error", ""), error)
@@ -219,14 +221,14 @@ def test_synthetic():
             "brief": "本期小结：只有豆包提到你。",
             "todos": [{"text": "一"}, {"text": "二"}, {"text": "三"}, {"text": "四"}]}), env=env)
         check("写了小结就没有提醒", acted["brief"] is True and acted["warnings"] == [], acted)
-        call(REPORT, "mark-todo", "--no", "2", env=env)
-        error = call(REPORT, "mark-todo", "--no", "9", env=env, expect=2)
-        check("没有的待办序号会被拒绝", "没有第 9 件" in error.get("error", ""), error)
+        gone = subprocess.run([sys.executable, str(REPORT), "mark-todo", "--no", "1"], capture_output=True, text=True,
+                              env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", **env))
+        check("建议不是要打勾的清单：没有给待办打勾的命令了", gone.returncode != 0 and "mark-todo" in gone.stderr, gone.stderr[-120:])
         call(REPORT, "set-actions", "--date", DATE, "--file", write(tmp, "a2.json", {"gaps": [{"where": "公众号", "note": "没有文章被引用"}]}), env=env)
         shown = call(REPORT, "show", env=env)
-        check("只传要改的部分，其余保持不变（小结、打过勾的待办都在）",
-              shown["brief"].startswith("本期小结") and [t["done"] for t in shown["todos"]] == [False, True, False]
-              and len(shown["gaps"]) == 1 and shown["contents"] == [], shown)
+        check("只传要改的部分，其余保持不变（小结、建议都在）；建议只有做什么和为什么",
+              shown["brief"].startswith("本期小结") and [sorted(t) for t in shown["todos"]] == [["text", "why"]] * 3
+              and [t["text"] for t in shown["todos"]] == ["一", "二", "三"] and len(shown["gaps"]) == 1 and shown["contents"] == [], shown)
 
         # ── 内容：按类型登记，稿子跟着类型走 ──
         long_text = "# 测试市哪家的吐司好吃\r\n\r\n第一段  \n\n\n\n第二段 <b>不是标签</b>\n\n" + "示例小店在测试市测试路 1 号，每天 9 点到 20 点营业。" * 4
@@ -302,32 +304,36 @@ def test_synthetic():
               and "内容" in built["synced"] and "warnings" not in built, built)
         check("同步后没有待同步的变化", call(REPORT, "links", env=env)["upToDate"] is True)
         keep_page("一期（合成数据）", built["file"])
-        check("这一期的报告单独一个文件，有自己的链接，和工作台的链接一起给出",
-              built["reportUrl"].endswith("/report-%s.html" % DATE) and built["links"]["这一期的报告"] == built["reportUrl"]
+        check("这一期的报告是独立的文件、有自己的链接；发给商家的是在工作台里打开它的地址",
+              built["reportFileUrl"].endswith("/report-%s.html" % DATE) and built["reportUrl"] == first["pageUrl"] + "#/report/" + DATE
+              and built["links"]["这一期的报告"] == built["reportUrl"]
               and [Path(f).name for f in built["reportFiles"]] == ["report-%s.html" % DATE] and "reportUrl" in built["next"], built)
+        listed = call(REPORT, "links", env=env)
+        check("要链接时：每一期都有“在工作台里打开”的地址，报告文件自己的链接另外给",
+              listed["reports"] == {DATE: built["reportUrl"]} and listed["reportFiles"] == {DATE: built["reportFileUrl"]}
+              and listed["reportUrl"] == built["reportUrl"] and listed["reportFileUrl"] == built["reportFileUrl"], listed)
         keep_page("一期的报告（合成数据）", built["reportFiles"][0])
         html, block, data = page_json(built["file"])
         check("工作台生成成功，占位符已替换", "__GEO_DATA__" not in html and data.get("kind") == "workbench" and data.get("runDate") == DATE)
         check("网页里的数据块不含能提前结束标签的字符", block is not None and "<" not in block.group(1))
-        check("待办最多保留三件", len(data["actions"]["todos"]) == 3)
-        check("工作台数据里有小结和打勾状态，体检做完后不再显示进行中",
-              data["actions"]["brief"].startswith("本期小结") and data["actions"]["todos"][1]["done"] is True and data["progress"] == {}, data["actions"])
+        check("建议最多保留三件", len(data["actions"]["todos"]) == 3)
+        check("工作台数据里有小结，体检做完后不再显示进行中",
+              data["actions"]["brief"].startswith("本期小结") and data["progress"] == {}, data["actions"])
         check("工作台上的内容：按类型带各自的东西，不发了的不带稿子",
               [(c["no"], c["typeName"], c["status"], bool(c["body"]), bool(c["previewUrl"])) for c in data["contents"]]
               == [(3, "公众号文章", "confirmed", False, True), (2, "小红书笔记", "dropped", False, False), (1, "长文", "preview", True, False)]
               and data["periods"][-1]["content"]["count"] == 2 and data["contentTypes"]["xhs"] == "小红书笔记", data["contents"])
         period = data["periods"][-1]
         check("工作台只放跨期的东西：每期一行，带报告的链接，不带回答原文和逐题明细",
-              len(data["periods"]) == 1 and (period["no"], period["reportFile"], period["reportUrl"]) == (1, "report-%s.html" % DATE, built["reportUrl"])
+              len(data["periods"]) == 1 and (period["no"], period["reportFile"], period["reportUrl"]) == (1, "report-%s.html" % DATE, built["reportFileUrl"])
               and "answers" not in data and "dots" not in period and "issues" not in data and data["latest"]["rivals"][0]["name"] == "甲记面包", period)
         check("监测设置：问题、同类店，和员工另外记下的信息",
               len(data["settings"]["questions"]) == 12 and [r["name"] for r in data["settings"]["rivals"]] == ["甲记面包", "乙家烘焙"]
               and data["settings"]["extras"]["wechatOfficial"] == "示例小店官方号" and data["settings"]["from"] == "public", data["settings"]["extras"])
-        kinds = [event["kind"] for event in data["log"]]
-        check("工作记录自动记下了建档、开通工作台、体检、核对回答、已改、重新打开、写内容",
-              all(k in kinds for k in ("profile", "questions", "rivals", "page", "check", "issue", "fixed", "reopen", "content")), kinds)
-        check("汇总数：1 次体检、内容 2 篇、其中 1 篇等确认，不把对不上的说法当成一项成绩",
-              (data["totals"]["periods"], data["totals"]["contents"], data["totals"]["contentsWaiting"]) == (1, 2, 1) and "issuesFound" not in data["totals"], data["totals"])
+        check("工作台首页只留跨期的几样：不带工作记录、不带某一期的说明；汇总数只有期数和内容篇数",
+              "log" not in data and "notes" not in data and not (Path(env["GEO_DATA_ROOT"]) / "log.json").exists()
+              and data["totals"] == {"periods": 1, "contents": 2, "contentsWaiting": 1, "contentsPublished": 0}, data["totals"])
+        check("问“你都做了哪些事”时有数可答：几期、几篇内容、几篇等确认", shown["totals"]["periods"] == 1 and call(REPORT, "show", env=env)["totals"]["contents"] == 2)
         _, _, report = page_json(built["reportFiles"][0])
         check("报告带这一期的全部证据：逐题圆点、回答原文、同类店、内容来源",
               report["kind"] == "report" and report["period"] == {"date": DATE, "no": 1, "latest": True}
@@ -336,7 +342,7 @@ def test_synthetic():
         check("缺失的查询在报告的圆点里留空", report["dots"].get("q04", {}).get("deepseek", "") == "")
         check("和店铺资料对不上的说法只出现在报告里，带固定序号",
               [(i["no"], i["id"]) for i in report["issues"]] == [(1, "hours-wrong")] and report["workbenchUrl"] == first["pageUrl"], report["issues"])
-        check("报告里有这一期的小结、待办和写的内容", report["actions"]["brief"].startswith("本期小结") and len(report["actions"]["todos"]) == 3
+        check("报告里有这一期的小结、建议和写的内容", report["actions"]["brief"].startswith("本期小结") and len(report["actions"]["todos"]) == 3
               and [c["no"] for c in report["contents"]] == [1, 3], report["contents"])
         rendered = call(REPORT, "render", "--data", write(tmp, "page.json", data), "--out", str(Path(tmp) / "out" / "page.html"), env=env)
         again = call(REPORT, "render", "--data", write(tmp, "report.json", report), "--out", str(Path(tmp) / "out" / "report.html"), env=env)
@@ -364,7 +370,10 @@ def test_synthetic():
               names == ["ai-visibility.html", "ai-visibility.html", "report-%s.html" % DATE, "ai-visibility.html", "report-%s.html" % DATE, "ai-visibility.html"]
               and len(set(uploads)) == 2, names)
         fixed = call(REPORT, "set-page-url", "--report", DATE, "--url", "https://claw-cloud.youzan.com/f/abc/report-%s.html" % DATE, env=env)
-        check("报告的链接也能手动补", fixed["report"] == DATE and call(REPORT, "links", env=env)["reports"][DATE].endswith("/f/abc/report-%s.html" % DATE), fixed)
+        relisted = call(REPORT, "links", env=env)
+        check("报告文件的链接也能手动补；在工作台里打开它的地址不变",
+              fixed["report"] == DATE and relisted["reportFiles"][DATE].endswith("/f/abc/report-%s.html" % DATE)
+              and relisted["reports"][DATE] == relisted["pageUrl"] + "#/report/" + DATE, relisted)
 
         changed = [dict(q, text="测试市哪家的贝果好吃？") if q["id"] == "q06" else q for q in SYNTHETIC_QUESTIONS]
         bumped = call(STATE, "set-questions", "--file", write(tmp, "changed.json", changed), env=env)
@@ -426,8 +435,8 @@ def test_replay():
         check("回放：工作台和报告都同步成功，数据来自真实存档（没有演示标记）",
               built["published"] and data["store"]["demo"] is False and data["store"]["name"] == "麦的日尝"
               and report["store"]["demo"] is False and Path(built["reportFiles"][0]).stat().st_size > 100000, built)
-        check("回放：工作台上的汇总数和存档一致（1 期、84 个回答、14 个问题）",
-              (data["totals"]["periods"], data["totals"]["answers"], data["totals"]["questions"]) == (1, 84, 14), data["totals"])
+        check("回放：工作台上是 1 期、14 个问题；报告里是 84 个回答的原话",
+              (data["totals"]["periods"], len(data["settings"]["questions"]), sum(len(v) for v in report["answers"].values())) == (1, 14, 84), data["totals"])
         check("回放：报告里对不上的说法按序号排列，资料来源标的是公开信息",
               [i["no"] for i in report["issues"]] == [1, 2, 3, 4] and report["factsFrom"] == "public" and data["settings"]["pending"] is True, report["factsFrom"])
         keep_page("工作台（麦的日尝真实存档）", built["file"])
@@ -488,9 +497,13 @@ def test_template():
     sections_script = re.findall(r'\("[^"]+", "([a-z]+)"\)', script.split("REPORT_SECTIONS = (")[1].split("REPORT_FILE")[0])
     check("报告里的小节，脚本和模板一致", len(sections_script) == 5 and sections_template == sections_script, (sections_template, sections_script))
     docs = (SKILLS / "geo-weekly" / "references" / "workbench.md").read_text(encoding="utf-8")
-    in_docs = re.findall(r"`#/([a-z]+)`", docs)
-    check("工作台说明里的页面和脚本里的页面完全一致（不多不少）", sorted(set(in_docs)) == sorted(in_script), (sorted(set(in_docs)), sorted(in_script)))
-    check("工作台说明里列全了报告的小节", all("`#%s`" % section in docs for section in sections_script), [x for x in sections_script if "`#%s`" % x not in docs])
+    in_docs = re.findall(r"`#/([a-z]+)", docs)
+    check("工作台说明里的页面和脚本里的页面一致，并写了“在工作台里打开报告”的地址",
+          sorted(set(in_docs) - {"report"}) == sorted(in_script) and "report" in in_docs, (sorted(set(in_docs)), sorted(in_script)))
+    check("工作台说明里列全了报告的小节", all("`%s`" % section in docs for section in sections_script), [x for x in sections_script if "`%s`" % x not in docs])
+    check("首页没有“员工已经做了的工作”“现在该做的”这两块", "员工已经做了的工作" not in html and "现在该做的" not in html)
+    check("报告嵌在工作台里打开：模板里有内嵌的入口、内嵌的标记和打不开时的退路",
+          "rpt-frame" in html and "#embed" in html and "单独打开这份报告" in html and "report-ready" in html)
 
 
 def test_demo_fixture():
@@ -509,6 +522,75 @@ def test_demo_fixture():
             keep_page(label, rendered["file"])
 
 
+READER_BANNED = ("商家", "周报", "publish", "set-", "geo_", "Skill", "技能", "员工要", "请执行")
+
+
+def _smoke(paths):
+    node = shutil.which("node")
+    if not node:
+        return None
+    proc = subprocess.run([node, str(HERE / "page_smoke.cjs"), *[str(p) for p in paths]], capture_output=True, text=True)
+    return json.loads(proc.stdout)["files"]
+
+
+def test_many_periods():
+    """有好几期报告以后，首页“没点名时提到你”怎么显示。"""
+    fixture = HERE / "fixtures" / "page-data.demo.json"
+    if not fixture.is_file() or not shutil.which("node"):
+        print("跳过  多期首页的检查（没有演示数据或没有 node）")
+        return
+    data = json.loads(fixture.read_text(encoding="utf-8"))
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        plain = call(REPORT, "render", "--data", str(fixture), "--out", str(Path(tmp) / "a.html"), env=env)
+        # 假设第 3 期起商家改过问题：前两期是按旧问题测的
+        changed = json.loads(json.dumps(data))
+        for period in changed["periods"][:2]:
+            period["questionsVersion"] = 0
+        reset = call(REPORT, "render", "--data", write(tmp, "b.json", changed), "--out", str(Path(tmp) / "b.html"), env=env)
+        # 假设这一期刚改过问题：没有可比的上一期
+        fresh = json.loads(json.dumps(data))
+        for period in fresh["periods"][:-1]:
+            period["questionsVersion"] = 0
+        fresh["compare"] = {"previous": "", "mention": {}, "ownRefs": {}, "trend": "observe", "baselineReset": True}
+        first = call(REPORT, "render", "--data", write(tmp, "c.json", fresh), "--out", str(Path(tmp) / "c.html"), env=env)
+        a, b, c = _smoke([plain["file"], reset["file"], first["file"]])
+    latest, before = data["periods"][-1]["mention"], data["periods"][-2]["mention"]
+    check("多期时首页显示的是最新一期的数，带上一期的数和走势，并说明不是累计",
+          not a["errors"] and "上一期 %d/%d，连续上升" % (before["hits"], before["valid"]) in a["homeText"]
+          and "不是累计" in a["homeText"] and a["sparkBars"] == len(data["periods"]), (a["errors"], a["sparkBars"]))
+    check("问题改过以后：小柱子只画新问题的那几期，旧的几期在表里标出来",
+          not b["errors"] and b["sparkBars"] == len(data["periods"]) - 2 and b["homeText"].count("旧问题") >= 2 and "旧问题" not in a["homeText"],
+          (b["errors"], b["sparkBars"]))
+    check("刚改过问题的那一期：不和之前比，也不画走势", not c["errors"] and c["sparkBars"] == 0 and "问题改过了，从这一期重新比" in c["homeText"],
+          (c["errors"], c["sparkBars"]))
+
+
+def test_reader_voice():
+    """商家在页面上逐字看到、由脚本写的文字只有一类：报告里“读这份报告前要知道的”。里面不能出现写给员工看的话。
+
+    出过的事故：给员工的提示“周报里不要写成上升或下降”原样出现在了商家的报告里。
+    """
+    source = REPORT.read_text(encoding="utf-8")
+    reader = re.findall(r'payload\["readerNotes"\]\.append\("([^"]+)"', source)
+    reader += re.findall(r'\bnotes\.append\("([^"]+)"', source)  # 报告里另外追加的两条
+    bad = [text for text in reader if any(word in text for word in READER_BANNED)]
+    check("页面说明是写给商家看的，没有混进给员工的提示（共 %d 条）" % len(reader), len(reader) >= 6 and not bad, bad or reader)
+    seen, bad = 0, []
+    for label, path in PAGES:
+        _, _, data = page_json(path)
+        texts = list(data.get("notes") or [])
+        seen += len(texts)
+        bad += [(label, text) for text in texts if any(word in text for word in READER_BANNED)]
+    check("生成出来的报告上，说明里没有写给员工看的话（查了 %d 条）" % seen, seen >= 3 and not bad, bad[:3])
+    for script in (STATE, RUN, SCORE, REPORT):
+        if "log_event" in script.read_text(encoding="utf-8"):
+            check("脚本里不再记工作记录（页面上已经不显示了）", False, script.name)
+            break
+    else:
+        check("脚本里不再记工作记录（页面上已经不显示了）", True)
+
+
 def test_pages_render():
     node = shutil.which("node")
     if not node:
@@ -520,14 +602,23 @@ def test_pages_render():
     except (json.JSONDecodeError, KeyError):
         check("工作台逐页渲染检查能跑起来", False, proc.stdout[:200] + proc.stderr[:300])
         return
-    for (label, _), item in zip(PAGES, report):
-        expected = 1 if item["kind"] == "report" else 4  # 工作台三个页面，加一次“地址不对时回到首页”
-        check("页面能渲染、没有把空值显示出来：%s" % label, not item["errors"] and item["pages"] == expected, item["errors"][:3] or item["pages"])
+    for (label, path), item in zip(PAGES, report):
+        if item["kind"] == "report":
+            check("报告能渲染，单独打开带标题、嵌在工作台里不带：%s" % label, not item["errors"] and item.get("embedded") is True, item["errors"][:3])
+            continue
+        _, _, data = page_json(path)
+        dates = [p["date"] for p in data["periods"]]
+        routes = item.get("routes") or []
+        # 三个页面 + 每一期报告在工作台里打开的地址，再加一次“地址不对时回到首页”
+        ok = not item["errors"] and item["pages"] == len(routes) + 1 and {"overview", "content", "settings"} <= set(routes) \
+            and all("report/" + d in routes for d in dates[-6:]) and len(item.get("frames") or []) == sum(1 for r in routes if r.startswith("report/")) \
+            and all("#embed" in src for src in item.get("frames") or [])
+        check("工作台能渲染，每一期的报告都在工作台里打开：%s" % label, ok, item["errors"][:3] or (routes, item.get("frames")))
 
 
 if __name__ == "__main__":
     try:
-        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_environment_error, test_replay, test_demo_fixture, test_pages_render):
+        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render):
             try:
                 test()
             except AssertionError as exc:

@@ -168,7 +168,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 ### 8. 马上体检
 
-立即按 `geo-check` Skill 跑第一次体检，再按 `geo-weekly` Skill 写本期小结和待办、同步工作台。这一期会生成第一份体检报告。
+立即按 `geo-check` Skill 跑第一次体检，再按 `geo-weekly` Skill 写本期小结和建议、同步工作台。这一期会生成第一份体检报告。
 
 ### 9. 告诉商家结果
 
@@ -176,7 +176,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 1. 一句结论：顾客没点名时，多少个回答里有几个提到了他。
 2. AI 点名介绍他时是怎么说的，一两句话。
-3. 这一期的报告链接（`publish` 输出的 `reportUrl`）。
+3. 这一期的报告（`publish` 输出的 `reportUrl`，点开是在工作台里看这一期的报告）。
 4. `pendingConfirm` 为 true 时：把 `toConfirm` 里的那几样点出来（“我搜到一个叫某某的抖音号，是你的吗”），请他看一眼工作台的“监测设置”，回复“确认”或者直接说哪里不对。没有要确认的就不提这一条。
 
 报告里有的不要再贴一遍。

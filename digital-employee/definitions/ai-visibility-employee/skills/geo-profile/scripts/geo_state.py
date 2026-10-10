@@ -311,7 +311,6 @@ def cmd_init(args) -> None:
     gc.write_json(paths["questions"], {"version": 0, "updatedAt": "", "items": []})
     gc.write_json(paths["rivals"], {"updatedAt": "", "items": []})
     _touch_meta()
-    gc.log_event("profile", "读好店铺资料（%s）" % gc.SEGMENT_NAMES[args.segment], key="profile:init")
     gc.mark_changed("店铺资料")
     gc.emit(status_payload())
 
@@ -341,11 +340,6 @@ def cmd_set_facts(args) -> None:
         elif gc.needs_confirm(facts) != gc.needs_confirm(current):
             updates["confirmedAt"] = ""
         _touch_meta(**updates)
-        if args.confirmed_by_merchant:
-            gc.log_event("confirm", "按商家说的更新了店铺资料", key="facts:merchant:" + gc.today())
-        elif "confirmedAt" in updates:
-            gc.log_event("profile", "记下了几样店铺后台里没有的信息，等商家确认" if facts.get("from") == "backend"
-                         else "从公开信息里整理了店铺信息，等商家确认", key="facts:auto:" + gc.today())
         gc.mark_changed("店铺资料")
     payload = status_payload()
     payload["changed"] = changed
@@ -368,8 +362,6 @@ def cmd_set_questions(args) -> None:
         if core_changed and gc.latest_run_date():
             # 问题库变了，之前的数字不能和之后的连成一条线。
             _touch_meta(baselineResetAt=gc.today())
-        if core_changed:
-            gc.log_event("questions", "出好 %d 道题（第 %d 版问题库）" % (len(items), max(version, 1)), key="questions:v%d" % max(version, 1))
         gc.mark_changed("问题库")
     payload = status_payload()
     payload["changed"] = changed
@@ -383,8 +375,6 @@ def cmd_set_rivals(args) -> None:
     facts = _require_facts()
     items = normalize_rivals(gc.load_input(args.file), facts)
     gc.write_json(_paths()["rivals"], {"updatedAt": gc.now_iso(), "items": items})
-    if items:
-        gc.log_event("rivals", "选定同类店：" + "、".join(r["name"] for r in items), key="rivals:" + gc.today())
     gc.mark_changed("同类店")
     payload = status_payload()
     if gc.latest_run_date():
@@ -405,7 +395,6 @@ def cmd_confirm(_args) -> None:
     if not questions:
         raise gc.GeoError("问题库还是空的，不能确认")
     _touch_meta(confirmedAt=gc.now_iso())
-    gc.log_event("confirm", "商家确认了员工记下的信息", key="confirm:" + gc.today())
     gc.mark_changed("商家的确认")
     payload = status_payload()
     payload["warnings"] = facts_warnings(facts)
