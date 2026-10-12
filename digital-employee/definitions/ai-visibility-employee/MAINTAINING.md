@@ -12,7 +12,8 @@
 | 定时任务 | `../../tasks/timer/geo-weekly-check.yaml` | 每周几点触发、触发时对员工说什么 | 不用 |
 | 页面清单 | `skills/geo-weekly/assets/pages.json` | 工作台导航里有哪些页面、什么顺序 | 不用 |
 | 护栏 | `skills/*/scripts/*.py` | 数据格式、硬性的上限和顺序、给员工的 `next` 提示 | 要 |
-| 页面样式 | `skills/geo-weekly/assets/page.html` | 工作台和报告长什么样 | 要 |
+| 页面样式 | `skills/geo-weekly/assets/page.html` | 标准模板：工作台和报告长什么样 | 要 |
+| 每家店自己的页面 | `<会话工作区>/ai-visibility-employee/template/page.html` | 员工按商家的意思改出来的模板，有它就不用标准模板 | 员工自己改 |
 
 流程写在文档里，脚本只管“错了就拦住”的那几件事。改流程时先看下面这张表：表里的规矩由脚本卡住，只改文档改不掉；其余规矩都只写在文档里，改文档就行。
 
@@ -82,9 +83,18 @@
 | 一条查询等多久算缺失 | `geo_run.py` 的 `DEADLINE_SECONDS` |
 | 工作台保留几期 | `geo_report.py` 的 `PERIOD_LIMIT` |
 
+### 每家店自己的页面
+
+员工可以按商家的意思改页面，什么都能改：`geo_report.py template-init` 把标准模板复制到这家店的数据目录，员工改这一份，以后同步都用它。数据还是脚本放进去的（模板里唯一不能删的是 `__GEO_DATA__`）。员工怎么做写在 `workbench.md` 的“改这家店的页面”。
+
+这对改标准模板有两个影响：
+
+- **标准模板的改动不会自动到达这些店。** 员工在 `publish` 的输出里看到 `templateNotice`，用 `template-diff` 拿到标准模板自他复制以来的增量，自己合进去。所以改标准模板时尽量一次只改一件事、改动集中，增量才好合；数据的格式（`geo-data` 里的字段）只加不改，改了字段名，改过模板的店会读不到。
+- **存量不处理**：以前各期的报告不重新生成；改过模板的店，旧改动和标准模板的差异也不回头去对齐。
+
 ### 改样式
 
-只改 `assets/page.html`，工作台和报告共用这一个模板，数据里的 `kind` 决定出哪一种。
+标准模板只改 `assets/page.html`，工作台和报告共用这一个模板，数据里的 `kind` 决定出哪一种。
 
 - 颜色只用文件开头定义的变量，取值和有赞龙虾客户端一致，深色模式有另一套值。
 - 不引用任何外部资源。数据只放在 `<script type="application/json" id="geo-data">` 里，页面上的文字一律用 `textContent` 写入。

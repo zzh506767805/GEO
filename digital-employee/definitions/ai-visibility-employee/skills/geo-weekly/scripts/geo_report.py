@@ -29,6 +29,11 @@
   geo_report.py pages                                  工作台有哪些页面、哪几页要员工填、每一页放什么
   geo_report.py set-page --id <页面> --file <json>      填写一个由内容块组成的页面（assets/pages.json 里登记的，或这家店单独加的）
   geo_report.py remove-page --id <页面>                 去掉这家店单独加的页面，或清空登记页面里员工填的内容
+  geo_report.py template                               这家店用的是标准模板还是自己的模板，标准模板有没有更新
+  geo_report.py template-init                          复制一份标准模板给这家店，之后想怎么改就怎么改
+  geo_report.py template-diff                          标准模板自上次以来改了什么（升级时把这些改动合进这家店的模板）
+  geo_report.py template-rebase                        改动合完了，记下这家店已经跟上了现在的标准模板
+  geo_report.py template-reset                         不用自己的模板了，恢复标准模板（原来那份留作备份）
   geo_report.py set-page-url --url <云盘链接> [--report 日期]
   geo_report.py render --data <页面数据.json> --out <输出.html>
 
@@ -39,6 +44,7 @@
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import os
 import re
@@ -882,14 +888,93 @@ def embed_json(data: dict) -> str:
     return text
 
 
-def render_html(data: dict) -> str:
+def active_template() -> Path:
+    """生成网页用哪份模板：这家店有自己的就用自己的，没有就用标准模板。"""
     try:
-        template = TEMPLATE.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise gc.GeoError("工作台模板读取失败") from exc
+        shop = gc.shop_template_path()
+    except gc.GeoError:
+        return TEMPLATE
+    return shop if shop.is_file() else TEMPLATE
+
+
+def render_html(data: dict, template_path: Path = None) -> str:
+    path = template_path or active_template()
+    mine = path != TEMPLATE
+    try:
+        template = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        raise gc.GeoError("这家店的页面模板读不出来" if mine else "工作台模板读取失败") from exc
     if template.count(PLACEHOLDER) != 1:
+        if mine:
+            # 页面怎么改都行，只有这一处不能动：脚本要把数据放进这里，页面上的数才会每期自动更新
+            raise gc.GeoError("这家店的页面模板里要有且只有一处 %s（脚本把数据放在这里），现在有 %d 处。"
+                              "改回来再同步；不想用自己的模板了，执行 template-reset" % (PLACEHOLDER, template.count(PLACEHOLDER)))
         raise gc.GeoError("工作台模板不完整")
     return template.replace(PLACEHOLDER, embed_json(data))
+
+
+def _template_base() -> Path:
+    """复制模板那一刻的标准模板。拿它和现在的标准模板比，就知道标准模板后来改了什么。"""
+    return gc.shop_template_path().parent / "base.html"
+
+
+def _template_payload() -> dict:
+    shop, base = gc.shop_template_path(), _template_base()
+    if not shop.is_file():
+        return {"ok": True, "using": "standard",
+                "next": "现在用的是标准模板。商家想改页面的样子、在哪一页加什么模块时，先执行 template-init 复制一份，再改复制出来的文件"}
+    standard = TEMPLATE.read_text(encoding="utf-8")
+    behind = not base.is_file() or base.read_text(encoding="utf-8") != standard
+    payload = {"ok": True, "using": "shop", "file": str(shop), "standardUpdated": behind}
+    payload["next"] = ("标准模板在你复制之后更新过。执行 template-diff 看改了什么，把这些改动合进这家店的模板，再执行 template-rebase"
+                       if behind else "这家店用的是自己的模板，改完直接 publish")
+    return payload
+
+
+def cmd_template(_args) -> None:
+    gc.emit(_template_payload())
+
+
+def cmd_template_init(_args) -> None:
+    _facts()
+    shop = gc.shop_template_path()
+    if shop.is_file():
+        raise gc.GeoError("这家店已经有自己的模板了，直接改它就行：" + str(shop))
+    shop.parent.mkdir(parents=True, exist_ok=True)
+    standard = TEMPLATE.read_text(encoding="utf-8")
+    shop.write_text(standard, encoding="utf-8")
+    _template_base().write_text(standard, encoding="utf-8")
+    gc.emit({"ok": True, "file": str(shop),
+             "next": "复制好了。直接改这个文件（布局、样式、模块都可以改），改完 publish。"
+                     "页面上的数据在 id 为 geo-data 的那段 JSON 里，每期由脚本放进去；文件里的 %s 要留着" % PLACEHOLDER})
+
+
+def cmd_template_diff(_args) -> None:
+    shop, base = gc.shop_template_path(), _template_base()
+    if not shop.is_file():
+        raise gc.GeoError("这家店用的是标准模板，标准模板更新了会自动用上，不用合并")
+    old = base.read_text(encoding="utf-8") if base.is_file() else ""
+    new = TEMPLATE.read_text(encoding="utf-8")
+    diff = "".join(difflib.unified_diff(old.splitlines(True), new.splitlines(True), "标准模板（你复制时）", "标准模板（现在）", n=3))
+    gc.emit({"ok": True, "changed": bool(diff), "diff": diff, "file": str(shop),
+             "next": ("这是标准模板的改动。把它们合进这家店的模板（和这家店自己的改动冲突时，以这家店的为准，除非改动是修错），"
+                      "合完 publish 检查页面正常，再执行 template-rebase") if diff else "标准模板没有更新"})
+
+
+def cmd_template_rebase(_args) -> None:
+    if not gc.shop_template_path().is_file():
+        raise gc.GeoError("这家店用的是标准模板，不用记")
+    _template_base().write_text(TEMPLATE.read_text(encoding="utf-8"), encoding="utf-8")
+    gc.emit({"ok": True, "next": "记下了：这家店的模板已经跟上现在的标准模板"})
+
+
+def cmd_template_reset(_args) -> None:
+    shop = gc.shop_template_path()
+    if not shop.is_file():
+        raise gc.GeoError("这家店本来就用的是标准模板")
+    backup = shop.with_name("page-%s.html" % gc.now().strftime("%Y%m%d-%H%M%S"))
+    shop.rename(backup)
+    gc.emit({"ok": True, "backup": str(backup), "next": "已经恢复标准模板，原来那份留作备份。请执行 publish"})
 
 
 def report_link(url: str, day: str) -> str:
@@ -1076,6 +1161,10 @@ def cmd_publish(args) -> None:
                    next=hint + "说到内容、监测设置时给 links 里对应页面的链接。商家要把报告单独转发给别人时，才给 reportFileUrl。链接逐字照抄")
     if urlparse(saved).netloc != EXPECTED_PAGE_HOST:
         payload["hostWarning"] = "链接的域名不是 %s" % EXPECTED_PAGE_HOST
+    template = _template_payload()
+    payload["template"] = template["using"]  # standard：标准模板；shop：这家店自己的模板
+    if template.get("standardUpdated"):
+        payload["templateNotice"] = template["next"]
     gc.emit(payload)
 
 
@@ -1132,7 +1221,7 @@ def cmd_render(args) -> None:
     if target.suffix.lower() != ".html":
         raise gc.GeoError("输出文件要以 .html 结尾")
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(render_html(data), encoding="utf-8")
+    target.write_text(render_html(data, Path(args.template) if args.template else None), encoding="utf-8")
     gc.emit({"ok": True, "file": str(target), "kind": data.get("kind", "workbench"), "sizeKB": round(target.stat().st_size / 1024)})
 
 
@@ -1176,7 +1265,11 @@ def main() -> None:
     p = sub.add_parser("render")
     p.add_argument("--data", required=True)
     p.add_argument("--out", required=True)
+    p.add_argument("--template", default="")  # 指定用哪份模板，不给就和 publish 一样
     p.set_defaults(func=cmd_render)
+    for name, func in (("template", cmd_template), ("template-init", cmd_template_init), ("template-diff", cmd_template_diff),
+                       ("template-rebase", cmd_template_rebase), ("template-reset", cmd_template_reset)):
+        sub.add_parser(name).set_defaults(func=func)
     args = parser.parse_args()
     args.func(args)
 

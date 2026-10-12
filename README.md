@@ -83,7 +83,7 @@
 python3 tests/run_tests.py
 ```
 
-共 145 项。它用 `mock_ai_query.py` 模拟“问 AI”、用 `mock_upload.py` 模拟云盘上传，跑通全过程，并逐步核对同步状态、确认的规则、内容按类型登记的规则、多期时首页的数怎么显示，以及“报告上不能出现写给员工看的话”。
+共 157 项。它用 `mock_ai_query.py` 模拟“问 AI”、用 `mock_upload.py` 模拟云盘上传，跑通全过程，并逐步核对同步状态、确认的规则、内容按类型登记的规则、多期时首页的数怎么显示，以及“报告上不能出现写给员工看的话”。
 
 如果上一级目录里有 `GEO实测/2026-10-08-麦的日尝/结果`，还会回放那次真实存档，核对算出来的数，并重新生成 `示例/麦的日尝/` 里的两个网页。
 
@@ -135,6 +135,7 @@ geo_score.py   score | brand-digest | set-judgement | issues [--status S] | mark
 geo_report.py  publish | links | show | compare | set-actions
                add-content | contents [--no N] | mark-content [--no N] [--status S] [--channel 去向] [--ref 凭据]
                pages | set-page --id P --file <json> | remove-page --id P
+               template | template-init | template-diff | template-rebase | template-reset（这家店自己的模板）
                build（只在本地生成）| set-page-url --url U [--report 日期] | render --data <json> --out <html>
 ```
 
@@ -154,7 +155,7 @@ geo_report.py  publish | links | show | compare | set-actions
 
 - `geo_common.py` 在三个技能目录里各有一份，内容必须完全一样。技能目录是独立安装的只读目录，不能跨目录 import。测试会校验三份一致。
 - 改了数据的命令要调 `gc.mark_changed("变了什么")`，否则员工不会被提醒同步。
-- 工作台和报告共用一个模板：`geo-weekly/assets/page.html`，数据里的 `kind` 决定出哪一种。样式、图标、交互全在这一个文件里。
+- 工作台和报告共用一个模板：`geo-weekly/assets/page.html`，数据里的 `kind` 决定出哪一种。样式、图标、交互全在这一个文件里。员工可以给某一家店复制一份随便改（`template-init`），那家店以后就用自己的；标准模板升级时，员工用 `template-diff` 拿增量自己合。所以 `geo-data` 里的字段只加不改。
 - 以前各期的报告文件生成后不再更新。所以报告嵌在工作台里用到的两个约定（地址里的 `#embed`、`report-ready` 消息）以后只能加、不能改，否则旧报告在新工作台里会显示不对。
 - **往工作台加页面或者往首页加模块之前先问两件事：它放的是不是跨期的东西；商家要在上面做什么。** 某一期分析出来的东西，放进报告当一节。导航和首页上放什么，等于告诉商家我们主要做什么。
 - 加工作台的页面：只在 `geo-weekly/assets/pages.json` 里加一项，员工用 `geo_report.py set-page` 填内容块，不用改模板和脚本；商家也可以让员工单独给他加一页。只有内容块拼不出来的页面才要写代码。增减报告的小节：`geo_report.py` 的 `REPORT_SECTIONS`、模板里的 `SECTIONS`、`workbench.md` 里的小节表要一起改，测试会核对。详见 `MAINTAINING.md`。

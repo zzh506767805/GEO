@@ -30,7 +30,7 @@ description: 出每期的体检报告、维护商家的“AI 曝光工作台”�
 python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" publish
 ```
 
-它重新生成这一期的报告和工作台、传到云盘、保存链接。**不要自己写或修改网页。** 要在工作台上多放一样东西，用员工负责的页面（`set-page` 填内容块），见 `references/workbench.md`。
+它重新生成这一期的报告和工作台、传到云盘、保存链接。**不要直接改生成出来的网页文件**，下次同步会被盖掉。商家想改页面的样子、加模块、加页面，按 `references/workbench.md` 的“改这家店的页面”做：内容块填一个页面，或者改这家店自己的页面模板。
 
 - `published: true`：同步成功。`pageUrl` 是工作台，`reportUrl` 是在工作台里打开这一期的报告（发给商家的是它），`links` 是可以直接发给商家的几个链接，`synced` 是这次同步上去的变化。`reportFileUrl` 是报告文件自己的链接，商家要单独转发给别人时才给。
 - `firstTime: true`：第一次开通。把 `pageUrl` 发给商家，告诉他以后都在这个链接看。

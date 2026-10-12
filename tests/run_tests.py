@@ -596,6 +596,55 @@ def test_pages():
         check("内置页面去不掉", "内置页面" in error.get("error", ""), error)
 
 
+def test_shop_template():
+    """每家店可以有自己的模板，什么都能改；数据还是脚本放进去。标准模板升级时给出增量，员工自己合。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        skill = Path(tmp) / "geo-weekly"
+        shutil.copytree(SKILLS / "geo-weekly", skill)  # 复制一份，才能模拟“标准模板升级了”
+        report = skill / "scripts" / "geo_report.py"
+        env = base_env(tmp)
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
+        call(STATE, "set-questions", "--file", write(tmp, "q.json", SYNTHETIC_QUESTIONS), env=env)
+        check("没有自己的模板时用标准模板", call(report, "publish", env=env)["template"] == "standard")
+        made = call(report, "template-init", env=env)
+        shop = Path(made["file"])
+        check("复制出来的模板放在这家店的数据目录里，和标准模板一样", shop.is_file() and str(shop).startswith(env["GEO_DATA_ROOT"])
+              and shop.read_text(encoding="utf-8") == (skill / "assets" / "page.html").read_text(encoding="utf-8"), made)
+        html = shop.read_text(encoding="utf-8").replace("<title>AI 曝光工作台</title>", "<title>示例小店的工作台</title>")
+        html = html.replace("</style>", ".shop-banner { padding: 12px; }\n</style>").replace('<div id="app"', '<div class="shop-banner">本店自己加的模块</div>\n<div id="app"', 1)
+        shop.write_text(html, encoding="utf-8")
+        pending = call(STATE, "status", env=env)["workbench"]["pending"]
+        check("员工直接改了模板文件，也会提醒要同步", "页面模板" in pending, pending)
+        published = call(report, "publish", env=env)
+        page = Path(published["file"]).read_text(encoding="utf-8")
+        _, _, data = page_json(published["file"])
+        check("同步时用这家店的模板，数据照样由脚本放进去",
+              published["template"] == "shop" and "本店自己加的模块" in page and "示例小店的工作台" in page
+              and data.get("kind") == "workbench" and "页面模板" in published["synced"], (published.get("template"), published.get("synced")))
+        check("同步以后不再提醒", "页面模板" not in call(STATE, "status", env=env)["workbench"]["pending"])
+        keep_page("工作台（这家店改过自己的模板）", published["file"])
+        shop.write_text(html.replace("__GEO_DATA__", ""), encoding="utf-8")
+        error = call(report, "publish", env=env, expect=2)
+        check("模板里放数据的那一处被删掉时，同步会拒绝并说清原因", "__GEO_DATA__" in error.get("error", "") and "template-reset" in error["error"], error)
+        shop.write_text(html, encoding="utf-8")
+        standard = skill / "assets" / "page.html"
+        standard.write_text(standard.read_text(encoding="utf-8").replace("</style>", "/* 标准模板的新修复 */\n</style>"), encoding="utf-8")
+        status = call(report, "template", env=env)
+        check("标准模板升级后，会告诉员工去看增量", status["standardUpdated"] is True and "template-diff" in status["next"], status)
+        check("同步结果里也提醒一句", "templateNotice" in call(report, "publish", env=env))
+        diff = call(report, "template-diff", env=env)
+        check("增量只有标准模板这次改的地方，不含这家店自己的改动",
+              "+/* 标准模板的新修复 */" in diff["diff"] and "本店自己加的模块" not in diff["diff"], diff["diff"][:300])
+        call(report, "template-rebase", env=env)
+        check("合完记一笔，就不再提醒", call(report, "template", env=env)["standardUpdated"] is False
+              and call(report, "template-diff", env=env)["changed"] is False)
+        reset = call(report, "template-reset", env=env)
+        back = call(report, "publish", env=env)
+        check("恢复标准模板，原来那份留作备份", Path(reset["backup"]).is_file() and not shop.exists() and back["template"] == "standard"
+              and "本店自己加的模块" not in Path(back["file"]).read_text(encoding="utf-8"), reset)
+
+
 def test_copies():
     copies = [(SKILLS / name / "scripts" / "geo_common.py").read_bytes() for name in ("geo-profile", "geo-check", "geo-weekly")]
     check("三个技能里的 geo_common.py 内容一致", copies[0] == copies[1] == copies[2])
@@ -740,7 +789,7 @@ def test_pages_render():
 
 if __name__ == "__main__":
     try:
-        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_facts_merge, test_new_agent_guards, test_pages, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render):
+        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_facts_merge, test_new_agent_guards, test_pages, test_shop_template, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render):
             try:
                 test()
             except AssertionError as exc:
