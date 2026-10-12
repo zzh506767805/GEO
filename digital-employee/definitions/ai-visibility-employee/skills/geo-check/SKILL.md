@@ -42,7 +42,13 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_ru
 - 一段超过 15 分钟还没返回的查询，脚本会自动记为缺失，这一期该题该平台不计分。缺失不需要你补救。
 - `start` 返回 `ok: false` 时按 `error` 处理。如果是“还没有开通问 AI 能力”，告诉商家暂时不能体检，不要尝试其他途径。
 
-只想重跑个别问题（例如商家改了某道题）：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --only q03,q07`。
+只想重跑个别问题（例如商家改了某道题）：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --only q03,q07`。改过原文的题会重新问，没改的不会。
+
+**接着上一次，和重新测一次，是两回事：**
+
+- 不带 `--fresh` 的 `start` 是“接着上一次”：这一天已经有回答的题不会重新问。同一天再执行，输出里 `started` 是 0，`next` 会说明用的是已有的回答。
+- 商家说“重新体检”“重新测一下”，要的是重新问一遍：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --fresh`。上一次的回答、算分和核对会挪进这一天目录下的 `old-<时间>/` 留底，然后从头问；等不带店名的全部返回，再 `start --phase brand`，接着照常算分、核对。还有查询在运行时不能重新测，先等它们返回。
+- 商家删掉的题不用重跑：重新 `score`，最新一期就不再算它（输出的 `notes` 会列出来）。以前各期按当时问的题算，不变。
 
 ## 第二步：算分
 
@@ -130,7 +136,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_sc
 核对写完，这一期的数据就齐了，但报告还没有生成，工作台上也还是旧的。接着按 `geo-weekly` Skill 写本期小结和建议，然后 `publish`：
 
 - 每周定时任务：按 `geo-weekly` 的“每周出周报”走完，发周报。
-- 商家临时要求重新体检：同样按 `geo-weekly` 重写小结和建议、`publish`，然后用两三句话说结果（没点名时多少个回答提到了他、和上一期比怎么样），给 `publish` 输出的 `reportUrl`。不用发完整周报。
+- 商家临时要求重新体检（用 `--fresh`，见第一步）：同样按 `geo-weekly` 重写小结和建议、`publish`，然后用两三句话说结果（没点名时多少个回答提到了他、和上一期比怎么样），给 `publish` 输出的 `reportUrl`。不用发完整周报。
 
 ## 对外表达
 

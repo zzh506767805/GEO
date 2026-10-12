@@ -246,8 +246,13 @@ def compare_payload(date: str) -> dict:
     current = _summary(date)
     periods = _periods(date)
     same = [p for p in periods if p["questionsVersion"] == current.get("questionsVersion", 0)]
-    previous_date = same[-2]["date"] if len(same) >= 2 else ""
+    prior = same[-2] if len(same) >= 2 else None
+    # 数据不全的期次不拿来比：这一期或上一期不全，就不和上一期比
+    previous_date = prior["date"] if prior and prior["complete"] and current["complete"] else ""
     previous = gc.read_json(gc.run_dir(previous_date) / "summary.json") if previous_date else None
+    # 判断涨跌要最近连续三期都完整；中间夹着一期不全的，就不判断
+    recent = same[-3:]
+    trend = _direction([_share(p["mention"]) for p in recent]) if len(recent) == 3 and all(p["complete"] for p in recent) else "observe"
     questions = {q["id"]: q["text"] for q in (gc.read_json(gc.profile_dir() / "questions.json", {}) or {}).get("items") or []}
     changes = []
     if previous:
@@ -265,27 +270,36 @@ def compare_payload(date: str) -> dict:
         "storePages": {"now": current["refs"]["storePages"], "before": previous["refs"]["storePages"] if previous else None},
         "questionChanges": changes,
         # 上一期建议过商家做的事。这一期写建议时先看一眼：做过的不再提，没理会的最多再提一次
-        "previousTodos": [t.get("text", "") for t in ((gc.read_json(gc.run_dir(previous_date) / "actions.json") or {}).get("todos") or [])] if previous_date else [],
-        "trend": _direction([_share(p["mention"]) for p in same]),
+        "previousTodos": [t.get("text", "") for t in ((gc.read_json(gc.run_dir(prior["date"]) / "actions.json") or {}).get("todos") or [])] if prior else [],
+        "trend": trend,
         "complete": current["complete"],
         # notes 是给员工的提示（周报该怎么写）；readerNotes 是页面上给商家看的说明。两套话不能混用：
         # 写给员工的“周报里不要写成……”如果原样出现在商家的报告里，就成了把内部提示漏给商家。
         "notes": [],
         "readerNotes": [],
     }
-    if not previous:
+    if not prior:
         if payload["baselineReset"]:
             payload["notes"].append("问题改过了，之前的数不能和这一期比；这一期重新作为基线，周报里不和之前的比")
             payload["readerNotes"].append("每周问的问题改过了，之前的数不能和这一期比。这一期重新作为之后对比的基线")
         else:
             payload["notes"].append("这是第一期，没有可比的上一期；这一期就是基线")
             payload["readerNotes"].append("这是第一期，没有可比的上一期。这一期的数是之后对比的基线")
-    elif payload["trend"] == "observe":
+    elif not current["complete"]:
+        payload["notes"].append("本期缺失的查询超过四分之一，周报要注明“本周数据不全”，不和上一期比，也不判断涨跌")
+        payload["readerNotes"].append("这一期有超过四分之一的提问没有拿到回答，数据不全，不和上一期比")
+    elif not prior["complete"]:
+        payload["notes"].append("上一期数据不全，这一期不和它比，也不判断涨跌；周报里写“上一期数据不全，没法比较”")
+        payload["readerNotes"].append("上一期有不少提问没有拿到回答，数据不全，这一期没法和它比")
+    elif trend == "observe" and not all(p["complete"] for p in recent):
+        payload["notes"].append("最近三期里有一期数据不全，还判断不了涨跌，周报里不要写成“上升”或“下降”，写“继续观察”")
+        payload["readerNotes"].append("最近几期里有一期数据不全，还看不出是在变多还是变少，先继续观察")
+    elif trend == "observe":
         payload["notes"].append("提及情况还没有连续两期同方向变化，周报里不要写成“上升”或“下降”，写“继续观察”")
         payload["readerNotes"].append("和上一期比有出入，但还没有连续两期朝同一个方向变。单独一期的涨跌说明不了问题，先继续观察")
-    if not current["complete"]:
-        payload["notes"].append("本期缺失的查询超过四分之一，周报要注明“本周数据不全”，不和上一期比")
-        payload["readerNotes"].append("这一期有超过四分之一的提问没有拿到回答，数据不全，不和上一期比")
+    if not prior and not current["complete"]:
+        payload["notes"].append("本期缺失的查询超过四分之一，周报要注明“本周数据不全”")
+        payload["readerNotes"].append("这一期有超过四分之一的提问没有拿到回答，数据不全")
     return payload
 
 

@@ -6,6 +6,7 @@
 
 用法（脚本用绝对路径执行）：
   geo_run.py start --phase open|brand [--date D] [--only q01,q03] [--retry]
+  geo_run.py start --phase open --fresh [--date D]   同一天重新测一次：上一次的结果挪走留底，全部重新问
   geo_run.py wait [--date D] [--max-seconds 90]
   geo_run.py status [--date D]
 
@@ -16,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import shlex
 import subprocess
 import sys
@@ -184,11 +186,34 @@ def _next_hint(p: dict) -> str:
     return "本轮已全部返回，请执行 geo_score.py score"
 
 
+def _archive_round(date: str, state: dict) -> str:
+    """同一天重新测之前，把上一次的查询、回答、算分和核对挪进 old-<时间>/ 留底。小结和建议（actions.json）留着，员工会重写。"""
+    if any(item["status"] == "running" for item in state["items"].values()):
+        raise gc.GeoError("上一次还有查询在运行，等它们返回（wait）再重新测")
+    folder = gc.run_dir(date)
+    target = folder / ("old-" + gc.now().strftime("%H%M%S"))
+    target.mkdir(parents=True, exist_ok=True)
+    for name in ("queries.json", "summary.json", "judgement.json", "raw"):
+        if (folder / name).exists():
+            shutil.move(str(folder / name), str(target / name))
+    return target.name
+
+
 def cmd_start(args) -> None:
     date = gc.check_date(args.date) if args.date else gc.today()
     phase = args.phase
     questions = _load_questions()
     state = _load_state(date)
+    archived = ""
+    if args.fresh:
+        # “重新测一次”和“接着上一次”是两回事：不带 --fresh 时已经有结果的题不会重新问
+        if phase != "open":
+            raise gc.GeoError("重新测一次要从不带店名的问题开始：start --phase open --fresh")
+        if state["items"]:
+            archived = _archive_round(date, state)
+        state = _load_state(date)
+    # 问题清单里已经删掉的题，不再算进这一期
+    dropped = gc.drop_removed_questions(state, {q["id"] for q in questions["items"]})
     state["questionsVersion"] = questions.get("version", 0)
     if phase == "brand" and not args.force:
         open_rows = [item for item in state["items"].values() if item["kind"] == "open"]
@@ -208,8 +233,16 @@ def cmd_start(args) -> None:
                 continue
             todo.append((key, question, provider))
     if not todo:
+        if dropped:
+            gc.write_json(_state_path(date), state)
         payload = progress(state)
         payload["started"] = 0
+        if dropped:
+            payload["dropped"] = dropped
+        if payload["finished"] or (phase == "open" and payload["phases"]["open"]["finished"]):
+            # 这一天已经问过了。没有新问的题时什么都不会重新问，免得员工以为“重新体检”了
+            payload["next"] = ("这一天的问题都已经问过，这次没有重新提问，用的是已有的回答（接着上一次）。"
+                               "商家要“重新测一次”，执行 start --phase open --fresh；否则按原来的进度继续：" + payload["next"])
         gc.emit(payload)
         return
     query_command()  # 环境不可用时在这里直接报清楚，不要每条都失败一遍
@@ -245,6 +278,10 @@ def cmd_start(args) -> None:
     gc.mark_changed("体检进度")
     payload = progress(state)
     payload["started"] = started
+    if archived:
+        payload["archived"] = archived  # 上一次的结果挪到了这个目录
+    if dropped:
+        payload["dropped"] = dropped
     if errors:
         payload["startErrors"] = len(errors)
     gc.emit(payload)
@@ -317,6 +354,7 @@ def main() -> None:
     p.add_argument("--only", default="")
     p.add_argument("--retry", action="store_true")
     p.add_argument("--force", action="store_true")
+    p.add_argument("--fresh", action="store_true")  # 同一天重新测一次
     p.set_defaults(func=cmd_start)
     p = sub.add_parser("wait")
     p.add_argument("--date", default="")

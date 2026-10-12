@@ -645,6 +645,87 @@ def test_shop_template():
               and "本店自己加的模块" not in Path(back["file"]).read_text(encoding="utf-8"), reset)
 
 
+def _quick_round(env, tmp, date, questions):
+    call(RUN, "start", "--phase", "open", "--date", date, env=env)
+    wait_all(env, date)
+    call(RUN, "start", "--phase", "brand", "--date", date, env=env)
+    wait_all(env, date)
+
+
+def test_data_reliability():
+    """同一天重新体检要真的重新问；删掉的问题不再算进这一期；数据不全的期次不拿来判断涨跌。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp, GEO_FAKE_NOW=DATE + "T10:00:00+08:00")
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
+        questions = [q for q in SYNTHETIC_QUESTIONS if q["id"] not in ("q04", "q05")]
+        call(STATE, "set-questions", "--file", write(tmp, "q.json", questions), env=env)
+        call(STATE, "set-rivals", "--file", write(tmp, "r.json", [{"name": "甲记面包"}]), env=env)
+        _quick_round(env, tmp, DATE, questions)
+        call(SCORE, "score", "--date", DATE, env=env)
+        call(SCORE, "set-judgement", "--date", DATE, "--file", write(tmp, "j.json", {"descriptions": {"hunyuan": "旧的介绍"}, "issues": []}), env=env)
+
+        again = call(RUN, "start", "--phase", "open", "--date", DATE, env=env)
+        check("同一天再发起：说清这是接着上一次（没有重新问），并告诉怎么重新测",
+              again["started"] == 0 and "--fresh" in again["next"], again.get("next"))
+        log = Path(env["MOCK_STATE"])
+        before = log.read_text(encoding="utf-8") if log.exists() else ""
+        fresh = call(RUN, "start", "--phase", "open", "--fresh", "--date", DATE, env=env)
+        check("重新测一次：不带店名的问题全部重新发起，带店名的要等它们返回后重新问",
+              fresh["started"] == 24 and fresh["phases"]["brand"]["started"] is False, fresh)
+        run_dir = Path(env["GEO_DATA_ROOT"]) / "runs" / DATE
+        check("重新测时，上一次的算分和核对挪走留底，不会被当成这一次的",
+              not (run_dir / "summary.json").exists() and not (run_dir / "judgement.json").exists()
+              and any(p.name.startswith("old-") for p in run_dir.iterdir()), sorted(p.name for p in run_dir.iterdir()))
+        wait_all(env, DATE)
+        call(RUN, "start", "--phase", "brand", "--date", DATE, env=env)
+        done = wait_all(env, DATE)
+        check("重新测完整轮结束", done["finished"] is True and done["done"] == 30, done)
+
+        call(STATE, "set-questions", "--file", write(tmp, "q2.json", [q for q in questions if q["id"] != "q01"]), env=env)
+        scored = call(SCORE, "score", "--date", DATE, env=env)
+        summary = json.loads((run_dir / "summary.json").read_text(encoding="utf-8"))
+        check("删掉 q01 后重新算分：这一期不再算它，问题数和回答数跟着变",
+              "q01" not in summary["mention"]["byQuestion"] and "q01" not in summary["cells"] and summary["expected"] == 27
+              and scored["mention"]["valid"] < 48, (sorted(summary["mention"]["byQuestion"]), summary["expected"]))
+        call(SCORE, "set-judgement", "--date", DATE, "--file", write(tmp, "j2.json", {"descriptions": {"hunyuan": "新的介绍"}, "issues": []}), env=env)
+        built = call(REPORT, "build", "--date", DATE, env=env)
+        _, _, data = page_json(built["reportFiles"][0])
+        check("报告里的问题清单也没有 q01，和监测设置一致", "q01" not in [q["id"] for q in data["questions"]], [q["id"] for q in data["questions"]])
+
+
+def test_trend_skips_incomplete():
+    """三期里中间一期数据不全：不判断涨跌，并说明为什么不能比。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        root = Path(env["GEO_DATA_ROOT"])
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
+
+        def period(day, hits, complete):
+            bucket = {"hits": hits, "valid": 40}
+            summary = {"questionsVersion": 1, "expected": 36, "returned": 36 if complete else 20, "missing": [], "complete": complete,
+                       "memoryFlagged": 0, "answers": {}, "cells": {},
+                       "mention": dict(bucket, byProvider={p: {"hits": 0, "valid": 0} for p in ("hunyuan", "doubao", "deepseek")},
+                                       byQuestion={"q01": bucket}),
+                       "refs": {"total": 0, "own": 0, "storePages": 0, "aboutStore": 0, "ownItems": [], "storePageItems": [], "aboutItems": []},
+                       "sources": {"all": [], "byProvider": {}}, "rivals": [], "buyEntry": None}
+            folder = root / "runs" / day
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
+
+        period("2026-09-21", 9, True)
+        period("2026-09-28", 5, False)
+        period("2026-10-05", 2, True)
+        compared = call(REPORT, "compare", "--date", "2026-10-05", env=env)
+        check("中间一期数据不全：不判断涨跌，不拿它当上一期，并说明不能比",
+              compared["trend"] == "observe" and compared["previous"] == ""
+              and any("不全" in n and "比" in n for n in compared["notes"]), compared)
+        period("2026-09-28", 5, True)
+        compared = call(REPORT, "compare", "--date", "2026-10-05", env=env)
+        check("三期都完整、连续两期下降，才写下降", compared["trend"] == "down" and compared["previous"] == "2026-09-28", compared)
+
+
 def test_copies():
     copies = [(SKILLS / name / "scripts" / "geo_common.py").read_bytes() for name in ("geo-profile", "geo-check", "geo-weekly")]
     check("三个技能里的 geo_common.py 内容一致", copies[0] == copies[1] == copies[2])
@@ -789,7 +870,7 @@ def test_pages_render():
 
 if __name__ == "__main__":
     try:
-        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_facts_merge, test_new_agent_guards, test_pages, test_shop_template, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render):
+        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_facts_merge, test_new_agent_guards, test_pages, test_shop_template, test_data_reliability, test_trend_skips_incomplete, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render):
             try:
                 test()
             except AssertionError as exc:

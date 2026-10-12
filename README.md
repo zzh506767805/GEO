@@ -83,7 +83,7 @@
 python3 tests/run_tests.py
 ```
 
-共 157 项。它用 `mock_ai_query.py` 模拟“问 AI”、用 `mock_upload.py` 模拟云盘上传，跑通全过程，并逐步核对同步状态、确认的规则、内容按类型登记的规则、多期时首页的数怎么显示，以及“报告上不能出现写给员工看的话”。
+共 165 项。它用 `mock_ai_query.py` 模拟“问 AI”、用 `mock_upload.py` 模拟云盘上传，跑通全过程，并逐步核对同步状态、确认的规则、内容按类型登记的规则、多期时首页的数怎么显示，以及“报告上不能出现写给员工看的话”。
 
 如果上一级目录里有 `GEO实测/2026-10-08-麦的日尝/结果`，还会回放那次真实存档，核对算出来的数，并重新生成 `示例/麦的日尝/` 里的两个网页。
 
@@ -130,7 +130,7 @@ node tests/page_smoke.cjs <工作台或报告.html> [更多文件]
 
 ```
 geo_state.py   status | init | show | set-facts [--replace]（默认合并，没传的字段保留）| set-questions | set-rivals | set-assets | confirm
-geo_run.py     start --phase open|brand [--only q01,q03] [--retry] | wait [--max-seconds 90] | status
+geo_run.py     start --phase open|brand [--only q01,q03] [--retry] [--fresh 同一天重新测] | wait [--max-seconds 90] | status
 geo_score.py   score | brand-digest | set-judgement | issues [--status S] | mark-issue --no N --status done|dismissed|open
 geo_report.py  publish | links | show | compare | set-actions
                add-content | contents [--no N] | mark-content [--no N] [--status S] [--channel 去向] [--ref 凭据]

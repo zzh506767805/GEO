@@ -214,7 +214,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 | 商家说 | 做法 |
 | --- | --- |
-| “把 Q3 换一个问法”“把 Q3 删掉”“加一道题：……” | `show --part questions` → `set-questions`；提醒商家：改了问题原文，之前的数就不能和之后的比了。然后按 `geo-check` 只重跑改过的题、重新算分 → `publish` |
+| “把 Q3 换一个问法”“把 Q3 删掉”“加一道题：……” | `show --part questions` → `set-questions`；提醒商家：改了问题原文，之前的数就不能和之后的比了。然后按 `geo-check` 只重跑改过、新加的题，重新算分（删掉的题不用重跑，重新算分时这一期就不再算它）→ `publish` |
 | “同类店换成……” | `set-rivals --file <文件>`（`[{"name": "", "aliases": []}]`，最多 5 家），按 `geo-check` 重新算分 → `publish` |
 | “我的公众号叫……”“我的抖音号是……” | 只传这一项，例如 `{"channels": {"wechatOfficial": "某某"}}`，`set-facts` 时加 `--confirmed-by-merchant`；抖音号还要按第 5 步查它的作品编号。然后按 `geo-check` 重新算分 → `publish` |
 | “这些信息没问题，确认”“确认” | `confirm` → `publish` |

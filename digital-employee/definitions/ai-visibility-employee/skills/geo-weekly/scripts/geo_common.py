@@ -125,6 +125,18 @@ def resolve_date(value: str = "") -> str:
     return dates[-1]
 
 
+def drop_removed_questions(state: dict, bank_ids) -> list:
+    """体检记录里那些已经从问题清单删掉的题：挪进 removed 留底，不再统计，也不出现在报告里。
+
+    只用于当前这一期（正在体检、或者最新一期重新算分时）。以前各期按当时的问题算，保留原样。
+    返回被挪走的问题编号。
+    """
+    keys = [key for key, item in (state.get("items") or {}).items() if item.get("qid") not in bank_ids]
+    for key in keys:
+        state.setdefault("removed", {})[key] = state["items"].pop(key)
+    return sorted({key.rpartition("_")[0] for key in keys})
+
+
 def read_json(path: Path, default=None):
     try:
         with open(path, encoding="utf-8") as handle:

@@ -294,8 +294,24 @@ def build_summary(date: str) -> dict:
     return summary
 
 
+def _drop_removed(date: str) -> list:
+    """最新一期按现在的问题清单算：商家删掉的题不再算进去。以前各期按当时问的题算，不动。"""
+    if date != gc.latest_run_date():
+        return []
+    path = gc.run_dir(date) / "queries.json"
+    state = gc.read_json(path)
+    if not state:
+        return []
+    bank = {q["id"] for q in (gc.read_json(gc.profile_dir() / "questions.json", {}) or {}).get("items") or []}
+    dropped = gc.drop_removed_questions(state, bank) if bank else []
+    if dropped:
+        gc.write_json(path, state)
+    return dropped
+
+
 def cmd_score(args) -> None:
     date = gc.resolve_date(args.date)
+    dropped = _drop_removed(date)
     summary = build_summary(date)
     gc.write_json(gc.run_dir(date) / "summary.json", summary)
     mention = summary["mention"]
@@ -316,6 +332,8 @@ def cmd_score(args) -> None:
         "buyEntry": summary["buyEntry"],
         "notes": [],
     }
+    if dropped:
+        digest["notes"].append("这几道题已经从问题清单里删掉，这一期不再算：" + "、".join(dropped))
     if not summary["complete"]:
         digest["notes"].append("本轮缺失的查询超过四分之一，周报要注明“本周数据不全”")
     if summary["memoryFlagged"]:
