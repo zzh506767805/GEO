@@ -322,8 +322,14 @@ def cmd_score(args) -> None:
         digest["notes"].append("有 %d 个回答带着历史对话的痕迹，已从提及统计里剔除" % summary["memoryFlagged"])
     if not summary["rivals"]:
         digest["candidates"] = summary["candidates"]
-        digest["notes"].append("同类店还没定：从 candidates 里挑 3 家和本店同类的店（不要挑商圈、平台、品类词），用 geo_state.py set-rivals 保存后重新执行 score")
-    digest["next"] = "请执行 brand-digest，读完后用 set-judgement 写回 AI 怎么介绍本店；有和店铺资料对不上的说法才写进 issues，没有就传空数组"
+        if summary["candidates"]:
+            # 同类店没定，报告里“提到了谁”就是空的。先定同类店再往下走，next 和 notes 说的是同一件事
+            digest["next"] = ("同类店还没定：从 candidates 里挑 3 家和本店同品类、同区域的店（不要挑商圈、平台、品类词），"
+                              "带上常见的别名，用 geo-profile 技能里的 geo_state.py set-rivals 保存，然后重新执行 score")
+            digest["notes"].append("同类店还没定，先按 next 选好同类店，再重新执行 score")
+        else:
+            digest["notes"].append("AI 的回答里没有提到别的店，这一期先不选同类店")
+    digest.setdefault("next", "请执行 brand-digest，读完后用 set-judgement 写回 AI 怎么介绍本店；有和店铺资料对不上的说法才写进 issues，没有就传空数组")
     gc.emit(digest)
 
 

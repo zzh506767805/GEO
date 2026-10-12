@@ -7,7 +7,7 @@
 | 路径 | 是什么 |
 | --- | --- |
 | `方案.md` | 产品方案（第六版） |
-| `digital-employee/` | 技能包，结构和 `yzclaw/digital-employee` 仓库一致，可以整体拷进去 |
+| `digital-employee/` | 技能包，结构和 `yzclaw/digital-employee` 仓库一致，可以整体拷进去。要改流程、加页面先看里面的 `definitions/ai-visibility-employee/MAINTAINING.md` |
 | `示例/` | 商家看到的工作台和第 1 期体检报告（麦的日尝 10 月 8 日的真实存档），加八张截图 |
 | `tests/` | 本地测试，不联网 |
 
@@ -19,7 +19,7 @@
 
 | 文件 | 是什么 |
 | --- | --- |
-| `ai-visibility.html` | 工作台。一个固定的链接，三个页面：工作台首页、内容、监测设置。只放跨期的东西 |
+| `ai-visibility.html` | 工作台。一个固定的链接，三个固定页面：工作台首页、内容、监测设置。只放跨期的东西。另外可以有员工用内容块填的页面（示例里没有） |
 | `report-2026-10-08.html` | 第 1 期体检报告。每期一份，是独立的文件。在工作台左边点“第 1 期”，它就在右边打开，不跳页面；也可以单独打开 |
 
 两个文件要放在同一个文件夹里，工作台才找得到报告。
@@ -83,7 +83,7 @@
 python3 tests/run_tests.py
 ```
 
-共 134 项。它用 `mock_ai_query.py` 模拟“问 AI”、用 `mock_upload.py` 模拟云盘上传，跑通全过程，并逐步核对同步状态、确认的规则、内容按类型登记的规则、多期时首页的数怎么显示，以及“报告上不能出现写给员工看的话”。
+共 145 项。它用 `mock_ai_query.py` 模拟“问 AI”、用 `mock_upload.py` 模拟云盘上传，跑通全过程，并逐步核对同步状态、确认的规则、内容按类型登记的规则、多期时首页的数怎么显示，以及“报告上不能出现写给员工看的话”。
 
 如果上一级目录里有 `GEO实测/2026-10-08-麦的日尝/结果`，还会回放那次真实存档，核对算出来的数，并重新生成 `示例/麦的日尝/` 里的两个网页。
 
@@ -129,11 +129,12 @@ node tests/page_smoke.cjs <工作台或报告.html> [更多文件]
 脚本都要用绝对路径执行，入参写成 JSON 文件后用 `--file` 传。每个命令输出一段 JSON，`ok: false` 时 `error` 是原因，退出码是 2。输出里的 `next` 是下一步该做什么。
 
 ```
-geo_state.py   status | init | show | set-facts | set-questions | set-rivals | set-assets | confirm
+geo_state.py   status | init | show | set-facts [--replace]（默认合并，没传的字段保留）| set-questions | set-rivals | set-assets | confirm
 geo_run.py     start --phase open|brand [--only q01,q03] [--retry] | wait [--max-seconds 90] | status
 geo_score.py   score | brand-digest | set-judgement | issues [--status S] | mark-issue --no N --status done|dismissed|open
 geo_report.py  publish | links | show | compare | set-actions
                add-content | contents [--no N] | mark-content [--no N] [--status S] [--channel 去向] [--ref 凭据]
+               pages | set-page --id P --file <json> | remove-page --id P
                build（只在本地生成）| set-page-url --url U [--report 日期] | render --data <json> --out <html>
 ```
 
@@ -156,7 +157,7 @@ geo_report.py  publish | links | show | compare | set-actions
 - 工作台和报告共用一个模板：`geo-weekly/assets/page.html`，数据里的 `kind` 决定出哪一种。样式、图标、交互全在这一个文件里。
 - 以前各期的报告文件生成后不再更新。所以报告嵌在工作台里用到的两个约定（地址里的 `#embed`、`report-ready` 消息）以后只能加、不能改，否则旧报告在新工作台里会显示不对。
 - **往工作台加页面或者往首页加模块之前先问两件事：它放的是不是跨期的东西；商家要在上面做什么。** 某一期分析出来的东西，放进报告当一节。导航和首页上放什么，等于告诉商家我们主要做什么。
-- 增减工作台的页面或报告的小节：`geo_report.py` 的 `PAGES` / `REPORT_SECTIONS`、模板里的 `NAV` / `SECTIONS`、`workbench.md` 里的两张表要一起改，测试会核对三处一致。
+- 加工作台的页面：只在 `geo-weekly/assets/pages.json` 里加一项，员工用 `geo_report.py set-page` 填内容块，不用改模板和脚本；商家也可以让员工单独给他加一页。只有内容块拼不出来的页面才要写代码。增减报告的小节：`geo_report.py` 的 `REPORT_SECTIONS`、模板里的 `SECTIONS`、`workbench.md` 里的小节表要一起改，测试会核对。详见 `MAINTAINING.md`。
 - **脚本里有一类文字会原样出现在商家的报告上：`readerNotes` 和报告里追加的 `notes`（“读这份报告前要知道的”）。** 它们要用对商家说话的口吻，称呼用“你”，不能写给员工看的提示。给员工的提示放在命令输出的 `notes` 和 `next` 里。测试会查这类文字里有没有“商家”“周报”这类词。
 - 模板里动态拼出来的类名要加前缀。踩过两次：条形图的 `.bar` 和顶栏撞名；时间线图标直接用事件类型当类名，`content` 和页面容器撞名。这类问题逐页渲染检查抓不到，要看截图。
 - 颜色用的是龙虾客户端的主题变量；页面里的龙虾形象取自客户端仓库的应用图标（`src/renderer/src/assets/images/app-icon.png`，缩到 88 像素后内嵌）。

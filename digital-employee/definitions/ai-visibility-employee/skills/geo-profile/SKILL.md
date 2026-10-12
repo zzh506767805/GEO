@@ -18,11 +18,13 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 ## 开始前
 
-- 脚本一律用绝对路径执行，工作目录保持在当前会话工作目录：
+- **每条命令都写全路径**，例如：
 
 ```bash
 python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" status
 ```
+
+  不要先定义 `S=...` 这类变量、在后面的命令里再用：两次命令之间 shell 变量不一定保留。下文表格里写的 `geo_state.py ...`、`set-facts`、`show` 都是这个全路径的简写。工作目录保持在当前会话工作目录。
 
 - 入参先写成 JSON 文件，放在会话临时目录 `$YOUZAN_AGENT_SESSION_TEMP/geo/` 下，再用 `--file` 传入。不要把 JSON 写在命令行里。
 - 先执行 `status`。返回 `exists: false` 走“首次建档”，否则走“修改”。
@@ -37,13 +39,24 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 | 别的叫法、他的公众号、他的抖音号、后台里没有的门店（比如已经关掉的旧店） | 你搜到的或推断的 | **要**。可能认错 |
 | 顾客类型、问题、同类店 | 你归纳的 | 不用确认，但他随时可以改 |
 
-- 从店铺后台读到的资料，`set-facts` 时写 `"from": "backend"`。这样不用等商家确认，就可以替他写内容。
+- 从店铺后台读到的资料，`set-facts` 时写 `"from": "backend"`。这样不用等商家确认，就可以替他写内容。**漏写 `from` 会被当成从公开信息整理的**，脚本会在 `warnings` 里提醒。
 - 查不到店铺后台、资料是从公开信息里整理的，写 `"from": "public"`。这时整份资料都要商家看过才算数，确认之前脚本不让你登记内容。
 - `status` 里的 `pendingConfirm` 为 true，说明有你另外记下的信息还没经过商家确认，`toConfirm` 里列着具体是哪几样。没确认的信息不能写进内容。
 
 ## 首次建档
 
 顺序不能变：先读资料、出题，开通工作台，再体检。不要先问商家一堆问题再干活。
+
+### 要用的其他能力不可用时
+
+建档要用几个别的 Skill。哪个不可用，按下表降级，接着往下做，不要停在那里等，也不要改用别的办法抓数据：
+
+| 不可用的能力 | 怎么办 |
+| --- | --- |
+| `youzan-data-analyst`（查店铺资料） | 按公开信息整理资料，`from` 写 `public`；第 9 步请商家看一眼“监测设置” |
+| `youzan-item`（查商品评价） | 用订单、热销商品和商家说过的话归纳顾客类型；都没有时 `basis` 写“推测” |
+| `youzan-ai-search`（搜账号和内容） | 第 5 步跳过，`set-assets` 里每个平台记 `"found": false, "note": "这次没查到"`；找内容缺口时只用体检的引用 |
+| 问 AI 能力（体检） | 建档照常完成、开通工作台，告诉商家暂时不能体检 |
 
 ### 1. 判断客群类型
 
@@ -114,11 +127,10 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 ### 6. 写入
 
 ```bash
-S="$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py"
-python3 "$S" init --segment local --brand "店名"
-python3 "$S" set-facts --file "$YOUZAN_AGENT_SESSION_TEMP/geo/facts.json"
-python3 "$S" set-questions --file "$YOUZAN_AGENT_SESSION_TEMP/geo/questions.json"
-python3 "$S" set-assets --file "$YOUZAN_AGENT_SESSION_TEMP/geo/assets.json"
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" init --segment local --brand "店名"
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" set-facts --file "$YOUZAN_AGENT_SESSION_TEMP/geo/facts.json"
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" set-questions --file "$YOUZAN_AGENT_SESSION_TEMP/geo/questions.json"
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" set-assets --file "$YOUZAN_AGENT_SESSION_TEMP/geo/assets.json"
 ```
 
 `facts.json`：
@@ -181,9 +193,20 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 报告里有的不要再贴一遍。
 
+## `set-facts` 是合并，不是覆盖
+
+`set-facts` 只改你传了的部分：
+
+- **没传的字段保持原样。** 例如只传 `brand`、`stores`、`products`、`buyEntry`，别名、他的公众号和抖音号、作品编号、顾客类型、写作要求都会留着。
+- `brand`、`buyEntry`、`channels`、`writingRules` 按字段合并：`{"channels": {"douyin": "某某"}}` 只改抖音号。
+- `stores` 里全是后台的门店（`source` 是“有赞后台”）时，你另外记下的门店（比如已经关掉的旧店）会保留；传了非后台的门店，就以这次传的整份门店为准。
+- 要删掉某一项，就把它**传成空值**，例如 `{"channels": {"douyin": ""}}`。
+- 输出里的 `kept` 列出这次原样保留下来的字段，看一眼是不是你想要的。
+- 只有要从头重写整份资料时才加 `--replace`：没传的字段会全部清空。
+
 ## 每期体检前：重读一遍店铺资料
 
-每周体检之前，重新从店铺后台读一遍资料，用 `set-facts` 写回（带 `"from": "backend"`，你另外记下的那几样原样保留）。营业时间改了、多了一家店，这样才能跟上。从后台重读带来的变化不用商家再确认。
+每周体检之前，重新从店铺后台读一遍资料，用 `set-facts` 写回：只传后台读得到的那几样（店名、品类、城市、门店、商品、购买入口），带上 `"from": "backend"`。你另外记下的那几样不用传，脚本会保留。营业时间改了、多了一家店，这样才能跟上。从后台重读带来的变化不用商家再确认。
 
 ## 修改
 
@@ -193,11 +216,11 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 | --- | --- |
 | “把 Q3 换一个问法”“把 Q3 删掉”“加一道题：……” | `show --part questions` → `set-questions`；提醒商家：改了问题原文，之前的数就不能和之后的比了。然后按 `geo-check` 只重跑改过的题、重新算分 → `publish` |
 | “同类店换成……” | `set-rivals --file <文件>`（`[{"name": "", "aliases": []}]`，最多 5 家），按 `geo-check` 重新算分 → `publish` |
-| “我的公众号叫……”“我的抖音号是……” | 记进 `channels`，`set-facts` 时加 `--confirmed-by-merchant`；抖音号还要按第 5 步查它的作品编号。然后按 `geo-check` 重新算分 → `publish` |
+| “我的公众号叫……”“我的抖音号是……” | 只传这一项，例如 `{"channels": {"wechatOfficial": "某某"}}`，`set-facts` 时加 `--confirmed-by-merchant`；抖音号还要按第 5 步查它的作品编号。然后按 `geo-check` 重新算分 → `publish` |
 | “这些信息没问题，确认”“确认” | `confirm` → `publish` |
-| “这个抖音号不是我的”“那家店早就关了” | 先 `show --part facts`，改好后 `set-facts --file <文件> --confirmed-by-merchant` → `publish` |
-| “这类顾客说得不对，其实是……” | 改 `audience`，`set-facts --confirmed-by-merchant`；需要的话相应改问题 → `publish` |
-| “写东西不要用某个词”“口吻随意一点” | 记进 `writingRules`，`set-facts --confirmed-by-merchant` → `publish` |
+| “这个抖音号不是我的”“那家店早就关了” | 先 `show --part facts` 看清现在记的是什么。抖音号不对就传空值（`{"channels": {"douyin": "", "ownContentKeys": []}}`）；门店要传改好的整份 `stores`。加 `--confirmed-by-merchant` → `publish` |
+| “这类顾客说得不对，其实是……” | 传改好的整份 `audience`，`set-facts --confirmed-by-merchant`；需要的话相应改问题 → `publish` |
+| “写东西不要用某个词”“口吻随意一点” | 只传 `writingRules` 里要改的那一项（`bannedWords` 要传完整的列表），`set-facts --confirmed-by-merchant` → `publish` |
 | “营业时间是……”“我们搬到……了” | 这是店铺后台里的资料。按他说的先记下（`--confirmed-by-merchant`），并提醒他把店铺后台也改掉，否则下一期重读时又会变回去 |
 
 你自己改资料时不要加 `--confirmed-by-merchant`。要确认的那部分变了，脚本会自动标成“等商家确认”。

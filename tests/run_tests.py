@@ -246,6 +246,8 @@ def test_synthetic():
         error = call(REPORT, "add-content", "--file", write(tmp, "c-notype.json", dict(text_item, type="")), env=env, expect=2)
         check("登记内容要写明类型", "wechat" in error.get("error", "") and "小红书笔记" in error.get("error", ""), error)
         error = call(REPORT, "add-content", "--file", write(tmp, "c-short.json", {"type": "text", "title": "只有标题", "body": "太短"}), env=env, expect=2)
+        check("长文正文太短会退回，并说清至少几个字", "至少 80 字" in error.get("error", ""), error)
+        error = call(REPORT, "add-content", "--file", write(tmp, "c-nobody.json", {"type": "text", "title": "只有标题"}), env=env, expect=2)
         check("长文必须带上稿子", "必须带上稿子正文" in error.get("error", ""), error)
         added = call(REPORT, "add-content", "--file", write(tmp, "c-text.json", text_item), env=env)
         check("登记长文：有固定序号、带全文、等商家确认，并提醒别在对话里再贴一遍",
@@ -479,6 +481,121 @@ def test_backend_source():
         keep_page("工作台（资料来自店铺后台，还没体检）", published["file"])
 
 
+def test_facts_merge():
+    """每周从后台重读资料时只传后台读得到的几样：员工另外记下的不能被悄悄清空。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        first = call(STATE, "set-facts", "--file", write(tmp, "f0.json", {k: v for k, v in SYNTHETIC_FACTS.items() if k != "segment"}), env=env)
+        check("资料没写 from 时提醒：后台读来的要写 backend", any("from" in w for w in first["warnings"]), first["warnings"])
+        full = dict(SYNTHETIC_FACTS, **{"from": "backend",
+                    "channels": {"wechatOfficial": "示例小店官方号", "douyin": "示例抖音", "ownContentKeys": ["1234567890"]},
+                    "writingRules": {"bannedWords": ["网红"]},
+                    "stores": SYNTHETIC_FACTS["stores"] + [{"name": "旧店", "address": "测试市旧路 2 号", "status": "已关闭", "source": "大众点评"}]})
+        call(STATE, "set-facts", "--file", write(tmp, "f1.json", full), env=env)
+        weekly = {"from": "backend", "segment": "local", "brand": {"name": "示例小店", "category": "面包", "city": "测试市"},
+                  "stores": [dict(SYNTHETIC_FACTS["stores"][0], hours="09:00-21:00")]}
+        merged = call(STATE, "set-facts", "--file", write(tmp, "f2.json", weekly), env=env)
+        facts = call(STATE, "show", "--part", "facts", env=env)["facts"]
+        check("只传后台的几样：别名、账号、作品编号、顾客类型、写作要求、后台以外的门店都保留，并列出保留了哪些",
+              facts["brand"]["aliases"] == ["Sample Shop"] and facts["channels"]["ownContentKeys"] == ["1234567890"]
+              and facts["audience"] and facts["writingRules"]["bannedWords"] == ["网红"]
+              and [s["name"] for s in facts["stores"]] == ["测试路店", "旧店"] and facts["stores"][0]["hours"] == "09:00-21:00"
+              and "brand.aliases" in merged.get("kept", []) and "channels" in merged.get("kept", []), (facts, merged.get("kept")))
+        cleared = call(STATE, "set-facts", "--file", write(tmp, "f3.json", {"channels": {"douyin": ""}}), env=env)
+        facts = call(STATE, "show", "--part", "facts", env=env)["facts"]
+        check("要删掉某一项就把它传成空值；只传一样也行", facts["channels"]["douyin"] == "" and facts["channels"]["wechatOfficial"] == "示例小店官方号"
+              and cleared["changed"] is True, facts["channels"])
+        call(STATE, "set-facts", "--replace", "--file", write(tmp, "f4.json", weekly), env=env)
+        facts = call(STATE, "show", "--part", "facts", env=env)["facts"]
+        check("--replace 整份覆盖：没传的都清空", facts["brand"]["aliases"] == [] and facts["audience"] == [] and len(facts["stores"]) == 1, facts)
+
+
+def test_new_agent_guards():
+    """一个新员工照着 next 做，不会跳过选同类店；先写了“这期不写”后来又写了内容，会被提醒。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
+        questions = [q for q in SYNTHETIC_QUESTIONS if q["id"] not in ("q04", "q05")]
+        call(STATE, "set-questions", "--file", write(tmp, "q.json", questions), env=env)
+        call(RUN, "start", "--phase", "open", "--date", DATE, env=env)
+        wait_all(env, DATE)
+        call(RUN, "start", "--phase", "brand", "--date", DATE, env=env)
+        wait_all(env, DATE)
+        scored = call(SCORE, "score", "--date", DATE, env=env)
+        check("同类店没定时，next 让员工先选同类店，而不是直接去核对",
+              scored.get("candidates") and "set-rivals" in scored["next"] and "brand-digest" not in scored["next"], scored.get("next"))
+        call(STATE, "set-rivals", "--file", write(tmp, "r.json", [{"name": "甲记面包"}, {"name": "乙家烘焙"}]), env=env)
+        scored = call(SCORE, "score", "--date", DATE, env=env)
+        check("同类店定了以后，next 才是去核对", "brand-digest" in scored["next"] and "candidates" not in scored, scored.get("next"))
+        call(SCORE, "set-judgement", "--date", DATE, "--file", write(tmp, "j.json", {"descriptions": {"hunyuan": "一家面包店"}, "issues": []}), env=env)
+        call(REPORT, "set-actions", "--date", DATE, "--file", write(tmp, "a.json", {"brief": "小结", "contentNote": "这一期先不写"}), env=env)
+        body = "示例小店在测试市测试路 1 号，每天 9 点到 20 点营业。" * 4
+        call(REPORT, "add-content", "--file", write(tmp, "c.json", {"type": "text", "title": "测试市哪家的吐司好吃", "body": body}), env=env)
+        published = call(REPORT, "publish", "--date", DATE, env=env)
+        check("登记了内容、contentNote 却还写着没写的原因：同步时提醒清掉",
+              any("contentNote" in w and "清掉" in w for w in published.get("warnings", [])), published.get("warnings"))
+        call(REPORT, "set-actions", "--date", DATE, "--file", write(tmp, "a2.json", {"contentNote": ""}), env=env)
+        check("清掉以后不再提醒", "warnings" not in call(REPORT, "publish", "--date", DATE, env=env))
+
+
+def test_pages():
+    """加页面：维护的人在 assets/pages.json 登记，员工用 set-page 填内容块；这家店也可以单独加一页。不用改模板和脚本。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        # 复制一份技能目录，改它的页面清单，模拟维护的人加了一个“活动”页
+        skill = Path(tmp) / "geo-weekly"
+        shutil.copytree(SKILLS / "geo-weekly", skill)
+        registry = json.loads((skill / "assets" / "pages.json").read_text(encoding="utf-8"))
+        registry["pages"].insert(2, {"id": "events", "title": "活动", "icon": "clock", "subtitle": "这个月的活动",
+                                     "guide": "放这个月店里的活动：时间、内容、怎么参加"})
+        (skill / "assets" / "pages.json").write_text(json.dumps(registry, ensure_ascii=False), encoding="utf-8")
+        report = skill / "scripts" / "geo_report.py"
+        env = base_env(tmp)
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
+        call(STATE, "set-questions", "--file", write(tmp, "q.json", SYNTHETIC_QUESTIONS), env=env)
+        listed = call(report, "pages", env=env)
+        check("登记了但还没填的页面，pages 会列出来并带上这一页放什么",
+              [r["id"] for r in listed["pages"]] == ["overview", "content", "events", "settings"]
+              and listed["pages"][2]["filled"] is False and "活动" in listed["next"] and "时间" in listed["pages"][2]["guide"], listed)
+        check("show 也会提醒有页面没填", call(report, "show", env=env).get("pagesToFill") == ["活动"])
+        first = call(report, "publish", env=env)
+        check("没填的页面不放上导航，也不给链接", "活动" not in first["links"], first["links"])
+        error = call(report, "set-page", "--id", "settings", "--file", write(tmp, "p0.json", {"blocks": [{"type": "text", "text": "x"}]}), env=env, expect=2)
+        check("内置页面不能用 set-page 改", "不能用 set-page" in error.get("error", ""), error)
+        error = call(report, "set-page", "--id", "events", "--file", write(tmp, "p1.json", {"blocks": [{"type": "links", "items": [{"text": "a", "url": "javascript:alert(1)"}]}]}), env=env, expect=2)
+        check("内容块里的链接只收 https", "https" in error.get("error", ""), error)
+        error = call(report, "set-page", "--id", "events", "--file", write(tmp, "p2.json", {"blocks": [{"type": "chart"}]}), env=env, expect=2)
+        check("不认识的块会被退回，并列出能用的块", "text" in error.get("error", "") and "table" in error.get("error", ""), error)
+        blocks = [{"type": "stats", "title": "这个月", "items": [{"label": "活动", "value": "2 场"}, {"label": "报名", "value": "18 人", "note": "截至昨天"}]},
+                  {"type": "text", "title": "说明", "text": "周末两场活动。\n<b>不是标签</b>"},
+                  {"type": "table", "title": "活动安排", "columns": ["日期", "活动", "怎么参加"], "rows": [["10 月 18 日", "烘焙课", "小程序报名"], ["10 月 25 日", "新品试吃"]]},
+                  {"type": "list", "title": "注意", "items": ["名额有限", "带上会员码"]},
+                  {"type": "links", "title": "报名入口", "items": [{"text": "小程序", "url": "https://example.com/signup"}]},
+                  {"type": "say", "items": ["加一场活动：……", "把 10 月 25 日的活动删掉"]}]
+        filled = call(report, "set-page", "--id", "events", "--file", write(tmp, "p3.json", {"blocks": blocks}), env=env)
+        check("登记过的页面用登记的标题", filled["title"] == "活动" and filled["shopOnly"] is False and "publish" in filled["next"], filled)
+        error = call(report, "set-page", "--id", "faq", "--file", write(tmp, "p4.json", {"blocks": [{"type": "text", "text": "x"}]}), env=env, expect=2)
+        check("这家店单独加的页面要写标题", "title" in error.get("error", ""), error)
+        call(report, "set-page", "--id", "faq", "--file", write(tmp, "p5.json", {"title": "常见问题", "icon": "chat",
+             "blocks": [{"type": "list", "items": ["几点开门？9 点", "能停车吗？门口有车位"]}]}), env=env)
+        published = call(report, "publish", env=env)
+        _, _, data = page_json(published["file"])
+        check("填好的页面上导航、给链接，顺序跟页面清单走，单独加的排最后",
+              [n["id"] for n in data["nav"]] == ["overview", "content", "events", "settings", "faq"]
+              and published["links"]["活动"] == published["pageUrl"] + "#/events" and "常见问题" in published["links"]
+              and "页面：活动" in published["synced"], (data["nav"], published["links"]))
+        check("表格的空格子补齐，文字原样保存（页面上按纯文字显示）",
+              data["customPages"]["events"]["blocks"][2]["rows"][1] == ["10 月 25 日", "新品试吃", ""]
+              and "<b>" in data["customPages"]["events"]["blocks"][1]["text"], data["customPages"]["events"]["blocks"])
+        keep_page("工作台（维护的人加了一页，这家店又单独加了一页）", published["file"])
+        removed = call(report, "remove-page", "--id", "faq", env=env)
+        check("单独加的页面可以去掉", removed["ok"] and "常见问题" not in call(report, "publish", env=env)["links"], removed)
+        error = call(report, "remove-page", "--id", "overview", env=env, expect=2)
+        check("内置页面去不掉", "内置页面" in error.get("error", ""), error)
+
+
 def test_copies():
     copies = [(SKILLS / name / "scripts" / "geo_common.py").read_bytes() for name in ("geo-profile", "geo-check", "geo-weekly")]
     check("三个技能里的 geo_common.py 内容一致", copies[0] == copies[1] == copies[2])
@@ -489,10 +606,13 @@ def test_template():
     check("模板里只有数据这一个占位符，龙虾图标已经内嵌", html.count("__GEO_DATA__") == 1 and "__MASCOT_B64__" not in html)
     check("模板不引用外部资源", not re.search(r'(?:src|href)\s*=\s*["\']https?://', html) and "@import" not in html and "url(http" not in html)
     script = REPORT.read_text(encoding="utf-8")
-    in_template = re.findall(r"\['([a-z]+)', '[^']+', '[a-z]+'\]", html)
-    in_script = re.findall(r'\("[^"]+", "([a-z]+)"\)', script.split("PAGES = (")[1].split("\n")[0])
-    check("工作台只有三个页面，脚本给出的链接和模板里的导航一一对应",
-          in_script == ["overview", "content", "settings"] and in_template == in_script, (in_template, in_script))
+    registry = json.loads((SKILLS / "geo-weekly" / "assets" / "pages.json").read_text(encoding="utf-8"))["pages"]
+    builtin = [p["id"] for p in registry if p.get("builtin")]
+    renderers = re.findall(r"([a-z]+): page[A-Z]", html.split("var PAGES = {")[1].split("};")[0])
+    fallback = re.findall(r"\{ id: '([a-z]+)'", html.split("var NAV_ITEMS")[1].split("]);")[0])
+    check("页面清单里的内置页面，模板里都有画它的代码；旧数据没有 nav 时的默认导航也是这几页",
+          builtin == ["overview", "content", "settings"] and sorted(renderers) == sorted(builtin) and fallback == builtin, (builtin, renderers, fallback))
+    in_script = builtin
     sections_template = re.findall(r"\['([a-z]+)', '[^']+'\]", html.split("var SECTIONS = [")[1].split("];")[0])
     sections_script = re.findall(r'\("[^"]+", "([a-z]+)"\)', script.split("REPORT_SECTIONS = (")[1].split("REPORT_FILE")[0])
     check("报告里的小节，脚本和模板一致", len(sections_script) == 5 and sections_template == sections_script, (sections_template, sections_script))
@@ -582,7 +702,9 @@ def test_reader_voice():
         texts = list(data.get("notes") or [])
         seen += len(texts)
         bad += [(label, text) for text in texts if any(word in text for word in READER_BANNED)]
-    check("生成出来的报告上，说明里没有写给员工看的话（查了 %d 条）" % seen, seen >= 3 and not bad, bad[:3])
+    # 真实存档回放会多生成一份报告；本机没有那份存档时少查一条
+    least = 3 if ARCHIVE.is_dir() else 2
+    check("生成出来的报告上，说明里没有写给员工看的话（查了 %d 条）" % seen, seen >= least and not bad, bad[:3])
     for script in (STATE, RUN, SCORE, REPORT):
         if "log_event" in script.read_text(encoding="utf-8"):
             check("脚本里不再记工作记录（页面上已经不显示了）", False, script.name)
@@ -618,7 +740,7 @@ def test_pages_render():
 
 if __name__ == "__main__":
     try:
-        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render):
+        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_facts_merge, test_new_agent_guards, test_pages, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render):
             try:
                 test()
             except AssertionError as exc:

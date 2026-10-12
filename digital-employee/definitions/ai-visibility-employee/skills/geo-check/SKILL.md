@@ -19,22 +19,16 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 - 先确认已经建档：没有建档时改用 `geo-profile` Skill。
 - 每周体检之前，按 `geo-profile` 的“每期体检前”重新读一遍店铺资料。核对用的是它，旧了会对错。
-- 脚本一律用绝对路径执行，工作目录保持在当前会话工作目录：
-
-```bash
-RUN="$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py"
-SCORE="$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py"
-```
-
+- **每条命令都写全路径**：两个脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py"` 和 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py"`。不要先定义 `RUN=...` 这类变量、在后面的命令里再用：两次命令之间 shell 变量不一定保留，变量丢了命令就会去执行一个空路径。下文表格里写的 `geo_run.py ...`、`geo_score.py ...` 都是全路径的简写。工作目录保持在当前会话工作目录。
 - 每个命令的输出里都有 `next`，写着下一步该做什么，照着做。
 
 ## 第一步：提问和等待
 
 ```bash
-python3 "$RUN" start --phase open     # 先问全部不带店名的问题
-python3 "$RUN" wait                   # 等结果，可以反复执行
-python3 "$RUN" start --phase brand    # 不带店名的全部返回后，再问带店名的问题
-python3 "$RUN" wait
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open     # 先问全部不带店名的问题
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" wait                   # 等结果，可以反复执行
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase brand    # 不带店名的全部返回后，再问带店名的问题
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" wait
 ```
 
 顺序不能反。取数账号有记忆，先问带店名的问题，后面的回答会凭空提到这家店。脚本会拦住错误的顺序。
@@ -48,12 +42,12 @@ python3 "$RUN" wait
 - 一段超过 15 分钟还没返回的查询，脚本会自动记为缺失，这一期该题该平台不计分。缺失不需要你补救。
 - `start` 返回 `ok: false` 时按 `error` 处理。如果是“还没有开通问 AI 能力”，告诉商家暂时不能体检，不要尝试其他途径。
 
-只想重跑个别问题（例如商家改了某道题）：`python3 "$RUN" start --phase open --only q03,q07`。
+只想重跑个别问题（例如商家改了某道题）：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --only q03,q07`。
 
 ## 第二步：算分
 
 ```bash
-python3 "$SCORE" score
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" score
 ```
 
 输出里重点看：
@@ -65,12 +59,12 @@ python3 "$SCORE" score
 - `memoryFlagged`：带着之前对话痕迹的回答数，已自动剔除。
 - `notes`：需要在周报里说明的情况。
 
-如果输出里有 `candidates`，说明同类店还没定：从里面挑 3 家和本店同品类、同区域的店（不要挑商圈、平台和品类词），带上常见的别名，用 `geo-profile` 的 `set-rivals` 保存，再执行一次 `score`。
+如果输出里有 `candidates`（这时 `next` 也会让你先选同类店），说明同类店还没定：从里面挑 3 家和本店同品类、同区域的店（不要挑商圈、平台和品类词），带上常见的别名，用 `geo-profile` 的 `set-rivals` 保存，再执行一次 `score`。
 
 ## 第三步：核对 AI 怎么介绍这家店
 
 ```bash
-python3 "$SCORE" brand-digest
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" brand-digest
 ```
 
 它输出店铺资料（`facts`）、之前记过的对不上的说法（`knownIssues`），以及全部带店名的回答和提到本店的回答，每个回答带着它引用的内容。
@@ -78,7 +72,7 @@ python3 "$SCORE" brand-digest
 读完后按 `references/judging.md` 写两样东西，存成 JSON 文件后交给脚本：
 
 ```bash
-python3 "$SCORE" set-judgement --file "$YOUZAN_AGENT_SESSION_TEMP/geo/judgement.json"
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" set-judgement --file "$YOUZAN_AGENT_SESSION_TEMP/geo/judgement.json"
 ```
 
 ```json
@@ -121,15 +115,15 @@ python3 "$SCORE" set-judgement --file "$YOUZAN_AGENT_SESSION_TEMP/geo/judgement.
 商家说的序号是报告上显示的。拿不准时先看清单，序号和报告上的一致：
 
 ```bash
-python3 "$SCORE" issues --status open
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" issues --status open
 ```
 
 | 商家说 | 做法 |
 | --- | --- |
-| “3 号我改好了” | `python3 "$SCORE" mark-issue --no 3 --status done` → `publish`。告诉他下一期体检会复查：AI 如果还在这么说，新的报告里会标出来 |
-| “3 号不是错的” | 问清实际情况 → 按 `geo-profile` 把店铺资料改对（`--confirmed-by-merchant`），并提醒他店铺后台里也要是对的 → `python3 "$SCORE" mark-issue --no 3 --status dismissed` → `publish` |
+| “3 号我改好了” | `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" mark-issue --no 3 --status done` → `publish`。告诉他下一期体检会复查：AI 如果还在这么说，新的报告里会标出来 |
+| “3 号不是错的” | 问清实际情况 → 按 `geo-profile` 把店铺资料改对（`--confirmed-by-merchant`），并提醒他店铺后台里也要是对的 → `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" mark-issue --no 3 --status dismissed` → `publish` |
 | “这个出处我改不了，怎么办” | 按 `references/judging.md`：别人写的内容改不了原文，可以发一篇带日期的信息说明，让 AI 有新的依据；地图和点评上的旧门店页可以标记为已关闭。他不想管也可以，不要反复提 |
-| “我标错了，3 号还没改” | `python3 "$SCORE" mark-issue --no 3 --status open` → `publish` |
+| “我标错了，3 号还没改” | `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" mark-issue --no 3 --status open` → `publish` |
 
 ## 体检之后
 

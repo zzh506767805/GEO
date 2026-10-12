@@ -62,12 +62,14 @@
 
 **它交回来的**：排版预览链接。
 
+**`wechat-writer` 不可用时**（当前环境没有这个子 Agent，或者它没有交回预览链接）：不要自己拼 HTML，也不要编一个预览链接。改成写一篇长文（`text`），`whereToPost` 写“公众号”，按长文登记；告诉商家这一篇是文字稿，排版要他在公众号后台自己做。
+
 **登记**：`type`、`title`、`previewUrl`（逐字照抄它给的链接）。手里有文字版可以放进 `body`，没有就不放。
 
 **确认后**：再次委派 `wechat-writer` 把这一篇存入草稿箱，然后记一笔：
 
 ```bash
-python3 "$REPORT" mark-content --no 4 --channel 公众号草稿箱 --ref <它返回的草稿编号>
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" mark-content --no 4 --channel 公众号草稿箱 --ref <它返回的草稿编号>
 ```
 
 `ref` 以后改稿时原样交还给它，让它在原草稿上更新。没有公众号、或者存草稿失败时，如实告诉商家，状态保持“已确认”。
@@ -127,14 +129,14 @@ python3 "$REPORT" mark-content --no 4 --channel 公众号草稿箱 --ref <它返
 1. **登记**。登记了，工作台“内容”页才有它；不登记，它就只存在于对话里。
 
    ```bash
-   python3 "$REPORT" add-content --file "$YOUZAN_AGENT_SESSION_TEMP/geo/content.json"
+   python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" add-content --file "$YOUZAN_AGENT_SESSION_TEMP/geo/content.json"
    ```
 
    ```json
    {"type": "text", "title": "", "bodyFile": "", "reason": "", "forQuestion": "q07", "whereToPost": "知乎", "origin": "weekly"}
    ```
 
-2. **同步工作台**：`python3 "$REPORT" publish`。
+2. **同步工作台**：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" publish`。
 3. **告诉商家**：类型、标题、两三句摘要，和工作台“内容”页的链接。**不要在对话里贴全文**，稿子在工作台上。商家明确要在对话里看时可以贴，贴的必须是登记的那一版。
 4. **等他确认**。他说“第 4 篇可以发”，再按这种类型的“确认后”去做。
 

@@ -8,7 +8,7 @@
   geo_state.py status
   geo_state.py init --segment local|ecom --brand <店名>
   geo_state.py show [--part facts|questions|rivals|assets|all]
-  geo_state.py set-facts --file <json> [--confirmed-by-merchant]
+  geo_state.py set-facts --file <json> [--confirmed-by-merchant] [--replace]
   geo_state.py set-questions --file <json>
   geo_state.py set-rivals --file <json>
   geo_state.py set-assets --file <json>
@@ -135,6 +135,49 @@ def normalize_facts(raw: dict) -> dict:
             "mustInclude": _text_list(rules.get("mustInclude"), 10, 60),
         },
     }
+
+
+# 这几项是对象：只传其中几个字段时，没传的字段保持原样。
+MERGED_OBJECTS = ("brand", "buyEntry", "channels", "writingRules")
+
+
+def _is_backend_store(store) -> bool:
+    return isinstance(store, dict) and "有赞后台" in str(store.get("source") or "")
+
+
+def _filled(value) -> bool:
+    return bool(value) if not isinstance(value, dict) else any(_filled(v) for v in value.values())
+
+
+def merge_facts(current: dict, raw) -> tuple:
+    """把这次传来的资料合进现有的资料，返回 (合并后的资料, 原样保留下来的字段)。
+
+    每周从店铺后台重读时，员工通常只传后台里读得到的那几样。整份覆盖会把员工另外记下的
+    别名、公众号、抖音作品编号、顾客类型、写作要求悄悄清空，所以默认合并：
+      - 没传的字段保持原样；传了的字段（包括传空值）以这次为准；
+      - brand、buyEntry、channels、writingRules 按字段合并；
+      - stores 里如果全是后台的门店，员工另外记下的门店（来源不是“有赞后台”）保留；
+        传了非后台的门店，就以这次传的整份门店为准。
+    """
+    if not isinstance(raw, dict):
+        raise gc.GeoError("店铺资料应为一个对象")
+    merged, kept = dict(current), []
+    for key, value in current.items():
+        if key not in raw and _filled(value):
+            kept.append(key)
+    for key, value in raw.items():
+        old = current.get(key)
+        if key in MERGED_OBJECTS and isinstance(value, dict) and isinstance(old, dict):
+            kept += ["%s.%s" % (key, sub) for sub, before in old.items() if sub not in value and _filled(before)]
+            merged[key] = dict(old, **value)
+        elif key == "stores" and isinstance(value, list) and all(_is_backend_store(s) for s in value):
+            extra = [s for s in old or [] if not _is_backend_store(s)]
+            if extra:
+                kept.append("stores（后台以外的 %d 家）" % len(extra))
+            merged[key] = list(value) + extra
+        else:
+            merged[key] = value
+    return merged, kept
 
 
 def facts_warnings(facts: dict) -> list:
@@ -328,7 +371,14 @@ def cmd_show(args) -> None:
 
 def cmd_set_facts(args) -> None:
     current = _require_facts()
-    facts = normalize_facts(gc.load_input(args.file))
+    raw = gc.load_input(args.file)
+    if args.replace:
+        if isinstance(raw, dict):
+            raw.setdefault("segment", current.get("segment"))
+        facts, kept = normalize_facts(raw), []
+    else:
+        merged, kept = merge_facts(current, raw)
+        facts = normalize_facts(merged)
     changed = facts != current
     gc.write_json(_paths()["facts"], facts)
     if changed:
@@ -343,6 +393,12 @@ def cmd_set_facts(args) -> None:
         gc.mark_changed("店铺资料")
     payload = status_payload()
     payload["changed"] = changed
+    if kept:
+        # 这次没传、原样保留下来的字段。要删掉其中某一项，就在入参里把它传成空值
+        payload["kept"] = kept
+    if "from" not in raw and not args.replace and current.get("from") != "backend" and facts["from"] != "backend":
+        payload["warnings"].append("资料里没有写 from：从店铺后台读到的资料要写 \"from\": \"backend\"，"
+                                   "否则会当成从公开信息整理的，商家确认之前不能替他写内容")
     gc.emit(payload)
 
 
@@ -415,6 +471,7 @@ def main() -> None:
     p = sub.add_parser("set-facts")
     p.add_argument("--file", required=True)
     p.add_argument("--confirmed-by-merchant", action="store_true")
+    p.add_argument("--replace", action="store_true")  # 整份覆盖：没传的字段全部清空。只在要从头重写资料时用
     p.set_defaults(func=cmd_set_facts)
     for name, func in (("set-questions", cmd_set_questions), ("set-rivals", cmd_set_rivals), ("set-assets", cmd_set_assets)):
         p = sub.add_parser(name)

@@ -8,7 +8,9 @@
 
 页面都是只读的：商家在上面看，回到对话里跟你说；你改数据，再同步。
 
-**你不需要、也不要自己写网页。** 样式、图标、交互都在 `assets/page.html` 里，脚本只负责把数据放进去。
+**你不需要、也不要自己写网页。** 样式、图标、交互都在 `assets/page.html` 里，脚本只负责把数据放进去。要在工作台上多放一样东西，用下面的“员工负责的页面”：你只写内容块，页面由模板画。
+
+本文表格里的 `geo_report.py ...`、`geo_state.py ...`、`geo_run.py ...`、`geo_score.py ...` 都是简写，执行时每条命令都写全路径：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/<技能>/scripts/<脚本>"`。geo_report.py 在 geo-weekly 下，geo_state.py 在 geo-profile 下，geo_run.py 和 geo_score.py 在 geo-check 下。
 
 ## 三条规则
 
@@ -46,6 +48,7 @@
 | 找内容缺口 | `set-actions` 的 `gaps` | 这一期的报告 · 读哪里的内容；工作台 · 内容 |
 | 写内容（公众号文章、小红书笔记、长文） | `geo_report.py add-content`，要写明类型 | 工作台 · 内容；有等他确认的，首页会多出一块“等你确认的内容” |
 | 内容确认了、放进草稿箱了、发出去了 | `geo_report.py mark-content --no N …` | 工作台 · 内容 |
+| 填员工负责的页面（登记好的，或这家店单独加的） | `geo_report.py set-page --id <页面> --file …` | 工作台 · 那一页，排在三个固定页面之后 |
 
 工作台首页只有这几样：最新一期的结论和你写的小结、四个数、等他确认的内容（有才出现）、每一期的报告。不要指望在首页上放别的东西；某一期的分析都在那一期的报告里。
 
@@ -99,10 +102,10 @@ AI 介绍这家店时，有的说法会和店铺资料对不上（旧地址、�
 
 | 商家说 | 做法 |
 | --- | --- |
-| “把 Q3 换一个问法”“把 Q3 删掉”“加一道题：……” | 按 `geo-profile` 改问题（Q3 就是 `q03`，B1 就是 `b01`），提醒他之前的数不能和之后比 → 按 `geo-check` 只重跑改过的题 → `publish` |
-| “同类店换成……”“把同类店换成我真正的对手” | 按 `geo-profile`：`set-rivals` → 重新 `score` → `publish` |
-| “我的公众号叫……”“我的抖音号是……”“这些信息没问题，确认” | 按 `geo-profile` 记下或确认 → `publish` |
-| “写东西不要用某个词” | 按 `geo-profile` 记进写作要求 → `publish` |
+| “把 Q3 换一个问法”“把 Q3 删掉”“加一道题：……” | 按 `geo-profile` 的“修改”做（Q3 就是 `q03`，B1 就是 `b01`）→ `publish` |
+| “同类店换成……”“把同类店换成我真正的对手” | 按 `geo-profile` 的“修改”做 → `publish` |
+| “我的公众号叫……”“我的抖音号是……”“这些信息没问题，确认” | 按 `geo-profile` 的“修改”做 → `publish` |
+| “写东西不要用某个词” | 按 `geo-profile` 的“修改”做 → `publish` |
 | “写一篇公众号文章：……”“写一条小红书笔记：……” | 按 `content-types.md` 里那种类型的写法写，`origin` 写 `asked` → `add-content` → `publish` |
 | “同一个主题再写一条小红书笔记” | 重新写一份笔记，不要拿原来的稿子删减 → `add-content`（类型 `xhs`）→ `publish` |
 | “第 4 篇可以发” | `mark-content --no 4 --status confirmed` → 按这种类型的“确认后”去做：公众号文章委派 `wechat-writer` 存草稿箱，再 `mark-content --no 4 --channel 公众号草稿箱 --ref <草稿编号>`；其他类型请他在工作台上复制去发 → `publish` |
@@ -110,16 +113,17 @@ AI 介绍这家店时，有的说法会和店铺资料对不上（旧地址、�
 | “把第 4 篇存进公众号草稿箱” | 只有公众号文章能存。先确认状态是已确认 → 委派 `wechat-writer` → `mark-content --no 4 --channel 公众号草稿箱 --ref <草稿编号>` → `publish` |
 | “第 4 篇标题改短一点”“第 4 篇再改一下：……” | `contents --no 4` 取回稿子 → 改稿（公众号文章让 `wechat-writer` 改，拿新的预览链接）→ `add-content` 带上 `"no": 4` → `publish`。他确认过的稿子改了以后要请他再看一眼 |
 | “第 4 篇不发了”“这周先不写” | `mark-content --no 4 --status dropped`；这周不写就用 `set-actions` 把原因写进 `contentNote` → `publish` |
-| “你建议的那件事我做了”“这件我做不了” | 回一句就行，不用登记。做不了的，下一期不要再提；他处理的如果是报告里的某一号，按下一行做 |
-| “3 号我改好了” | `geo_score.py mark-issue --no 3 --status done` → `publish`。告诉他下一期会复查 |
-| “3 号不是错的” | 问清实际情况 → 按 `geo-profile` 把资料改对 → `mark-issue --no 3 --status dismissed` → `publish` |
+| “你建议的那件事我做了”“这件我做不了” | 回一句就行，不用登记。做不了的，下一期不要再提；他处理的如果是报告里的某一号，按 `geo-check` 记一笔 |
+| “3 号我改好了”“3 号不是错的”“这个出处我改不了” | 按 `geo-check` 的“商家针对某一条来说话”做 → `publish` |
 | “为什么元宝不提我”“怎么让 AI 多提我” | 用这一期报告里的内容回答：这道题 AI 引用的是谁的内容，这家店在那些地方有没有内容。给 `reportUrl` |
-| “重新体检一次” | 按 `geo-check` 全流程 → 按本 Skill 重写小结和建议 → `publish` |
-| “现在体检到哪一步了” | `geo_run.py status`，用一句话说进度 |
+| “重新体检一次”“现在体检到哪一步了” | 按 `geo-check` 做；重新体检完按本 Skill 重写小结和建议 → `publish` |
 | “这周怎么样” | `compare` 的结果，加 `reportUrl`。不重新体检 |
 | “把报告发我”“第 2 期的报告发我” | `geo_report.py links`：最新一期给 `reportUrl`，以前的在 `reports` 里按日期找 |
 | “把报告单独发我一份，我要转给合伙人” | `links` 里的 `reportFileUrl`（以前各期在 `reportFiles` 里）。这个链接打开只有报告，没有工作台的导航 |
-| “你都做了哪些事” | `geo_report.py show` 的 `totals`（体检了几期、写了几篇、发了几篇），两三句话概括，给工作台首页的链接 |
+| “你都做了哪些事”“之前几期怎么样” | `geo_report.py show` 的 `totals`（体检了几期、写了几篇、发了几篇），两三句话概括，给工作台首页的链接 |
+| “把工作台发我”“我想看看整体情况” | `geo_report.py links`；`pending` 不为空先 `publish`。给“工作台”的链接 |
+| “工作台上加一个页面，放……”“把活动安排放到工作台上” | 先看是不是已经有合适的页面（`geo_report.py pages`）。没有、而且放的是跨期的、商家会反复来看的东西，就按下面的“员工负责的页面”单独加一页 → `publish`，给 `links` 里这一页的链接。某一期的分析不要做成页面，它在那一期的报告里 |
+| “活动页上的……改一下”“那个页面不要了” | 改：`set-page` 传整页的新内容块 → `publish`；不要了：`geo_report.py remove-page --id <页面>` → `publish` |
 
 商家说的序号都是页面上显示的：问题是 Q1、B1，内容是“第 4 篇”，报告里对不上的说法是“3 号”。拿不准时先用 `geo_report.py contents` 或 `geo_score.py issues` 对一下，不要猜。
 
@@ -147,7 +151,7 @@ AI 介绍这家店时，有的说法会和店铺资料对不上（旧地址、�
 
 ## 页面清单
 
-工作台有三个页面。加页面之前先想清楚：它放的是不是跨期的东西，商家要在上面做什么。某一期分析出来的东西放进报告，不要放上工作台的导航。
+工作台固定有三个页面，由脚本按存档生成。另外还可以有员工负责的页面（见下一节），它们排在这三个页面之后，链接末尾是 `#/` 加页面的 id，`publish` 和 `links` 的输出里会给出来。
 
 | 工作台的页面 | 链接末尾 | 商家在这里做什么 |
 | --- | --- | --- |
@@ -169,12 +173,53 @@ AI 介绍这家店时，有的说法会和店铺资料对不上（旧地址、�
 
 还没体检过的时候，工作台首页显示“现在到哪一步了”，没有报告，这是正常的。
 
-## 改页面样式时的规矩（给维护的人）
+## 员工负责的页面
 
-- 只改 `assets/page.html`，工作台和报告共用这一个模板，数据里的 `kind` 决定出哪一种。模板不要挪到 `references/` 或 `scripts/` 下面。
-- 颜色只用文件开头定义的变量，取值和有赞龙虾客户端一致，深色模式有另一套值。
-- 不引用任何外部资源。数据只放在 `<script type="application/json" id="geo-data">` 里，页面上的文字一律用 `textContent` 写入。
-- 增减工作台的页面或报告的小节：`geo_report.py` 的 `PAGES` / `REPORT_SECTIONS`、模板里的 `NAV` / `SECTIONS`、本文件的两张表要一起改，测试会核对三处一致。
-- 报告嵌在工作台里靠两个约定：工作台给报告的地址带 `#embed`（报告据此不显示自己的标题）；报告显示出来以后向外发一条 `report-ready` 的消息（工作台等不到，就在上面给一个“单独打开”的入口）。**以前各期的报告文件生成后不再更新，所以这两个约定以后只能加、不能改**，否则旧报告在新工作台里会显示不对。
-- 模板里动态拼出来的类名要加前缀，免得和布局用的类名撞上。
-- 只想看样式：`geo_report.py render --data <页面数据.json> --out <输出.html>`。数据样例是测试目录里的 `fixtures/page-data.demo.json`（工作台）和 `fixtures/report-data.demo.json`（报告），都是虚构的多期数据，页面上会标“演示数据”。
+除了上面三个固定页面，工作台上还可以有由你填写的页面。它们有两种来源：
+
+- **登记好的**：维护的人在 `assets/pages.json` 里加了页面（比如“活动”），每一页带着一段 `guide`，写着放什么、什么时候更新。还没填的会出现在 `geo_report.py show` 的 `pagesToFill` 里。没填之前不会放上导航。
+- **这家店单独加的**：商家要求在工作台上多放一样东西时，你可以单独给他加一页，最多 5 页。
+
+```bash
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" pages
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" set-page --id events --file "$YOUZAN_AGENT_SESSION_TEMP/geo/page-events.json"
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" remove-page --id events
+```
+
+`pages` 列出每一页的 id、有没有填、`guide`，以及能用哪几种内容块。`set-page` 每次传**整页**的内容，会替换这一页原来的内容。登记好的页面不用写 `title`；单独加的页面要写 `title`（12 个字以内），`id` 用小写英文，例如 `faq`、`events`。
+
+```json
+{
+  "title": "活动",
+  "subtitle": "这个月店里的活动",
+  "icon": "clock",
+  "blocks": [
+    {"type": "stats", "title": "这个月", "items": [{"label": "活动", "value": "2 场", "note": ""}]},
+    {"type": "text", "title": "说明", "text": "可以换行的一段文字"},
+    {"type": "table", "title": "活动安排", "columns": ["日期", "活动", "怎么参加"], "rows": [["10 月 18 日", "烘焙课", "小程序报名"]]},
+    {"type": "list", "title": "注意", "items": ["名额有限"]},
+    {"type": "links", "title": "报名入口", "items": [{"text": "小程序", "url": "https://..."}]},
+    {"type": "say", "items": ["加一场活动：……"]}
+  ]
+}
+```
+
+| 块 | 用来放什么 |
+| --- | --- |
+| `text` | 一段说明，可以换行 |
+| `list` | 几条并列的事 |
+| `table` | 有几列的清单，最多 6 列、50 行 |
+| `stats` | 两到四个数，`value` 写成“2 场”“18 人”这样带单位的话 |
+| `links` | 链接，只收 `https`。链接只能来自查询结果或商家提供的，不能凭记忆填 |
+| `say` | 页面最下面“可以这样跟员工说”的话，商家点一下就能复制。写上他在这一页最可能想让你做的两三件事 |
+
+规矩：
+
+- 页面上的每一个事实都要有出处：店铺资料、店铺数据、体检存档，或者商家亲口说的。不编造，不写“第一”“最好”。
+- 放跨期的、商家会反复来看的东西。某一期的分析在那一期的报告里，不要做成页面。
+- 页面也是只读的：商家在上面看，回到对话里跟你说，你改了再 `set-page` → `publish`。
+- 你只写内容块，不写网页、不写样式。块不够用，告诉商家这个页面现在做不了，不要硬塞。
+
+## 改页面样式、加页面类型（给维护的人）
+
+员工不用读这一节。怎么改工作台和报告的样式、怎么给所有店加一个页面、怎么加报告的小节、内容类型和内容块，都写在员工定义目录下的 `MAINTAINING.md` 里。
