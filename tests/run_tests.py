@@ -81,7 +81,7 @@ def read_all(env, tmp, date, only="", shops=MOCK_SHOPS):
         out = call(SCORE, "answers", "--provider", provider, "--date", date, *(["--only", only] if only else []), env=env)
         answers = {a["answer"]: [n for n in shops if n in a["text"] and n != "手工面包"] for a in out["answers"] if a["listShops"]}
         files += ["--file", write(tmp, "reading-%s.json" % provider, {"provider": provider, "answers": answers})]
-    return call(SCORE, "set-shops", "--date", date, *files, env=env)
+    return call(SCORE, "set-reading", "--date", date, *files, env=env)
 
 
 def wait_all(env, date):
@@ -115,7 +115,7 @@ SYNTHETIC_FACTS = {
 SYNTHETIC_QUESTIONS = [
     {"id": "q01", "kind": "open", "tag": "品类", "text": "测试市哪家面包店好吃？", "audience": "附近居民", "worry": "口碑"},
     {"id": "q02", "kind": "open", "tag": "地段", "text": "测试路附近有什么面包店？", "audience": "不存在的人群"},
-    {"id": "q03", "kind": "open", "tag": "场景", "text": "这是一道用来测记忆标记的题目"},
+    {"id": "q03", "kind": "open", "tag": "场景", "text": "这是一道用来测同名的题目"},
     {"id": "q04", "kind": "open", "tag": "场景", "text": "这道题会在某个平台挂起不返回"},
     {"id": "q05", "kind": "open", "tag": "场景", "text": "这道题会在某个平台失败返回"},
     {"id": "q06", "kind": "open", "tag": "单品", "text": "测试市哪家的吐司好吃？"},
@@ -201,34 +201,52 @@ def test_synthetic():
         check("重复发起不会重复提问", noop["started"] == 0, noop)
 
         digest = call(SCORE, "score", "--date", DATE, env=env)
-        check("提及统计：豆包 2/19，其余为 0，带记忆的回答被剔除",
-              digest["mention"]["byProvider"] == {"元宝": "0/18", "豆包": "2/19", "DeepSeek": "0/18"} and digest["memoryFlagged"] == 1, digest["mention"])
+        check("提及统计：按名字算，同名的也先算进去（豆包 3/20），其余为 0",
+              digest["mention"]["byProvider"] == {"元宝": "0/18", "豆包": "3/20", "DeepSeek": "0/18"} and "memoryFlagged" not in digest, digest["mention"])
         check("本店公众号被引用 12 次，门店页 12 次", (digest["refs"]["own"], digest["refs"]["storePages"]) == (12, 12), digest["refs"])
-        check("竞品次数按有效回答数", digest["rivals"][0] == {"name": "甲记面包", "count": 55}, digest["rivals"])
+        check("还没读全文时，同类店次数都是 0，不按名字另算", [r["count"] for r in digest["rivals"]] == [0, 0], digest["rivals"])
+        check("对照表里没有的网站，被引用两次以上的单独成一行；天眼查归到企业信息",
+              {"测试论坛", "企业信息"} <= {x["type"] for x in digest["topSources"]} | {x["type"] for x in json.loads(
+                  (Path(env["GEO_DATA_ROOT"]) / "runs" / DATE / "summary.json").read_text(encoding="utf-8"))["sources"]["all"]}, digest["topSources"])
         check("缺失 2 条不到四分之一，数据算完整", digest["complete"] is True and len(digest["missing"]) == 2)
         check("还没读全文时：提到了谁不出数，next 让员工派子 Agent 读全部题",
-              digest["shops"] == [] and digest["shopsPending"] == 55 and "读全部题" in digest["next"], digest.get("next"))
+              digest["shops"] == [] and digest["shopsPending"] == 56 and "读全部题" in digest["next"], digest.get("next"))
         full = call(SCORE, "answers", "--provider", "doubao", "--date", DATE, env=env)
         check("给子 Agent 的全文：带店铺资料、同类店、每个回答的全文，标明哪些要写店名",
               full["store"]["name"] == "示例小店" and [r["name"] for r in full["rivals"]] == ["甲记面包", "乙家烘焙"]
               and any(a["listShops"] for a in full["answers"]) and any(a["withBrandName"] and not a["listShops"] for a in full["answers"])
               and all(a["text"] for a in full["answers"]), [a["answer"] for a in full["answers"]][:4])
         tag = next(a["answer"] for a in full["answers"] if a["listShops"])
-        bad = call(SCORE, "set-shops", "--date", DATE, "--file", write(tmp, "bad-shops.json", {"answers": {tag: ["丁记面包"]}}), env=env, expect=2)
+        bad = call(SCORE, "set-reading", "--date", DATE, "--file", write(tmp, "bad-shops.json", {"answers": {tag: ["丁记面包"]}}), env=env, expect=2)
         check("写回的店名原文里找不到，整份退回", "找不到" in bad.get("error", ""), bad)
-        own = call(SCORE, "set-shops", "--date", DATE, "--file", write(tmp, "own-shops.json", {"answers": {tag: ["示例小店"]}}), env=env, expect=2)
+        own = call(SCORE, "set-reading", "--date", DATE, "--file", write(tmp, "own-shops.json", {"answers": {tag: ["示例小店"]}}), env=env, expect=2)
         check("本店不能写进“提到了谁”", "本店" in own.get("error", ""), own)
-        partial = call(SCORE, "set-shops", "--date", DATE, "--file", write(tmp, "part-shops.json", {"answers": {tag: ["甲记面包"]}}), env=env)
+        partial = call(SCORE, "set-reading", "--date", DATE, "--file", write(tmp, "part-shops.json", {"answers": {tag: ["甲记面包"]}}), env=env)
         check("只写了一部分：保存，并列出还没写的回答", partial["stillMissing"] and "补齐" in partial["next"], partial.get("next"))
-        merged = call(SCORE, "set-shops", "--date", DATE, "--file", write(tmp, "alias-shops.json",
+        merged = call(SCORE, "set-reading", "--date", DATE, "--file", write(tmp, "alias-shops.json",
                       {"answers": {tag: ["甲记"]}, "names": {"甲记": ["甲记面包"]}}), env=env)
         check("同一家店的不同写法：在 names 里写上原文的写法就能对上", merged["ok"], merged)
         done = read_all(env, tmp, DATE)
         check("三个平台都写回后，没有漏读的回答", done["stillMissing"] == [] and "score" in done["next"], done)
+        same = next(a for a in full["answers"] if "养老服务站" in a["text"])
+        elder = next(r for r in same["refs"] if "养老" in r["title"])
+        bakery = next(r for r in same["refs"] if "工商信息" in r["title"])
+        check("给子 Agent 的全文里标明哪些回答按名字算作提到你、哪些引用按标题算作和你有关",
+              same["mentionedByName"] and elder["relation"] == "about" and bakery["relation"] == "", same["refs"])
+        wrong = call(SCORE, "set-reading", "--date", DATE, "--file", write(tmp, "wrong.json", {"notUs": [tag], "refsNotUs": ["https://nowhere.cn/x"]}), env=env, expect=2)
+        check("复核写错了：没算作提到你的回答、这一期没有的引用，都退回", "不用写进 notUs" in wrong.get("error", "") and "没有这条引用" in wrong.get("error", ""), wrong)
+        call(SCORE, "set-reading", "--date", DATE, "--file", write(tmp, "review.json",
+             {"notUs": [same["answer"]], "refsNotUs": [elder["url"]], "refsAboutUs": [bakery["url"]]}), env=env)
         digest = call(SCORE, "score", "--date", DATE, env=env)
+        check("复核后：同名的不算提到你（豆包 2/20），并在 notes 里说明", digest["mention"]["byProvider"]["豆包"] == "2/20"
+              and digest["notUs"] == [same["answer"]] and any("同名" in n for n in digest["notes"]), digest["mention"])
+        about = json.loads((Path(env["GEO_DATA_ROOT"]) / "runs" / DATE / "summary.json").read_text(encoding="utf-8"))["refs"]["aboutItems"]
+        check("复核后：同名的引用不算和你有关，没写店名但写的是你的算进来",
+              [x["title"] for x in about] == ["测试路面包店工商信息"], [x["title"] for x in about])
+        check("同类店次数和“提到了谁”用同一份店名", digest["rivals"][0] == {"name": "甲记面包", "count": 56}, digest["rivals"])
         shops = {x["name"]: x["count"] for x in digest["shops"]}
         check("提到了谁：按员工读出来的店计数，不只是同类店；不含本店，不含不是店的词",
-              shops.get("甲记面包") == 55 and shops.get("丙记吐司坊") == 6 and "示例小店" not in shops and "手工面包" not in shops, digest["shops"])
+              shops.get("甲记面包") == 56 and shops.get("丙记吐司坊") == 6 and "示例小店" not in shops and "手工面包" not in shops, digest["shops"])
         tag_brand = next(a["answer"] for a in full["answers"] if a["withBrandName"])
         quote = next(a["text"] for a in full["answers"] if a["answer"] == tag_brand).split("\n")[1][:12]
         finding = {"kind": "misread", "title": "豆包把你和别的店放在一起介绍", "detail": "带着店名问豆包时，它先推荐了别的店，再说到你。",
@@ -402,7 +420,7 @@ def test_synthetic():
         _, _, report = page_json(built["reportFiles"][0])
         check("报告带这一期的全部证据：逐题圆点、回答原文、同类店、内容来源",
               report["kind"] == "report" and report["period"] == {"date": DATE, "no": 1, "latest": True}
-              and report["dots"]["q02"]["doubao"] == "hh" and report["dots"]["q03"]["doubao"] == "mn"
+              and report["dots"]["q02"]["doubao"] == "hh" and report["dots"]["q03"]["doubao"] == "nn"
               and len(report["answers"]["q02_doubao"]) == 2 and report["rivals"][0]["name"] == "甲记面包" and report["sources"]["doubao"]
               and {(x["name"], x["rival"]) for x in report["shops"]} >= {("甲记面包", True), ("乙家烘焙", True), ("丙记吐司坊", False)}
               and report["shopsPending"] == 0 and report["findings"][0]["kindName"] == "认错了你"
@@ -493,9 +511,11 @@ def test_replay():
         call(RUN, "start", "--phase", "brand", "--date", DATE, env=env)
         wait_all(env, DATE)
         digest = call(SCORE, "score", "--date", DATE, env=env)
-        check("回放：元宝 0/24、DeepSeek 0/24，豆包剔除 3 个带记忆的回答后是 1/21",
-              digest["mention"]["byProvider"] == {"元宝": "0/24", "豆包": "1/21", "DeepSeek": "0/24"} and digest["memoryFlagged"] == 3, digest["mention"])
-        check("回放：唯一没带记忆痕迹的提及出在留下附近那道题", digest["questionsMentioned"] == ["q11"], digest["questionsMentioned"])
+        # 那次实测豆包还开着记忆，有 3 个回答是记忆带出来的提及；现在不再单独剔除，由员工读全文时复核
+        check("回放：元宝 0/24、DeepSeek 0/24，豆包 24 个回答都计入",
+              digest["mention"]["byProvider"]["元宝"] == "0/24" and digest["mention"]["byProvider"]["DeepSeek"] == "0/24"
+              and digest["mention"]["byProvider"]["豆包"].endswith("/24"), digest["mention"])
+        check("回放：留下附近那道题提到了本店", "q11" in digest["questionsMentioned"], digest["questionsMentioned"])
         check("回放：被提到最多的同类店是 Cycle & Cycle，17 次", digest["rivals"][0] == {"name": "Cycle & Cycle", "count": 17}, digest["rivals"])
         check("回放：主理人账号的抖音视频被引用 1 次", digest["refs"]["own"] == 1, digest["refs"])
         summary = json.loads((Path(env["GEO_DATA_ROOT"]) / "runs" / DATE / "summary.json").read_text(encoding="utf-8"))
@@ -788,7 +808,7 @@ def test_trend_skips_incomplete():
         def period(day, hits, complete):
             bucket = {"hits": hits, "valid": 40}
             summary = {"questionsVersion": 1, "expected": 36, "returned": 36 if complete else 20, "missing": [], "complete": complete,
-                       "memoryFlagged": 0, "answers": {}, "cells": {},
+                       "notUs": [], "answers": {}, "cells": {},
                        "mention": dict(bucket, byProvider={p: {"hits": 0, "valid": 0} for p in ("hunyuan", "doubao", "deepseek")},
                                        byQuestion={"q01": bucket}),
                        "refs": {"total": 0, "own": 0, "storePages": 0, "aboutStore": 0, "ownItems": [], "storePageItems": [], "aboutItems": []},

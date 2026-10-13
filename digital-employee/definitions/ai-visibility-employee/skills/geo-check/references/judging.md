@@ -10,7 +10,6 @@
 ## 通用要求
 
 - 只根据输出里的回答原文判断，不凭印象补充。
-- `memoryTrace` 为 true 的回答带着之前对话的痕迹，不用来核对。
 - `truncated` 为 true 的回答被截短了。需要看全文时，用更大的 `--max-chars` 重新执行 `brand-digest`。
 
 ## descriptions：AI 怎么介绍这家店

@@ -132,7 +132,7 @@ node tests/page_smoke.cjs <工作台或报告.html> [更多文件]
 ```
 geo_state.py   status | init | show | set-facts [--replace]（默认合并，没传的字段保留）| set-questions | set-rivals | confirm | confirm-monitoring | set-schedule --status on|declined|off|unavailable
 geo_run.py     start --phase open|brand [--only q01,q03] [--retry] [--fresh 同一天重新测] | wait [--max-seconds 90] | status
-geo_score.py   score | answers --provider P [--only ...] | set-shops --file F [--file F ...] | set-findings --file F | brand-digest | set-judgement | issues [--status S] | mark-issue --no N --status done|dismissed|open
+geo_score.py   score | answers --provider P [--only ...] | set-reading --file F [--file F ...] | set-findings --file F | brand-digest | set-judgement | issues [--status S] | mark-issue --no N --status done|dismissed|open
 geo_report.py  publish | links | show | compare | set-actions
                add-content | contents [--no N] | mark-content [--no N] [--status S] [--channel 去向] [--ref 凭据]
                pages | set-page --id P --file <json> | remove-page --id P
@@ -177,7 +177,6 @@ geo_report.py  publish | links | show | compare | set-actions
 - 工作台上内容的稿子只带最近 10 条，更早的只留标题和状态。
 - 商家在对话里临时要的内容，员工没登记的话脚本发现不了，只靠规则约束。
 - 小红书笔记的写法只有几条基本规格；抖音文案、视频脚本还没有对应的类型。
-- 记忆痕迹只能认出明说“你之前问过”的回答。
 - 抖音的引用不带作者，只有员工记下过作品编号的视频才能认出是本店的。
 - 每家店的周任务都在周一 9 点触发，没有错峰。
 - 真实数据只有一期，多期的展示只用虚构数据测过；真实示例的店铺资料是公开信息整理的，“资料来自店铺后台”这条主路径只用合成数据测过。

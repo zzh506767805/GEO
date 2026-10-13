@@ -59,16 +59,24 @@ def synthetic(provider, question):
             parts.append("4. **丙记吐司坊**：吐司扎实。")
         if "可颂" in question:
             parts.append("4. **手工面包**：现做现卖的更好吃。")
-        if "记忆" in question and provider == "doubao" and n == 1:
-            parts.append("另外你之前问过的示例小店也可以考虑。")
+        if "同名" in question and provider == "doubao" and n == 1:
+            parts.append("另外，示例小店养老服务站也在这一带，不过那是社区活动点，不卖面包。")
         texts.append("\n".join(parts))
     refs = [
         {"no": 1, "url": "https://mp.weixin.qq.com/s?id=own1", "host": "mp.weixin.qq.com", "title": "示例小店的新品", "source": "示例小店官方号", "summary": "", "publishDate": ""},
         {"no": 2, "url": "https://www.iesdouyin.com/share/video/1", "host": "www.iesdouyin.com", "title": "探店合集", "source": "www.iesdouyin.com", "summary": "", "publishDate": ""},
         {"no": 3, "url": "https://m.dianping.com/shop/1", "host": "m.dianping.com", "title": "示例小店(测试路店)", "source": "大众点评", "summary": "", "publishDate": ""},
     ]
+    extra = []
+    if "同名" in question:
+        extra += [
+            {"no": 4, "url": "https://www.example-news.cn/elder", "host": "www.example-news.cn", "title": "示例小店养老服务站开业", "source": "示例新闻", "summary": "", "publishDate": ""},
+            {"no": 5, "url": "https://www.tianyancha.com/company/1", "host": "www.tianyancha.com", "title": "测试路面包店工商信息", "source": "天眼查", "summary": "", "publishDate": ""},
+        ]
+    if "面包店好吃" in question:
+        extra += [{"no": 6, "url": "https://bbs.local-test.cn/t/%s" % provider, "host": "bbs.local-test.cn", "title": "测试市面包店讨论", "source": "测试论坛", "summary": "", "publishDate": ""}]
     answers = [{"platform": provider, "mode": "fast", "answer": {"text": t, "markdown": t},
-                "references": {"total": len(refs), "list": refs if brand else refs[1:2]}} for t in texts]
+                "references": {"total": len(refs) + len(extra), "list": (refs if brand else refs[1:2]) + extra}} for t in texts]
     return {"success": True, "provider": provider, "question": question, "answers": answers, "error": ""}
 
 

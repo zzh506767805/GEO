@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """把一轮体检的原始回答算成指标，并记下员工核对回答的结果。
 
-能用规则算的都在这里算：提没提到本店、同类店被提到的次数、引用来源、本店内容被引用、
-带记忆痕迹的回答。需要理解语义的部分由员工（和它派的子 Agent）读回答后写回，脚本负责校验和计数：
-每个回答推荐了哪几家店（set-shops）、这一期的发现（set-findings）、AI 怎么介绍这家店和哪句对不上（set-judgement）。
+能用规则算的都在这里算：提没提到本店、引用来源、本店内容被引用。凡是靠“名字出现在文字里”算的，
+同名的店、同名的养老院都会混进来，所以要员工读完回答后复核（set-reading）：每个回答推荐了哪几家店、
+哪些“提到你”其实说的不是这家店、哪些引用其实和这家店无关（或者没写店名但写的就是它）。
+发现（set-findings）、AI 怎么介绍这家店和哪句对不上（set-judgement）也由员工写回，脚本负责校验和计数。
 
 “和店铺资料对不上的说法”只是核对顺带的发现：有才记，记了也只出现在那一期的报告里，
 工作台上没有它的页面，也没有它的数。
@@ -11,7 +12,7 @@
 用法（脚本用绝对路径执行）：
   geo_score.py score [--date D]
   geo_score.py answers --provider <平台> [--only q01,q03] [--date D]   一个平台每个回答的全文和引用，给读全文的子 Agent 用
-  geo_score.py set-shops --file <json> [--file <json> ...] [--date D]  写回每个回答推荐了哪几家店（读全文后）
+  geo_score.py set-reading --file <json> [--file <json> ...] [--date D]  读全文后写回：推荐的店、不是你的“提到”和引用
   geo_score.py set-findings --file <json> [--date D]                  写回这一期的发现，最多 5 条，每条带原文证据
   geo_score.py brand-digest [--date D] [--max-chars 900]
   geo_score.py set-judgement --file <json> [--date D]
@@ -45,6 +46,9 @@ SOURCE_TYPES = [
     ("今日头条", ("toutiao.com",)),
     ("携程", ("ctrip.com",)),
     ("搜狐", ("sohu.com",)),
+    ("企业信息", ("tianyancha.com", "qcc.com", "aiqicha.baidu.com", "qixin.com")),
+    ("电话黄页", ("dianhua.cn", "114best.com", "huangye88.com")),
+    ("本地生活网站", ("bendibao.com",)),
     ("百度系", ("baidu.com",)),
     ("网易", ("163.com",)),
     ("腾讯新闻", ("news.qq.com", "inews.qq.com", "new.qq.com")),
@@ -55,14 +59,11 @@ SOURCE_TYPES = [
 ]
 STORE_PAGE_TYPES = ("地图", "大众点评和美团")
 
-# 取数账号带着历史对话时，回答里会出现这类说法。只认“和提问者有过对话”的说法，
-# “前面提到的”“买之前先看”这类指回答自身或时间先后的不算。
-MEMORY_PATTERNS = [
-    re.compile(r"(你|您)(之前|上次|上回|此前|早先|刚才|刚刚)[^。，,；;\n]{0,8}(问|聊|看|提|说|关注|查|搜|了解)"),
-    re.compile(r"(之前|上次|上回|此前)(聊|问)(过|的|到|起)"),
-    re.compile(r"(记得你|你提到过|你说过|你问过|咱们聊过|我们聊过|咱们之前|我们之前)"),
-]
 SHOPS_SHOWN = 15
+OTHER_SITE = "其他网站"
+READING_FILE = "reading.json"
+RELATED_FILE = "related.json"
+SITE_SHOWN_FROM = 2  # 对照表里没有的网站，一期被引用到这么多次，图表里就单独成一行，不再算进“其他网站”
 FINDINGS_CAP = 5
 FINDING_KINDS = {"misread": "认错了你", "lead": "线索", "against": "对你不利的说法", "rivals": "同行的做法", "other": "其他"}
 FACT_KINDS = ("address", "hours", "phone", "product", "price", "status", "other")
@@ -75,15 +76,11 @@ def classify(host: str) -> str:
     for label, keys in SOURCE_TYPES:
         if any(key in host for key in keys):
             return label
-    return "其他网站"
+    return OTHER_SITE
 
 
 def answer_text(answer: dict) -> str:
     return gc.clean_answer(answer)
-
-
-def has_memory_trace(text: str) -> bool:
-    return any(pattern.search(text) for pattern in MEMORY_PATTERNS)
 
 
 def ref_host(ref: dict) -> str:
@@ -100,7 +97,8 @@ def _digest_hash(text: str) -> str:
 
 
 def _answer_index(run: dict, profile: dict) -> dict:
-    """这一期每个回答：编号 → 正文、平台、题号、是不是没点名的、带不带记忆痕迹。"""
+    """这一期每个回答：编号 → 正文、平台、题号、是不是没点名的、脚本算不算提到了本店。"""
+    aliases = gc.brand_aliases(profile["facts"])
     texts = {q["id"]: q["text"] for q in profile["questions"]}
     kinds = {q["id"]: q["kind"] for q in profile["questions"]}
     out = {}
@@ -110,19 +108,29 @@ def _answer_index(run: dict, profile: dict) -> dict:
             out["%s#%d" % (key, index)] = {
                 "text": text, "provider": item["provider"], "qid": item["qid"],
                 "question": texts.get(item["qid"], item["question"]),
-                "open": kinds.get(item["qid"], item["kind"]) == "open", "memory": has_memory_trace(text),
+                "open": kinds.get(item["qid"], item["kind"]) == "open", "mentioned": gc.contains_any(text, aliases),
                 "refs": ((answer.get("references") or {}).get("list")) or [],
             }
     return out
 
 
-def count_shops(date: str, eligible: dict, rivals: list):
+def load_reading(date: str) -> dict:
+    """员工读全文后写回的结果：每个回答推荐的店、同一家店的写法、哪些“提到你”其实说的不是这家店。"""
+    data = gc.read_json(gc.run_dir(date) / READING_FILE, {}) or {}
+    return {"answers": data.get("answers") or {}, "names": data.get("names") or {}, "notUs": data.get("notUs") or {}}
+
+
+def load_related() -> dict:
+    """员工复核过的引用，跨期有效：notUs 同名但不是这家店，aboutUs 没写店名但写的就是这家店。"""
+    data = gc.read_json(gc.profile_dir() / RELATED_FILE, {}) or {}
+    return {"notUs": set(data.get("notUs") or []), "aboutUs": set(data.get("aboutUs") or [])}
+
+
+def count_shops(reading: dict, eligible: dict, rivals: list):
     """按员工写回的店名计数。回答重跑过、正文变了的，算作还没读。"""
-    data = gc.read_json(gc.run_dir(date) / "shops.json", {}) or {}
-    reviewed = data.get("answers") or {}
     counter, by_provider, pending = Counter(), {}, []
     for tag, (text, provider) in sorted(eligible.items()):
-        entry = reviewed.get(tag)
+        entry = reading["answers"].get(tag)
         if not entry or entry.get("hash") != _digest_hash(text):
             pending.append(tag)
             continue
@@ -176,7 +184,15 @@ def load_run(date: str) -> dict:
     return {"state": state, "raw": raw}
 
 
-def classify_ref(ref: dict, facts: dict, aliases: list) -> dict:
+def site_name(ref: dict) -> str:
+    """对照表里没有的网站叫什么：优先用引用自带的来源名（“天眼查”），没有就用域名。"""
+    source = gc.clean_text(ref.get("source"))
+    if 2 <= len(source) <= 12 and "." not in source and "/" not in source:
+        return source
+    return re.sub(r"^(www|m|wap)\.", "", ref_host(ref)) or OTHER_SITE
+
+
+def classify_ref(ref: dict, facts: dict, aliases: list, related: dict = None) -> dict:
     """一条引用和本店的关系：own 本店账号或页面；store 以本店命名的门店页；about 别人写本店的内容。"""
     host = ref_host(ref)
     kind = classify(host)
@@ -198,7 +214,13 @@ def classify_ref(ref: dict, facts: dict, aliases: list) -> dict:
         relation = "own"
     elif gc.contains_any(title, aliases):
         relation = "store" if kind in STORE_PAGE_TYPES else "about"
-    return {"type": kind, "relation": relation, "title": title[:80], "source": source[:30],
+    # 员工读全文时复核过的：同名但不是这家店的去掉；没写店名但写的就是这家店的加上
+    related = related or {}
+    if relation in ("store", "about") and url in related.get("notUs", ()):
+        relation = ""
+    elif not relation and url in related.get("aboutUs", ()):
+        relation = "store" if kind in STORE_PAGE_TYPES else "about"
+    return {"type": kind, "site": site_name(ref) if kind == OTHER_SITE else kind, "relation": relation, "title": title[:80], "source": source[:30],
             "url": str(ref.get("url") or "")[:400], "no": ref.get("no")}
 
 
@@ -213,35 +235,18 @@ def first_pos(text_low: str, names) -> int:
     return min(hits) if hits else -1
 
 
-def analyse_answer(answer: dict, profile: dict, aliases: list) -> dict:
+def analyse_answer(answer: dict, profile: dict, aliases: list, related: dict) -> dict:
     facts = profile["facts"]
     text = answer_text(answer)
     low = text.lower()
-    mine = first_pos(low, aliases)
-    rival_hits = []
-    ahead = 0
-    for rival in profile["rivals"]:
-        pos = first_pos(low, [rival["name"]] + list(rival.get("aliases") or []))
-        if pos >= 0:
-            rival_hits.append(rival["name"])
-            if mine >= 0 and pos < mine:
-                ahead += 1
-    refs = [classify_ref(ref, facts, aliases) for ref in ((answer.get("references") or {}).get("list")) or []]
+    refs = [classify_ref(ref, facts, aliases, related) for ref in ((answer.get("references") or {}).get("list")) or []]
     entry = facts.get("buyEntry") or {}
     shop_host = urlparse(str(entry.get("shopUrl") or "")).netloc.lower()
     buy_entry = bool(
         (entry.get("miniProgram") and entry["miniProgram"].lower() in low)
         or (shop_host and (shop_host in low or any(shop_host in r["url"].lower() for r in refs)))
     )
-    return {
-        "mentioned": mine >= 0,
-        "memory": has_memory_trace(text),
-        "rank": (ahead + 1) if mine >= 0 and profile["rivals"] else None,
-        "rivals": rival_hits,
-        "refs": refs,
-        "buyEntry": buy_entry,
-        "chars": len(text),
-    }
+    return {"mentioned": first_pos(low, aliases) >= 0, "refs": refs, "buyEntry": buy_entry, "text": text}
 
 
 def _as_rival(name: str, rivals: list) -> str:
@@ -263,61 +268,63 @@ def build_summary(date: str) -> dict:
     facts = profile["facts"]
     aliases = gc.brand_aliases(facts)
     kinds = {q["id"]: q["kind"] for q in profile["questions"]}
+    reading, related_ok = load_reading(date), load_related()
     cells, answers = {}, {}
     mention = {"hits": 0, "valid": 0, "byProvider": {}, "byQuestion": {}}
     for provider in gc.PROVIDERS:
         mention["byProvider"][provider] = {"hits": 0, "valid": 0}
-    rival_counter = Counter()
-    rival_by_provider = {}
-    eligible = {}  # 要读的回答：顾客没点名、没带记忆痕迹的。编号 → 正文
-    src_all, src_by_provider = Counter(), {p: Counter() for p in gc.PROVIDERS}
+    eligible = {}  # 要读的回答：顾客没点名的。编号 → (正文, 平台)
+    cited = []  # 每条引用：(平台, 类型, 网站名)
     related = {"own": {}, "store": {}, "about": {}}
     related_count = Counter()
     buy_entry = {"count": 0, "valid": 0}
-    memory_flagged = brand_answers = 0
-    missing = []
+    brand_answers = 0
+    missing, not_us = [], []
     for key, item in sorted(run["state"]["items"].items()):
         qid, provider = item["qid"], item["provider"]
         kind = kinds.get(qid, item["kind"])
-        rows = [analyse_answer(a, profile, aliases) for a in run["raw"][key]]
-        cell = {"status": item["status"], "answers": len(rows), "valid": 0, "hits": 0, "memory": 0}
+        rows = [analyse_answer(a, profile, aliases, related_ok) for a in run["raw"][key]]
+        cell = {"status": item["status"], "answers": len(rows), "valid": len(rows), "hits": 0}
         if not rows:
             missing.append(key)
-        for index, (row, source) in enumerate(zip(rows, run["raw"][key]), 1):
-            if row["memory"]:
-                cell["memory"] += 1
-                memory_flagged += 1
-            else:
-                cell["valid"] += 1
-                cell["hits"] += int(row["mentioned"])
-                buy_entry["valid"] += 1
-                buy_entry["count"] += int(row["buyEntry"])
+        for index, row in enumerate(rows, 1):
+            tag = "%s#%d" % (key, index)
+            # 员工复核过：脚本算作提到你，其实说的是同名的别的店或别的东西
+            if row["mentioned"] and reading["notUs"].get(tag) == _digest_hash(row["text"]):
+                row["mentioned"] = False
+                not_us.append(tag)
+            cell["hits"] += int(row["mentioned"])
+            buy_entry["valid"] += 1
+            buy_entry["count"] += int(row["buyEntry"])
             if kind == "brand":
                 brand_answers += 1
-            elif not row["memory"]:
-                for name in row["rivals"]:
-                    rival_counter[name] += 1
-                    rival_by_provider.setdefault(name, Counter())[provider] += 1
-                eligible["%s#%d" % (key, index)] = (answer_text(source), provider)
+            else:
+                eligible[tag] = (row["text"], provider)
             for ref in row["refs"]:
-                src_all[ref["type"]] += 1
-                src_by_provider[provider][ref["type"]] += 1
+                cited.append((provider, ref["type"], ref["site"]))
                 if ref["relation"]:
                     related_count[ref["relation"]] += 1
                     entry = related[ref["relation"]].setdefault(ref["url"] or ref["title"], dict(ref, usedIn=[]))
-                    tag = "%s#%d" % (key, index)
                     if tag not in entry["usedIn"]:
                         entry["usedIn"].append(tag)
         cells.setdefault(qid, {})[provider] = cell
-        answers[key] = [{k: r[k] for k in ("mentioned", "memory", "rank", "buyEntry")}
-                        | {"refInfo": [[ref["type"], ref["relation"]] for ref in r["refs"]]} for r in rows]
+        answers[key] = [{"mentioned": r["mentioned"], "buyEntry": r["buyEntry"],
+                         "refInfo": [[ref["type"], ref["relation"]] for ref in r["refs"]]} for r in rows]
         if kind == "open":
             for bucket in (mention, mention["byProvider"][provider], mention["byQuestion"].setdefault(qid, {"hits": 0, "valid": 0})):
                 bucket["hits"] += cell["hits"]
                 bucket["valid"] += cell["valid"]
+    # 对照表里没有的网站，被引用够多的单独成一行，其余的算“其他网站”
+    sites = Counter(site for _, kind, site in cited if kind == OTHER_SITE)
+    src_all, src_by_provider = Counter(), {p: Counter() for p in gc.PROVIDERS}
+    for provider, kind, site in cited:
+        label = site if kind == OTHER_SITE and sites[site] >= SITE_SHOWN_FROM else kind
+        src_all[label] += 1
+        src_by_provider[provider][label] += 1
     expected = len(run["state"]["items"])
-    shops, pending = count_shops(date, eligible, profile["rivals"])
+    shops, pending = count_shops(reading, eligible, profile["rivals"])
     findings, dropped_findings = load_findings(date, run)
+    shop_counts = {s["name"]: s for s in shops}
     summary = {
         "date": date,
         "generatedAt": gc.now_iso(),
@@ -330,10 +337,11 @@ def build_summary(date: str) -> dict:
         "cells": cells,
         "answers": answers,
         "mention": mention,
-        "memoryFlagged": memory_flagged,
+        # 员工复核后，不算“提到你”的回答
+        "notUs": not_us,
         "brandAnswers": brand_answers,
         "refs": {
-            "total": sum(src_all.values()),
+            "total": len(cited),
             "own": related_count["own"],
             "storePages": related_count["store"],
             "aboutStore": related_count["about"],
@@ -342,11 +350,13 @@ def build_summary(date: str) -> dict:
             "aboutItems": list(related["about"].values())[:30],
         },
         "sources": {
-            "all": _ratio(src_all, sum(src_all.values())),
+            "all": _ratio(src_all, len(cited)),
             "byProvider": {p: _ratio(c, sum(c.values()), 6) for p, c in src_by_provider.items()},
         },
-        "rivals": [{"name": r["name"], "count": rival_counter[r["name"]],
-                    "byProvider": dict(rival_by_provider.get(r["name"], {}))} for r in profile["rivals"]],
+        # 同类店各几次：和“提到了谁”用同一份员工读出来的店名，口径一致；还没读完时都是 0
+        "rivals": sorted(({"name": r["name"], "count": shop_counts.get(r["name"], {}).get("count", 0) if not pending else 0,
+                           "byProvider": shop_counts.get(r["name"], {}).get("byProvider", {}) if not pending else {}}
+                          for r in profile["rivals"]), key=lambda r: -r["count"]),
         "buyEntry": buy_entry if facts["segment"] == "ecom" else None,
         # 顾客没点名时 AI 推荐的所有店，按出现在几个回答里排序。报告“提到了谁”列的就是它。
         # 店名是员工读全文后写回的；还有回答没读（shopsPending）时不出数
@@ -357,7 +367,6 @@ def build_summary(date: str) -> dict:
         # 还不是同类店、出现在两个以上回答里的，供第一次体检后挑同类店
         "candidates": [{"name": s["name"], "answers": s["count"]} for s in shops if not s["rival"] and s["count"] >= 2][:25],
     }
-    summary["rivals"].sort(key=lambda r: r["count"], reverse=True)
     return summary
 
 
@@ -392,7 +401,7 @@ def cmd_score(args) -> None:
         "mention": {"hits": mention["hits"], "valid": mention["valid"],
                     "byProvider": {gc.PROVIDER_NAMES[p]: "%d/%d" % (v["hits"], v["valid"]) for p, v in mention["byProvider"].items()}},
         "questionsMentioned": sorted(q for q, v in mention["byQuestion"].items() if v["hits"]),
-        "memoryFlagged": summary["memoryFlagged"],
+        "notUs": summary["notUs"],
         "refs": {k: summary["refs"][k] for k in ("total", "own", "storePages", "aboutStore")},
         "topSources": summary["sources"]["all"][:5],
         "rivals": [{"name": r["name"], "count": r["count"]} for r in summary["rivals"]],
@@ -404,15 +413,15 @@ def cmd_score(args) -> None:
         digest["notes"].append("这几道题已经从问题清单里删掉，这一期不再算：" + "、".join(dropped))
     if not summary["complete"]:
         digest["notes"].append("本轮缺失的查询超过四分之一，周报要注明“本周数据不全”")
-    if summary["memoryFlagged"]:
-        digest["notes"].append("有 %d 个回答带着历史对话的痕迹，已从提及统计里剔除" % summary["memoryFlagged"])
+    if summary["notUs"]:
+        digest["notes"].append("有 %d 个回答提到的同名不是本店，已经不算“提到你”" % len(summary["notUs"]))
     if summary["shopsPending"]:
         # 还有回答没读：先读全文，写回店名和发现，再往下走
         pending_q = sorted({t.split("_")[0] for t in summary["shopsPending"]})
         open_q = sorted({q["id"] for q in load_profile()["questions"] if q["kind"] == "open"})
         scope = "读全部题" if pending_q == open_q else "只读这几道题：" + ",".join(pending_q)
         digest["next"] = ("还有 %d 个回答没读过。按 geo-check 的“第三步：读全文”派子 Agent 读（%s），"
-                          "用 set-shops 写回店名、set-findings 写回发现，然后重新执行 score" % (len(summary["shopsPending"]), scope))
+                          "用 set-reading 写回、set-findings 写回发现，然后重新执行 score" % (len(summary["shopsPending"]), scope))
     elif not summary["rivals"]:
         digest["candidates"] = summary["candidates"]
         if summary["candidates"]:
@@ -435,6 +444,7 @@ def cmd_answers(args) -> None:
     profile = load_profile()
     run = load_run(date)
     only = {q.strip().lower() for q in args.only.split(",") if q.strip()}
+    related = load_related()
     rows = []
     for tag, info in _answer_index(run, profile).items():
         if info["provider"] != args.provider or (only and info["qid"] not in only):
@@ -443,12 +453,16 @@ def cmd_answers(args) -> None:
             "answer": tag,
             "question": info["question"],
             "withBrandName": not info["open"],
-            # 要写回店名的回答：顾客没点名、没带之前对话痕迹的。带店名的回答只用来找发现
-            "listShops": info["open"] and not info["memory"],
-            "memoryTrace": info["memory"],
+            # 要写回店名的回答：顾客没点名的。带店名的回答只用来找发现
+            "listShops": info["open"],
+            # 脚本按名字算作“提到了你”的回答：要确认说的真是这家店，不是同名的别的店或别的东西
+            "mentionedByName": info["open"] and info["mentioned"],
             "text": info["text"],
+            # relation：脚本按标题有没有店名判断的，和这家店的关系（own 本店账号、store 门店页、about 别人写本店；空的是无关）
             "refs": [{"no": r.get("no"), "title": gc.clean_title(r.get("title"))[:80], "source": gc.clean_text(r.get("source"))[:30],
-                      "url": str(r.get("url") or "")[:300]} for r in info["refs"][:20]],
+                      "url": str(r.get("url") or "")[:300],
+                      "relation": classify_ref(r, profile["facts"], gc.brand_aliases(profile["facts"]), related)["relation"]}
+                     for r in info["refs"][:20]],
         })
     gc.emit({
         "ok": True, "date": date, "provider": args.provider, "platform": gc.PROVIDER_NAMES[args.provider],
@@ -460,33 +474,46 @@ def cmd_answers(args) -> None:
     })
 
 
-def cmd_set_shops(args) -> None:
+def cmd_set_reading(args) -> None:
     date = gc.resolve_date(args.date)
     profile = load_profile()
     run = load_run(date)
     index = _answer_index(run, profile)
     own = gc.brand_aliases(profile["facts"])
-    path = gc.run_dir(date) / "shops.json"
-    saved = gc.read_json(path, {}) or {}
-    names = dict(saved.get("names") or {})
-    answers = dict(saved.get("answers") or {})
-    incoming = {}
+    saved = load_reading(date)
+    names, answers, not_us = dict(saved["names"]), dict(saved["answers"]), dict(saved["notUs"])
+    related = load_related()
+    urls = {str(r.get("url") or "") for info in index.values() for r in info["refs"]} - {""}
+    incoming, errors = {}, []
     for file in args.file:
         raw = gc.load_input(file)
-        if not isinstance(raw, dict) or not isinstance(raw.get("answers"), dict):
-            raise gc.GeoError(file + "：要有 answers，格式是 {\"回答编号\": [\"店名\", ...]}")
+        if not isinstance(raw, dict):
+            raise gc.GeoError(file + "：应为一个对象")
         for name, spellings in (raw.get("names") or {}).items():
             name = gc.clean_text(name)[:30]
             names[name] = sorted({gc.clean_text(x)[:40] for x in (names.get(name) or []) + list(spellings or []) if gc.clean_text(x)})
-        incoming.update(raw["answers"])
-    errors = []
+        incoming.update(raw.get("answers") or {})
+        for tag in raw.get("notUs") or []:
+            info = index.get(tag)
+            if not info or not info["open"] or not info["mentioned"]:
+                errors.append(tag + "：不是脚本算作“提到你”的没点名回答，不用写进 notUs")
+            else:
+                not_us[tag] = _digest_hash(info["text"])
+        for key in ("refsNotUs", "refsAboutUs"):
+            for url in raw.get(key) or []:
+                if url not in urls:
+                    errors.append("这一期没有这条引用：" + str(url)[:80])
+                else:
+                    target, other = ("notUs", "aboutUs") if key == "refsNotUs" else ("aboutUs", "notUs")
+                    related[target].add(url)
+                    related[other].discard(url)
     for tag, shops in incoming.items():
         info = index.get(tag)
         if not info:
             errors.append(tag + "：没有这个回答")
             continue
-        if not info["open"] or info["memory"]:
-            errors.append(tag + "：带店名的回答和带之前对话痕迹的回答不用写店名")
+        if not info["open"]:
+            errors.append(tag + "：带店名问的回答不用写店名")
             continue
         clean = []
         for name in shops or []:
@@ -504,12 +531,13 @@ def cmd_set_shops(args) -> None:
         answers[tag] = {"hash": _digest_hash(info["text"]), "shops": clean}
     if errors:
         raise gc.GeoError("有 %d 处对不上，整份没有保存：%s" % (len(errors), "；".join(errors[:12])))
-    gc.write_json(path, {"updatedAt": gc.now_iso(), "names": names, "answers": answers})
-    eligible = [t for t, i in index.items() if i["open"] and not i["memory"]]
+    gc.write_json(gc.run_dir(date) / READING_FILE, {"updatedAt": gc.now_iso(), "names": names, "answers": answers, "notUs": not_us})
+    gc.write_json(gc.profile_dir() / RELATED_FILE, {"updatedAt": gc.now_iso(), "notUs": sorted(related["notUs"]), "aboutUs": sorted(related["aboutUs"])})
+    eligible = [t for t, i in index.items() if i["open"]]
     missing = [t for t in eligible if t not in answers or answers[t]["hash"] != _digest_hash(index[t]["text"])]
     gc.emit({"ok": True, "date": date, "saved": len(incoming), "toRead": len(eligible), "stillMissing": missing[:30],
-             "next": ("还有 %d 个回答没写，补齐后再执行 score" % len(missing)) if missing
-             else "店名都写齐了。请重新执行 geo_score.py score"})
+             "next": ("还有 %d 个回答没写店名，补齐后再执行 score" % len(missing)) if missing
+             else "都写齐了。请重新执行 geo_score.py score"})
 
 
 def cmd_set_findings(args) -> None:
@@ -584,7 +612,6 @@ def cmd_brand_digest(args) -> None:
                 "platform": gc.PROVIDER_NAMES.get(item["provider"], item["provider"]),
                 "question": texts.get(item["qid"], item["question"]),
                 "withBrandName": item["kind"] == "brand",
-                "memoryTrace": has_memory_trace(text),
                 "text": text[: args.max_chars],
                 "truncated": len(text) > args.max_chars,
                 "refs": refs[:15],
@@ -734,10 +761,10 @@ def main() -> None:
     p.add_argument("--only", default="")
     p.add_argument("--date", default="")
     p.set_defaults(func=cmd_answers)
-    p = sub.add_parser("set-shops")
+    p = sub.add_parser("set-reading")
     p.add_argument("--file", required=True, action="append")
     p.add_argument("--date", default="")
-    p.set_defaults(func=cmd_set_shops)
+    p.set_defaults(func=cmd_set_reading)
     p = sub.add_parser("set-findings")
     p.add_argument("--file", required=True)
     p.add_argument("--date", default="")

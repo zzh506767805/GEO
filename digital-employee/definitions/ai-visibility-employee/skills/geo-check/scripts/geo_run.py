@@ -2,7 +2,7 @@
 """批量向 AI 平台提问并等待结果。
 
 一轮体检分两段：先问全部不带店名的问题（open），全部返回后再问带店名的问题（brand）。
-顺序不能反：取数账号有记忆，先问带店名的会让后面的回答凭空提到这家店。
+顺序不能反：取数账号万一带着记忆，先问带店名的会让后面的回答凭空提到这家店。豆包已经关掉了记忆，顺序仍然保留，当作保险。
 
 用法（脚本用绝对路径执行）：
   geo_run.py start --phase open|brand [--date D] [--only q01,q03] [--retry]
@@ -193,7 +193,7 @@ def _archive_round(date: str, state: dict) -> str:
     folder = gc.run_dir(date)
     target = folder / ("old-" + gc.now().strftime("%H%M%S"))
     target.mkdir(parents=True, exist_ok=True)
-    for name in ("queries.json", "summary.json", "judgement.json", "shops.json", "findings.json", "raw"):
+    for name in ("queries.json", "summary.json", "judgement.json", "reading.json", "findings.json", "raw"):
         if (folder / name).exists():
             shutil.move(str(folder / name), str(target / name))
     return target.name

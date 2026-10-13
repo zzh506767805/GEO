@@ -197,7 +197,6 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .kv dd { margin: 0; word-break: break-word; }
 .d { display: inline-block; width: 12px; height: 12px; margin: 0 2.5px; border-radius: 50%; background: var(--line-2); opacity: .7; vertical-align: middle; }
 .d.h { background: var(--brand); opacity: 1; }
-.d.m { background: none; opacity: 1; box-shadow: inset 0 0 0 2px var(--warn); }
 .d.x { height: 2px; border-radius: 1px; }
 .legend { display: flex; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--ink-2); }
 .legend span { display: inline-flex; align-items: center; margin: 0 14px 4px 0; }
@@ -546,8 +545,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (!code) { var miss = el('span', 'd x'); miss.title = '没有拿到结果'; wrap.appendChild(miss); return wrap; }
     for (var i = 0; i < code.length; i++) {
       var ch = code.charAt(i);
-      var dot = el('span', 'd' + (ch === 'h' ? ' h' : ch === 'm' ? ' m' : ''));
-      dot.title = ch === 'h' ? '提到了你' : ch === 'm' ? '带着之前对话的痕迹，没有计入' : '没提到你';
+      var dot = el('span', 'd' + (ch === 'h' ? ' h' : ''));
+      dot.title = ch === 'h' ? '提到了你' : '没提到你';
       wrap.appendChild(dot);
     }
     return wrap;
@@ -555,8 +554,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   function legend() {
     return add(el('div', 'legend'),
       add(el('span'), el('span', 'd h'), '提到了你'),
-      add(el('span'), el('span', 'd'), '没提到'),
-      add(el('span'), el('span', 'd m'), '带着之前对话的痕迹，没有计入'));
+      add(el('span'), el('span', 'd'), '没提到'));
   }
   function questionMeta(id, text) {
     for (var i = 0; i < DATA.questions.length; i++) { if (DATA.questions[i].id === id && DATA.questions[i].text === text) { return DATA.questions[i]; } }
@@ -669,8 +667,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     rows.forEach(function (item, index) {
       var block = el('div', 'ans');
       add(block, add(el('div', 'ans-flags'), el('span', 'ans-no', '第 ' + (index + 1) + ' 个回答'),
-        pill(item.mentioned ? 'brand' : 'plain', item.mentioned ? '提到了你' : '没提到你'),
-        item.memory ? pill('warn', '带着之前对话的痕迹，没有计入') : null));
+        pill(item.mentioned ? 'brand' : 'plain', item.mentioned ? '提到了你' : '没提到你')));
       var text = el('div', 'ans-text');
       renderText(text, item.text);
       block.appendChild(text);
@@ -1393,8 +1390,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       filter.appendChild(btn);
     });
     add(box, add(el('div', 'qbar'), filter), add(t, body), legend(),
-      el('div', 'small muted', '点任何一格，可以看 AI 的原话和它引用的内容。'),
-      S.memoryFlagged ? el('div', 'small muted', '这一期有 ' + S.memoryFlagged + ' 个回答带着之前对话的痕迹，没有计入。') : null);
+      el('div', 'small muted', '点任何一格，可以看 AI 的原话和它引用的内容。'));
     root.appendChild(box);
   }
   function reportRivals(root, S) {

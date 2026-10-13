@@ -31,7 +31,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_ru
 python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" wait
 ```
 
-顺序不能反。取数账号有记忆，先问带店名的问题，后面的回答会凭空提到这家店。脚本会拦住错误的顺序。
+顺序不能反：取数账号万一带着记忆，先问带店名的问题，后面的回答会凭空提到这家店。脚本会拦住错误的顺序。
 
 第一次 `start` 之后执行一次 `publish`：工作台会显示“体检进行中”，商家这时打开不会以为看到的是最新结果。之后等待的过程中不用再同步。
 
@@ -59,10 +59,9 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_sc
 输出里重点看：
 
 - `mention`：顾客没点名时，多少个回答提到了本店，分平台。
-- `rivals`：选定的同类店各被几个回答提到。
+- `rivals`：选定的同类店各被几个回答推荐（读全文写回以后才有数）。
 - `refs`：本店账号的内容、以本店命名的门店页、别人写本店的内容，各被引用多少次。
 - `topSources`：AI 这一期最常读哪里的内容。
-- `memoryFlagged`：带着之前对话痕迹的回答数，已自动剔除。
 - `shopsPending`：还没读过的回答数。不为 0 时，`next` 会让你先做第三步。
 - `notes`：需要在周报里说明的情况。
 
@@ -78,35 +77,43 @@ AI 推荐了哪些店、有什么值得商家知道的，脚本算不出来，�
 python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" answers --provider doubao
 ```
 
-收回来以后，整理成两样写回：
+脚本有几个数是按“名字出现在文字里”算的，同名的店、同名的养老院都会混进来。读全文时一起复核，收回来以后整理成一份写回：
 
-1. **每个回答推荐了哪几家店**。`answers` 输出里 `listShops` 为 true 的回答每个都要写，没推荐店的写空列表。只写店（门店、品牌、网店、连锁），不写品类、商圈、平台，不写本店。同一家店的不同写法，在 `names` 里写上原文的写法。
+```bash
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" set-reading --file "$YOUZAN_AGENT_SESSION_TEMP/geo/reading.json"
+```
 
-   ```bash
-   python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" set-shops --file "$YOUZAN_AGENT_SESSION_TEMP/geo/shops.json"
-   ```
+```json
+{"answers": {"q01_doubao#1": ["储缘蛋糕", "馋嘴蛋糕"], "q01_doubao#2": []},
+ "names": {"储缘蛋糕": ["储缘生日蛋糕(留下镇店)"]},
+ "notUs": ["q05_doubao#2"],
+ "refsNotUs": ["https://..."],
+ "refsAboutUs": ["https://..."]}
+```
 
-   ```json
-   {"answers": {"q01_doubao#1": ["储缘蛋糕", "馋嘴蛋糕"], "q01_doubao#2": []},
-    "names": {"储缘蛋糕": ["储缘生日蛋糕(留下镇店)"]}}
-   ```
+| 写什么 | 对应 `answers` 输出里的 | 要求 |
+| --- | --- | --- |
+| `answers`：每个回答推荐了哪几家店 | `listShops` 为 true 的回答 | **每个都要写**，没推荐店的写空列表。只写店（门店、品牌、网店、连锁），不写品类、商圈、平台，不写本店。同一家店的不同写法，在 `names` 里写上原文的写法 |
+| `notUs`：算作“提到你”、其实说的不是这家店的回答 | `mentionedByName` 为 true 的回答 | 只写说错了的，比如说的是同名的养老院、别的城市的同名店 |
+| `refsNotUs`：标题里有店名、其实不是这家店的引用 | 引用的 `relation` 不为空的 | 只写不是的 |
+| `refsAboutUs`：标题里没店名、其实写的就是这家店的引用 | 引用的 `relation` 为空的 | 只写有把握的，例如地址、招牌都对得上 |
 
-   可以一次传，也可以按平台分几个文件传（`--file` 写多次）。脚本会核对：店名或原文写法必须出现在那个回答里，要写的回答不能漏。对不上的整份退回，按 `error` 改；`stillMissing` 里是还没写的回答，漏了就让子 Agent 补。
+后三样没有就不写。可以一次传，也可以按平台分几个文件传（`--file` 写多次）。脚本会核对：店名或原文写法必须出现在那个回答里，要写店名的回答不能漏，引用必须是这一期出现过的。对不上的整份退回，按 `error` 改；`stillMissing` 里是还没写店名的回答，漏了就让子 Agent 补。复核过的引用以后各期都算数。
 
-2. **这一期的发现，最多 5 条，宁缺毋滥。** 没有值得说的就传空列表，不要凑。
+再写这一期的发现，**最多 5 条，宁缺毋滥**，没有值得说的就传空列表，不要凑：
 
-   ```bash
-   python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" set-findings --file "$YOUZAN_AGENT_SESSION_TEMP/geo/findings.json"
-   ```
+```bash
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" set-findings --file "$YOUZAN_AGENT_SESSION_TEMP/geo/findings.json"
+```
 
-   ```json
-   {"items": [{"kind": "misread", "title": "", "detail": "", "action": "",
-               "evidence": [{"answer": "b01_doubao#1", "quote": "回答里的一句原话"}]}]}
-   ```
+```json
+{"items": [{"kind": "misread", "title": "", "detail": "", "action": "",
+            "evidence": [{"answer": "b01_doubao#1", "quote": "回答里的一句原话"}]}]}
+```
 
-   `kind`：`misread` 认错了你、`lead` 线索（比如疑似你家、但没写店名的内容）、`against` 对你不利的说法、`rivals` 同行的做法、`other` 其他。每条至少一句原话，脚本会逐字核对；数字只用脚本算出来的，子 Agent 自己数的次数不要写进去。
+`kind`：`misread` 认错了你、`lead` 线索（比如疑似你家、但没写店名的内容）、`against` 对你不利的说法、`rivals` 同行的做法、`other` 其他。每条至少一句原话，脚本会逐字核对；数字只用脚本算出来的，子 Agent 自己数的次数不要写进去。
 
-写完重新算分，报告的“提到了谁”这时才有数：
+写完重新算分。“提到了谁”和同类店的次数这时才有数，“提到你”和“和你有关的引用”也按复核过的算：
 
 ```bash
 python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" score

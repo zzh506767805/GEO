@@ -230,7 +230,7 @@ def read_all(week, date, now):
         answers = {a["answer"]: [r["name"] for r in RIVALS if r["name"] in a["text"]] for a in out["answers"] if a["listShops"]}
         files += ["--file", write("reading-%d-%s.json" % (week, provider), {"provider": provider, "answers": answers})]
         brand_tag = brand_tag or next((a["answer"] for a in out["answers"] if "偏素" in a["text"]), None)
-    call(SCORE, "set-shops", "--date", date, *files, now=now)
+    call(SCORE, "set-reading", "--date", date, *files, now=now)
     if week == len(demo.WEEKS) and brand_tag:
         findings = [
             {"kind": "against", "title": "AI 提醒想吃甜口的顾客：你家可能偏素",

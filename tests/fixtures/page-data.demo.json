@@ -189,7 +189,7 @@
    "questionsVersion": 1,
    "mention": {
     "hits": 2,
-    "valid": 59,
+    "valid": 60,
     "byProvider": {
      "hunyuan": {
       "hits": 0,
@@ -197,7 +197,7 @@
      },
      "doubao": {
       "hits": 2,
-      "valid": 19
+      "valid": 20
      },
      "deepseek": {
       "hits": 0,

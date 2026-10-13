@@ -115,7 +115,7 @@ def _summary(date: str) -> dict:
 def _empty_summary() -> dict:
     bucket = lambda: {"hits": 0, "valid": 0}  # noqa: E731
     return {
-        "questionsVersion": 0, "expected": 0, "returned": 0, "missing": [], "complete": True, "memoryFlagged": 0,
+        "questionsVersion": 0, "expected": 0, "returned": 0, "missing": [], "complete": True, "notUs": [],
         "answers": {}, "mention": dict(bucket(), byProvider={p: bucket() for p in gc.PROVIDERS}, byQuestion={}),
         "refs": {"total": 0, "own": 0, "storePages": 0, "aboutStore": 0, "ownItems": [], "storePageItems": [], "aboutItems": []},
         "sources": {"all": [], "byProvider": {p: [] for p in gc.PROVIDERS}}, "rivals": [], "shops": [], "shopsPending": [], "findings": [], "buyEntry": None,
@@ -564,8 +564,7 @@ def _answers(date: str, summary: dict) -> dict:
                 kind, relation = info[position] if position < len(info) else ("", "")
                 refs.append({"t": gc.clean_title(ref.get("title"))[:70], "s": gc.clean_text(ref.get("source"))[:20],
                              "u": str(ref.get("url") or "")[:300], "k": kind, "r": relation})
-            rows.append({"text": gc.clean_answer(answer), "mentioned": bool(flag.get("mentioned")),
-                         "memory": bool(flag.get("memory")), "refs": refs})
+            rows.append({"text": gc.clean_answer(answer), "mentioned": bool(flag.get("mentioned")), "refs": refs})
         out[key] = rows
     return out
 
@@ -688,14 +687,13 @@ def report_data(day: str) -> dict:
     dots = {}
     for key, flags in (summary.get("answers") or {}).items():
         qid, _, provider = key.rpartition("_")
-        # 每个回答一个字符：h 提到了本店，n 没提到，m 带着之前对话的痕迹、没有计入
-        dots.setdefault(qid, {})[provider] = "".join(
-            "m" if flag.get("memory") else ("h" if flag.get("mentioned") else "n") for flag in flags)
+        # 每个回答一个字符：h 提到了本店，n 没提到
+        dots.setdefault(qid, {})[provider] = "".join("h" if flag.get("mentioned") else "n" for flag in flags)
     seen = set(judgement.get("issueIds") or [])
     compare = compare_payload(day)
     notes = list(compare["readerNotes"])
-    if summary["memoryFlagged"]:
-        notes.append("有 %d 个回答带着之前对话的痕迹（AI 记得之前有人问过这家店），没有计入统计" % summary["memoryFlagged"])
+    if summary.get("notUs"):
+        notes.append("有 %d 个回答里出现的同名说的不是你（比如同名的别的店），没有算作提到你" % len(summary["notUs"]))
     confirm = gc.confirm_state(facts, meta)
     if confirm["from"] != "backend" and not confirm["confirmed"]:
         notes.append("这家店的资料是员工从公开信息里整理的，还没有经过你确认；AI 的说法和它对不上，不一定是 AI 说错")
@@ -710,7 +708,7 @@ def report_data(day: str) -> dict:
         "workbenchFile": gc.PAGE_FILE,
         "summary": {"mention": summary["mention"], "refs": {k: summary["refs"][k] for k in ("total", "own", "storePages", "aboutStore")},
                     "buyEntry": summary["buyEntry"], "expected": summary["expected"], "returned": summary["returned"],
-                    "complete": summary["complete"], "memoryFlagged": summary["memoryFlagged"], "judged": bool(judgement)},
+                    "complete": summary["complete"], "judged": bool(judgement)},
         "compare": {k: compare[k] for k in ("previous", "mention", "ownRefs", "trend", "baselineReset")},
         "actions": actions,
         "questions": sorted(questions.values(), key=lambda q: (q["kind"] != "open", q["id"])),

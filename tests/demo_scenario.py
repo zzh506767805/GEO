@@ -24,7 +24,6 @@ HITS = {
     5: {"doubao": {"运河边": [1, 2], "贝果": [1]}, "hunyuan": {"拱墅区": [1, 2], "全麦吐司": [1]}, "deepseek": {"全麦吐司": [1]}},
 }
 KEYWORDS = ("运河边", "拱墅区", "全麦吐司", "贝果", "小程序下单", "带孩子", "坐下来喝咖啡", "礼盒", "提前预订", "城西")
-MEMORY = {2: ("doubao", "坐下来喝咖啡", 2)}            # 这一期豆包有一个回答带着之前对话的痕迹
 OLD_ADDRESS = {"hunyuan": (1, 2), "deepseek": (1, 2, 3)}  # 哪几期还在说已经关掉的河畔店
 WRONG_HOURS = {"deepseek": (1, 2, 3, 4, 5)}                # 哪几期把营业时间说成到 22:00
 
@@ -96,9 +95,6 @@ def _open_answer(provider: str, question: str, week: int, number: int) -> dict:
         refs.insert(0, OWN_TOAST if (word == "全麦吐司" and week >= 4) else OWN_INFO)
     if hit:
         refs.append(NEW_STORE)
-    if MEMORY.get(week) == (provider, word, number):
-        lines.append("")
-        lines.append("另外，你之前问过的%s也有座位，不过离这一带稍远。" % BRAND)
     lines += ["", "需要的话，我可以按离你近的顺序再排一遍。"]
     text = "\n".join(lines)
     return {"platform": provider, "mode": "fast", "answer": {"text": text, "markdown": text}, "references": _refs(refs)}
