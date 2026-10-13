@@ -58,7 +58,7 @@
 - **某一期分析出来的东西进报告，不上工作台的导航。** 工作台只放跨期的、商家要在上面做点什么的东西。首页只留四样，不要往上加模块。
 - **没有“待办”这张清单，也不记工作记录。** 员工可以在 `set-actions` 的 `todos` 里写最多三件建议，只列在那一期报告的结论里，不打勾。真正要商家点头的两件事有固定入口：确认内容、确认员工另外记下的信息。
 - **AI 的说法和店铺资料对不上，是顺带的发现，不是主线。** 它只出现在当期报告的“怎么介绍你”一节，有才列出来；工作台上没有它的页面和数；只有商家自己改得动、值得改的才进建议。
-- **店铺后台里有的资料不展示、不用商家确认。** `set-facts` 时写 `"from": "backend"`。要确认的只有员工另外记下的几样（别名、公众号、抖音号、后台里没有的门店），`status` 的 `toConfirm` 会列出来。资料不是从后台读的（`"from": "public"`）时，整份要商家确认后才能登记内容。
+- **店铺后台里有的资料不展示、不用商家确认。** `set-facts` 时写 `"from": "backend"`。要确认的只有员工另外推断的几样（别名、后台里没有的门店）；员工不去搜商家在别的平台的账号，商家自己说了才记，`status` 的 `toConfirm` 会列出来。资料不是从后台读的（`"from": "public"`）时，整份要商家确认后才能登记内容。
 
 ## 内容按类型登记
 
@@ -101,10 +101,11 @@ node tests/page_smoke.cjs <工作台或报告.html> [更多文件]
 
 ## 装进仓库
 
-1. 把 `digital-employee/definitions/ai-visibility-employee/` 和 `digital-employee/tasks/timer/geo-weekly-check.yaml` 拷到 `yzclaw/digital-employee` 仓库的同名位置。
-2. 提交说明里带上 `[sync-tasks:geo-weekly-check]`，任务模板会自动同步到后端。
-3. `youzan-business-assistant` 更新 `employees` 子模块指针，发版。
-4. 运营后台建员工模板，把任务模板关联到员工，加白名单。
+1. 把 `digital-employee/definitions/ai-visibility-employee/` 拷到 `yzclaw/digital-employee` 仓库的同名位置。
+2. `youzan-business-assistant` 更新 `employees` 子模块指针，发版。
+3. 运营后台建员工模板，加白名单。
+
+不再带定时任务模板。每周体检由员工在第一份报告后问商家，商家同意了，员工用运行时创建定时任务的能力替他建（见 `geo-weekly` 的“开启每周体检”）。联调时要确认员工会话里有这个能力，并且建出来的任务读得回来。
 
 运行时主干的员工定义加载器已经能加载这份定义（目录名、字段、技能名都符合校验）。
 
@@ -129,7 +130,7 @@ node tests/page_smoke.cjs <工作台或报告.html> [更多文件]
 脚本都要用绝对路径执行，入参写成 JSON 文件后用 `--file` 传。每个命令输出一段 JSON，`ok: false` 时 `error` 是原因，退出码是 2。输出里的 `next` 是下一步该做什么。
 
 ```
-geo_state.py   status | init | show | set-facts [--replace]（默认合并，没传的字段保留）| set-questions | set-rivals | set-assets | confirm
+geo_state.py   status | init | show | set-facts [--replace]（默认合并，没传的字段保留）| set-questions | set-rivals | set-assets（不再用于建档，留着兼容旧存档）| confirm | confirm-monitoring | set-schedule --status on|declined|off|unavailable
 geo_run.py     start --phase open|brand [--only q01,q03] [--retry] [--fresh 同一天重新测] | wait [--max-seconds 90] | status
 geo_score.py   score | brand-digest | set-judgement | issues [--status S] | mark-issue --no N --status done|dismissed|open
 geo_report.py  publish | links | show | compare | set-actions

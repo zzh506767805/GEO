@@ -9,7 +9,7 @@
 | 角色和红线 | `prompt.md` | 员工是谁、什么能做什么不能做、对商家怎么说话、哪句话找哪个 Skill | 不用 |
 | 流程 | `skills/*/SKILL.md` | 每件事按什么顺序做、每一步跑哪个命令 | 不用 |
 | 细则 | `skills/*/references/*.md` | 怎么出题、怎么核对、各类内容怎么写、页面上的东西从哪来 | 不用 |
-| 定时任务 | `../../tasks/timer/geo-weekly-check.yaml` | 每周几点触发、触发时对员工说什么 | 不用 |
+| 每周体检 | `skills/geo-weekly/SKILL.md` 的“开启每周体检” | 商家同意后员工替他建的定时任务：每周几点、触发时对员工说什么 | 不用 |
 | 页面清单 | `skills/geo-weekly/assets/pages.json` | 工作台导航里有哪些页面、什么顺序 | 不用 |
 | 护栏 | `skills/*/scripts/*.py` | 数据格式、硬性的上限和顺序、给员工的 `next` 提示 | 要 |
 | 页面样式 | `skills/geo-weekly/assets/page.html` | 标准模板：工作台和报告长什么样 | 要 |
@@ -35,7 +35,7 @@
 例如“每周先写内容再出报告”“周报多加一行”“改成两周一次”。
 
 1. 改 `skills/geo-weekly/SKILL.md` 的“每周出周报”（体检那一段在 `skills/geo-check/SKILL.md`）。
-2. 触发时间、触发时的那段话改 `tasks/timer/geo-weekly-check.yaml` 的 `cronExpression` 和 `promptTemplate`。
+2. 触发时间、触发时的那段话改 `skills/geo-weekly/SKILL.md` 的“开启每周体检”。只对之后新建的任务生效，已经建好的任务不会跟着变。
 3. 搜一下脚本里的 `next` 文案（`grep -n '"next"' skills/*/scripts/*.py`）。员工会照着 `next` 做，文档改了顺序而 `next` 还指旧的下一步，新员工会跟着 `next` 走。
 4. 新的流程碰到上面那张表里的规矩时，才需要改脚本。
 

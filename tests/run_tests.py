@@ -136,11 +136,11 @@ def test_synthetic():
 
         saved = call(STATE, "set-questions", "--file", write(tmp, "questions.json", SYNTHETIC_QUESTIONS), env=env)
         check("问题库 10 加 2 写入成功", (saved["openQuestions"], saved["brandQuestions"], saved["questionsVersion"]) == (10, 2, 1), saved)
-        check("没写差异点、某类顾客题不够、题没写替谁问，都会提醒",
-              any("不一样" in w for w in saved["warnings"]) and any("“附近居民”只有 1 道题" in w for w in saved["warnings"])
-              and any("Q02" in w and "Q10" in w for w in saved["warnings"]), saved["warnings"])
+        check("没写差异点、题没写替谁问，都会提醒；不再按顾客类型数题",
+              any("不一样" in w for w in saved["warnings"]) and any("Q03" in w and "Q10" in w and "Q02" not in w for w in saved["warnings"])
+              and not any("顾客" in w for w in saved["warnings"]), saved["warnings"])
         shown = call(STATE, "show", "--part", "questions", env=env)["questions"]["items"]
-        check("不存在的顾客类型会被清空", shown[1]["audience"] == "" and shown[0]["audience"] == "附近居民")
+        check("替谁问是出题时顺手写的，原样保留，不用先归纳顾客类型", shown[1]["audience"] == "不存在的人群" and shown[0]["audience"] == "附近居民")
         relabel = [dict(q, tag="改标签") if q["id"] == "q06" else q for q in SYNTHETIC_QUESTIONS]
         again = call(STATE, "set-questions", "--file", write(tmp, "relabel.json", relabel), env=env)
         check("只改标注不算口径变化", again["questionsVersion"] == 1 and again["changed"] is True, again)
@@ -160,6 +160,8 @@ def test_synthetic():
         check("页签输出明确员工可调用签名命令，不要求平台代办", "claw-admin-request" in first["tabSetup"] and "无需商家提供" in first["tabSetup"], first["tabSetup"])
         blocked = call(RUN, "start", "--phase", "open", "--date", DATE, env=env, expect=2)
         check("首次初始化未经确认不发查询", "商家确认" in blocked.get("error", "") and not Path(env["MOCK_STATE"]).exists(), blocked)
+        early = call(STATE, "set-schedule", "--status", "on", env=env, expect=2)
+        check("商家确认之前不能开启每周体检", "确认" in early.get("error", ""), early)
         consent = call(STATE, "confirm-monitoring", env=env)
         check("监测方向确认与第三方账号确认分开", consent["firstCheckPending"] is False and consent["confirmed"] is False, consent)
         check("工作台页签配置保留对话和真实工作台链接", first["tabConfiguration"]["tabs"][0]["tabKey"] == "conversation"
@@ -326,6 +328,10 @@ def test_synthetic():
               listed["reports"] == {DATE: built["reportUrl"]} and listed["reportFiles"] == {DATE: built["reportFileUrl"]}
               and listed["reportUrl"] == built["reportUrl"] and listed["reportFileUrl"] == built["reportFileUrl"], listed)
         keep_page("一期的报告（合成数据）", built["reportFiles"][0])
+        asked = call(STATE, "status", env=env)
+        check("第一份报告出来后，提醒问商家要不要开启每周体检", asked["schedule"] == "" and "每周体检" in asked.get("next", ""), asked)
+        turned_on = call(STATE, "set-schedule", "--status", "on", env=env)
+        check("商家同意后记下每周体检已开启，不再提醒", turned_on["schedule"] == "on" and "每周体检" not in turned_on.get("next", ""), turned_on)
         html, block, data = page_json(built["file"])
         check("工作台生成成功，占位符已替换", "__GEO_DATA__" not in html and data.get("kind") == "workbench" and data.get("runDate") == DATE)
         check("网页里的数据块不含能提前结束标签的字符", block is not None and "<" not in block.group(1))
@@ -491,6 +497,11 @@ def test_backend_source():
         _, _, data = page_json(published["file"])
         check("监测设置里只列员工另外记下的，不抄店铺后台的门店",
               data["settings"]["from"] == "backend" and data["settings"]["extras"]["douyin"] == "另一个抖音号" and data["settings"]["extras"]["stores"] == [], data["settings"]["extras"])
+        call(STATE, "set-facts", "--file", write(tmp, "edges.json", {"edges": [{"text": "测试路上唯一一家现烤面包", "basis": "门店位置"}]}), env=env)
+        published = call(REPORT, "publish", env=env)
+        _, _, data = page_json(published["file"])
+        check("差异点显示在监测设置上，商家看得到、能让员工改",
+              data["settings"]["edges"] == [{"text": "测试路上唯一一家现烤面包", "basis": "门店位置"}], data["settings"].get("edges"))
         keep_page("工作台（资料来自店铺后台，还没体检）", published["file"])
 
 

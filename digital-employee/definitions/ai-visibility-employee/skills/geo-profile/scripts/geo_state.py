@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """店铺资料和监测设置的读写和校验：店铺资料、问题、同类店、已有的内容。
 
-店铺资料是员工核对和写内容的底稿，不在工作台上展示；问题、顾客类型、同类店和
+店铺资料是员工核对和写内容的底稿，不在工作台上展示；差异点、问题、同类店和
 员工另外记下的几样信息，显示在工作台的“监测设置”页。
 
 用法（脚本用绝对路径执行，入参写成 JSON 文件后用 --file 传入）：
@@ -13,6 +13,8 @@
   geo_state.py set-rivals --file <json>
   geo_state.py set-assets --file <json>
   geo_state.py confirm
+  geo_state.py confirm-monitoring
+  geo_state.py set-schedule --status on|declined|off|unavailable
 """
 from __future__ import annotations
 
@@ -198,12 +200,8 @@ def facts_warnings(facts: dict) -> list:
         warnings.append("电商版缺少购买入口（小程序名或店铺链接），没法统计 AI 有没有给出下单的地方")
     if facts["segment"] == "ecom" and not facts["products"]:
         warnings.append("电商版缺少核心商品，没法比对 AI 说的价格和规格")
-    if not facts.get("audience"):
-        warnings.append("还没有写“顾客是谁”，问题会缺少针对性；请按客群说明先归纳 2 到 4 类顾客")
     if not facts.get("edges"):
-        warnings.append("还没有写这家店和同类店不一样在哪，问题容易出成同类店都能答的题；请按 geo-profile 第 4 步先写 1 到 3 条")
-    if not facts["channels"]["wechatOfficial"]:
-        warnings.append("没有登记公众号名称，统计“本店内容被引用”时会漏掉公众号文章")
+        warnings.append("还没有写这家店和同类店不一样在哪，问题容易出成同类店都能答的题；请按 geo-profile 第 2 步先写 1 到 3 条")
     return warnings
 
 
@@ -212,7 +210,6 @@ def normalize_questions(raw, facts: dict) -> list:
     if not isinstance(items, list):
         raise gc.GeoError("问题库应为一个列表")
     names = gc.brand_aliases(facts)
-    people = [p["name"] for p in facts.get("audience") or []]
     out, seen = [], set()
     for item in items:
         if not isinstance(item, dict):
@@ -236,7 +233,7 @@ def normalize_questions(raw, facts: dict) -> list:
         seen.add(qid)
         person = _text(item.get("audience"), 12)
         out.append({"id": qid, "kind": kind, "tag": _text(item.get("tag"), 8), "text": text,
-                    "audience": person if person in people else "", "worry": _text(item.get("worry"), 30)})
+                    "audience": person, "worry": _text(item.get("worry"), 30)})
     n_open = sum(1 for q in out if q["kind"] == "open")
     n_brand = len(out) - n_open
     if not OPEN_RANGE[0] <= n_open <= OPEN_RANGE[1]:
@@ -246,18 +243,12 @@ def normalize_questions(raw, facts: dict) -> list:
     return sorted(out, key=lambda q: (q["kind"] != "open", q["id"]))
 
 
-def question_warnings(items: list, facts: dict) -> list:
-    """出题不合配比的地方：哪类顾客题太少、哪道题没写替谁问。只提醒，不拦。"""
-    opens = [q for q in items if q["kind"] == "open"]
-    warnings = []
-    unassigned = [q["id"].upper() for q in opens if not q["audience"]]
+def question_warnings(items: list) -> list:
+    """出题时漏写的地方：哪道题没写替谁问。只提醒，不拦。"""
+    unassigned = [q["id"].upper() for q in items if q["kind"] == "open" and not q["audience"]]
     if unassigned:
-        warnings.append("这几道题没写替哪类顾客问（或写的不是已归纳的顾客类型）：" + "、".join(unassigned))
-    for person in facts.get("audience") or []:
-        n = sum(1 for q in opens if q["audience"] == person["name"])
-        if n < 2:
-            warnings.append("“%s”只有 %d 道题，每类顾客至少 2 道；题出不出来，说明这类顾客可能归纳得不对" % (person["name"], n))
-    return warnings
+        return ["这几道题没写替谁问：" + "、".join(unassigned)]
+    return []
 
 
 def normalize_rivals(raw, facts: dict) -> list:
@@ -346,7 +337,7 @@ def status_payload() -> dict:
         # 资料从哪来（backend 店铺后台 / public 公开信息）、有没有等商家确认的、现在能不能替商家写内容
         "factsFrom": state["from"],
         "pendingConfirm": state["pending"],
-        # 等商家确认的具体是哪几样。请他确认时点出来（“我搜到一个叫某某的抖音号，是你的吗”），这些也不能写进内容。
+        # 等商家确认的具体是哪几样（你推断的别名、从别处看到的旧门店）。请他确认时点出来，这些也不能写进内容。
         "toConfirm": gc.needs_confirm(facts) if state["pending"] else {},
         "canWrite": state["canWrite"],
         "openQuestions": sum(1 for q in questions if q["kind"] == "open"),
@@ -357,10 +348,14 @@ def status_payload() -> dict:
         "pageUrl": meta.get("pageUrl", ""),
         # 工作台是不是最新的。pending 不为空时，先同步再把链接发给商家。
         "workbench": workbench,
+        # 每周定时体检：on 已开启，declined 商家说先不开，off 商家让关掉，unavailable 当前环境开不了，空的是还没问过
+        "schedule": (meta.get("schedule") or {}).get("status", ""),
         "warnings": facts_warnings(facts),
     }
     if hint:
         payload["next"] = hint
+    elif last_run and not payload["schedule"]:
+        payload["next"] = "第一份报告出来了，还没问过商家要不要开启每周体检；按 geo-weekly 的“开启每周体检”问他一次"
     return payload
 
 
@@ -450,7 +445,7 @@ def cmd_set_questions(args) -> None:
     n_open, n_brand = payload["openQuestions"], payload["brandQuestions"]
     if (n_open, n_brand) != RECOMMENDED:
         payload["warnings"].append("建议用 %d 个不带店名加 %d 个带店名的问题，现在是 %d 加 %d" % (RECOMMENDED + (n_open, n_brand)))
-    payload["warnings"].extend(question_warnings(items, facts))
+    payload["warnings"].extend(question_warnings(items))
     gc.emit(payload)
 
 
@@ -492,6 +487,14 @@ def cmd_confirm_monitoring(_args) -> None:
     gc.emit(status_payload())
 
 
+def cmd_set_schedule(args) -> None:
+    _require_facts()
+    if args.status == "on" and (_load()["meta"] or {}).get("firstCheckPending"):
+        raise gc.GeoError("商家还没确认监测方向，不能开启每周体检")
+    _touch_meta(schedule={"status": args.status, "at": gc.now_iso()})
+    gc.emit(status_payload())
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="店铺资料和监测设置")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -514,6 +517,9 @@ def main() -> None:
         p.set_defaults(func=func)
     sub.add_parser("confirm").set_defaults(func=cmd_confirm)
     sub.add_parser("confirm-monitoring").set_defaults(func=cmd_confirm_monitoring)
+    p = sub.add_parser("set-schedule")
+    p.add_argument("--status", required=True, choices=("on", "declined", "off", "unavailable"))
+    p.set_defaults(func=cmd_set_schedule)
     args = parser.parse_args()
     args.func(args)
 

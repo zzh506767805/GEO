@@ -1,6 +1,6 @@
 ---
 name: geo-weekly
-description: 出每期的体检报告、维护商家的“AI 曝光工作台”、替商家写内容：把体检和核对的结果做成这一期的报告，同步工作台，写本期小结和建议，找内容缺口，按类型写内容（公众号文章、小红书笔记、长文）并登记，给商家发周报和链接。每周定时任务里接在 geo-check 之后使用；任何时候数据有变化需要同步页面时使用；商家说“把工作台发我”“把报告发我”“这周怎么样”“你都做了哪些事”“写一篇公众号文章”“写一条小红书笔记”“第 2 篇可以发”“新增嵌入 tab”“固定工作台到客户端”“查看客户端页签”时也使用。
+description: 出每期的体检报告、维护商家的“AI 曝光工作台”、替商家写内容：把体检和核对的结果做成这一期的报告，同步工作台，写本期小结和建议，找内容缺口，按类型写内容（公众号文章、小红书笔记、长文）并登记，给商家发周报和链接；第一份报告出来后问商家要不要开启每周体检，并替他开启。第一次体检和每周体检之后接在 geo-check 之后使用；商家说“开启每周体检”“每周体检停掉”时使用；任何时候数据有变化需要同步页面时使用；商家说“把工作台发我”“把报告发我”“这周怎么样”“你都做了哪些事”“写一篇公众号文章”“写一条小红书笔记”“第 2 篇可以发”“新增嵌入 tab”“固定工作台到客户端”“查看客户端页签”时也使用。
 ---
 
 # 报告、工作台和内容
@@ -19,7 +19,7 @@ description: 出每期的体检报告、维护商家的“AI 曝光工作台”�
 
 ## 开始前
 
-- 首次初始化只开通工作台，不做体检或写内容。geo_state.py status 返回 firstCheckPending 为 true 时，在对话里等待商家确认，不因定时任务触发就绕过确认。
+- 本 Skill 负责整体流程里的第 4、5 步（流程见 `geo-profile`）：第一份报告出来后汇报、问商家要不要开启每周体检；以后每周出周报。`geo_state.py status` 返回 `firstCheckPending` 为 true 时，还在等商家确认第一次体检，这时不出报告、不写内容。
 
 - **每条命令都写全路径**：本 Skill 的脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py"`，店铺资料的脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py"`。不要先定义 `REPORT=...` 这类变量、在后面的命令里再用：两次命令之间 shell 变量不一定保留，变量丢了命令就会去执行一个空路径。下文表格里写的 `geo_report.py ...`、`geo_state.py ...` 都是全路径的简写。工作目录保持在当前会话工作目录。
 - 入参先写成 JSON 文件，放在 `$YOUZAN_AGENT_SESSION_TEMP/geo/` 下，再用 `--file` 传入。
@@ -40,7 +40,53 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 什么时候同步：建完档、发起体检之后、这一期的核对和动作都写完之后、登记或改了内容之后、商家让你改了任何东西之后。拿不准页面是不是最新的，执行 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" links`，`pending` 不为空就先同步。
 
-## 每周出周报
+## 第一份报告（整体流程第 4 步）
+
+商家确认后跑完第一次体检（`geo-check` 的算分和核对都做完），按下面“每周出周报”的第 1 到第 5 步做：对比（第一期没有可比的）、找内容缺口、写第一篇内容、写小结和建议、同步。然后给商家发一条消息，六行以内：
+
+1. 一句结论：顾客没点名时，多少个回答里有几个提到了他。
+2. AI 点名介绍他时是怎么说的，一两句话。
+3. 这一期的报告（`publish` 输出的 `reportUrl`）。
+4. 写了的第一篇内容：类型、标题和“内容”页的链接，请他看一眼；没写就说为什么。
+5. 问他要不要开启每周体检：“以后每周一上午我自动问一遍、出报告、备好一篇内容，要开启吗？”
+
+报告里有的不要再贴一遍。商家回复后按下一节做。
+
+## 开启每周体检
+
+每周体检由你替商家开启，不是一上岗就有。**只在商家明确同意后开启**，只问一次；商家没回、说再看看，就不开，以后在周报里也不催。
+
+商家同意后，用运行时提供的创建定时任务的能力，建一个这样的任务：
+
+| 项 | 填什么 |
+| --- | --- |
+| 名称 | 每周 AI 曝光体检 |
+| 时间 | 每周一 9:00，时区 Asia/Shanghai（cron：`0 9 * * 1`） |
+| 每次触发时对你说的话 | 下面这一段，原样填 |
+
+```text
+每周 AI 曝光体检：先执行 geo-profile 的 status。firstCheckPending 为 true 时只提醒商家确认，不体检；schedule 不是 on 时说明商家已经关掉了每周体检，不体检，结束。
+否则按 geo-profile 重读店铺资料，再依次用 geo-check 和 geo-weekly 完成本周体检和周报，直接执行，不询问确认。
+这一期写的内容先登记到工作台，等商家确认后再发；现在不能替商家写内容时不写，只请商家看一眼工作台的“监测设置”。
+结束时用一句话总结：“本周体检完成：Y 个回答里有 X 个提到本店，本周内容：待确认 / 未写。”
+```
+
+建好以后读回确认任务存在、时间对，再记下来，并告诉商家每周一上午会收到周报：
+
+```bash
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" set-schedule --status on
+```
+
+其他情况：
+
+| 情况 | 做法 |
+| --- | --- |
+| 商家说先不开 | `set-schedule --status declined`。告诉他想做的时候说一声“开启每周体检”，或者随时说“重新体检” |
+| 商家后来说“开启每周体检” | 照上面建任务，`set-schedule --status on` |
+| 商家说“每周体检停掉” | 用运行时的能力停掉或删掉这个任务，`set-schedule --status off` |
+| 当前环境没有创建定时任务的能力，或者建了读不回来 | `set-schedule --status unavailable`。如实告诉商家暂时开不了自动体检，他想看新结果时说“重新体检”。不要说已经开启 |
+
+## 每周出周报（整体流程第 5 步）
 
 前提：当期已经按 `geo-check` Skill 完成体检（算分和核对都做完）。没做完时先去做。
 
@@ -54,7 +100,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 ### 2. 找内容缺口
 
-对照两样东西：这一期各平台最常读哪里的内容（`geo-check` 算分输出的 `topSources`、`refs`），和建档时查到的这家店已有的内容（`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" show --part assets`）。AI 常读、而这家店没有内容的地方，就是缺口。最多写 3 条，每条说清是哪个平台、缺什么。
+看这一期各平台最常读哪里的内容（`geo-check` 算分输出的 `topSources`），和其中有多少是这家店的（`refs`）。AI 常读、而这家店的内容没被引用的地方，就是缺口。最多写 3 条，每条说清是哪个平台、缺什么。
 
 例如：元宝三分之一的引用来自公众号，而这家店没有公众号文章被引用。
 
@@ -130,7 +176,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 3. 这一期的报告：`reportUrl`。
 4. 要他做的一件事：有内容等他确认，就给工作台“内容”页的链接；有你另外记下的信息等他确认，就给“监测设置”的链接；都没有，就说建议里的第一件。
 
-每周定时任务结束时，再按任务要求输出那一句总结。
+每周定时任务触发的这一轮结束时，再按任务里的要求输出那一句总结。
 
 ## 客户端页签
 
