@@ -51,7 +51,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 
 - 有线下门店、顾客主要到店或同城下单：`local`（本地门店）。
 - 没有门店，或主要全国发货：`ecom`（电商）。
-- 两样都有：按主要收入来源选一套，再从另一套里补 2 个问题。
+- 两样都有：按主要收入来源选一套，从这一套的 10 道题里换出 2 道，按另一套的配比出。
 
 然后只读对应的一份说明：`references/segment-local.md` 或 `references/segment-ecom.md`。它规定了资料里多记什么、怎么出题。
 
@@ -65,9 +65,10 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 | `stores` | 每家门店的名称、地址、营业时间、电话、状态（在营 / 已搬迁 / 已关闭） | 后台的门店 `source` 写“有赞后台”；从别处看到的写实际来源 |
 | `products` | 核心商品的名称、规格、价格带、产地（电商必填，最多 10 个） | 店铺后台 |
 | `buyEntry` | 小程序名称、店铺链接 | 店铺后台 |
-| `channels` | 他的公众号、抖音号、他发过的内容的编号 | 第 5 步查到的，属于要确认的 |
+| `channels` | 他的公众号、抖音号、他发过的内容的编号 | 第 6 步查到的，属于要确认的 |
 | `writingRules` | 口吻、不用的词、每篇必须带的信息 | 商家说过才填 |
 | `audience` | 顾客类型，见第 3 步 | 评价、订单等 |
+| `edges` | 和同类店不一样的地方，见第 4 步 | 评价、热销品、价格带 |
 
 ### 3. 归纳顾客类型
 
@@ -89,18 +90,39 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 - `worry`：最在意或最担心什么。
 - `basis`：依据，写“商品评价”“订单”“客服对话”“商家说明”或“推测”。没有数据支撑的必须写“推测”。
 
-### 4. 出题
+### 4. 写差异点
+
+出题之前，先写 1 到 3 条**这家店和同类店不一样的地方**（`edges`）。不带店名的问题都要挂在差异点上出，不能挂在“这家店卖什么”上：按商品清单出的题，同类店个个都能答，AI 没有理由提到他。
+
+- 差异点是顾客能感受到的区别：价格（清仓价、临期折扣）、规格（体验装、小包装）、品类组合（母婴和零食一次买齐）、地段（这一片唯一一家）、服务（30 分钟送到）。
+- 依据和第 3 步一样，从评价、热销品、价格带里找，写在 `basis` 里；找不到依据的写“推测”。
+- 每条 30 个字以内，例如“大牌母婴体验装，价格比正装低一半”。
+- 实在找不出差异点，就退到地段：门店所在街道附近同类店少，本身就是差异点。
+
+### 5. 出题
 
 按客群说明里的配比出 10 个不带店名的问题和 2 个带店名的问题。
 
-- 每类顾客至少 2 道题，在题目上写明 `audience`（替哪类顾客问）和 `worry`（他在意什么）。
+- 每类顾客至少 2 道题，在题目上写明 `audience`（替哪类顾客问）和 `worry`（他在意什么）。某一类顾客凑不出 2 道题，说明这类顾客归纳得不对，回第 3 步改。
 - 用这类顾客的口气和他会用的词，把他在意的事写进问题里。例如控糖的人不会问“哪家面包店好”，会问“有没有适合控糖的人吃的面包店”。
 - 不带店名的问题里不能出现店名和别名，否则结果虚高，脚本会拒绝。
 - 多出具体的问题：具体街区、具体单品、具体场合、具体价位。“全国哪个牌子好”这类大问题，小店赢不了，最多留 1 个当参照。
+
+每道不带店名的题出完，按下面四条过一遍，过不了的改掉：
+
+| 检查 | 过不了的样子 | 改成 |
+| --- | --- | --- |
+| 挂在哪条差异点上 | “杭州有没有小程序下单、当天送到的社区小店？”（什么店都能答） | 换成能体现差异点的问法，或者删掉 |
+| AI 会列几家、这家店算不算好答案 | 标准答案是盒马、美团、山姆这类平台或连锁 | 加上这家店才有的条件（清仓价、体验装、某条街），让答案只剩三五家 |
+| 一道题只有一个需求 | “哪里能买到便宜的洞洞鞋和轻奢清仓包？” | 拆成两道，或者只留一个 |
+| 顾客真会这么打字 | “正装之外的体验装和尝鲜装”“银耳罐头、冰激凌这类耐放的吃食”（从商品清单拼出来的） | 换成顾客的说法：“哪里能买到大牌尿裤的试用装？” |
+
+- 渠道题（小程序下单、配送、自提）单独问一定输给平台，要和差异点或地段绑在一起问，例如“留下附近有没有能小程序下单、到店自提的折扣店？”。
 - 带店名的 2 个固定为“某某怎么样”和“某某在哪、几点开门、有什么招牌”。
 - 同类店这一步先不定，第一次体检后从 AI 实际提到的店里挑。
+- `set-questions` 返回的 `warnings` 会列出哪类顾客题不够、哪道题没写替谁问，照着补。
 
-### 5. 查他在别处的账号和内容
+### 6. 查他在别处的账号和内容
 
 通过 `youzan-ai-search` Skill 查，每项只查一次：
 
@@ -111,7 +133,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 
 搜到的账号是不是他的，你没法确定，所以这些都属于要商家确认的信息。查询需要等待时按 `youzan-ai-search` 的要求等；查不到就如实记“没有找到”。
 
-### 6. 写入
+### 7. 写入
 
 ```bash
 S="$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py"
@@ -129,6 +151,7 @@ python3 "$S" set-assets --file "$YOUZAN_AGENT_SESSION_TEMP/geo/assets.json"
   "segment": "local",
   "brand": {"name": "", "aliases": [], "category": "", "city": ""},
   "audience": [{"name": "", "who": "", "scene": "", "worry": "", "basis": "商品评价"}],
+  "edges": [{"text": "", "basis": "热销品"}],
   "stores": [{"name": "", "address": "", "hours": "", "phone": "", "status": "在营", "source": "有赞后台"}],
   "products": [{"name": "", "spec": "", "priceRange": "", "origin": ""}],
   "buyEntry": {"miniProgram": "", "shopUrl": ""},
@@ -146,15 +169,15 @@ python3 "$S" set-assets --file "$YOUZAN_AGENT_SESSION_TEMP/geo/assets.json"
 ]
 ```
 
-`assets.json`（第 5 步查到的，你找内容缺口时用，不在工作台上展示）：
+`assets.json`（第 6 步查到的，你找内容缺口时用，不在工作台上展示）：
 
 ```json
 {"items": [{"platform": "抖音门店", "found": true, "note": "", "url": ""}]}
 ```
 
-脚本返回的 `warnings` 要处理：能补的补上，补不了的在第 9 步告诉商家。
+脚本返回的 `warnings` 要处理：能补的补上，补不了的在第 10 步告诉商家。
 
-### 7. 开通工作台
+### 8. 开通工作台
 
 ```bash
 python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" publish
@@ -166,11 +189,11 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 `published: false` 时按 `geo-weekly` 的 `references/workbench.md` 处理，体检照常进行。
 
-### 8. 马上体检
+### 9. 马上体检
 
 立即按 `geo-check` Skill 跑第一次体检，再按 `geo-weekly` Skill 写本期小结和建议、同步工作台。这一期会生成第一份体检报告。
 
-### 9. 告诉商家结果
+### 10. 告诉商家结果
 
 这条消息控制在 6 行以内：
 
@@ -183,7 +206,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 ## 每期体检前：重读一遍店铺资料
 
-每周体检之前，重新从店铺后台读一遍资料，用 `set-facts` 写回（带 `"from": "backend"`，你另外记下的那几样原样保留）。营业时间改了、多了一家店，这样才能跟上。从后台重读带来的变化不用商家再确认。
+每周体检之前，重新从店铺后台读一遍资料，用 `set-facts` 写回（带 `"from": "backend"`，你另外记下的那几样和顾客类型、差异点原样保留）。营业时间改了、多了一家店，这样才能跟上。从后台重读带来的变化不用商家再确认。
 
 ## 修改
 
@@ -193,10 +216,11 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 | --- | --- |
 | “把 Q3 换一个问法”“把 Q3 删掉”“加一道题：……” | `show --part questions` → `set-questions`；提醒商家：改了问题原文，之前的数就不能和之后的比了。然后按 `geo-check` 只重跑改过的题、重新算分 → `publish` |
 | “同类店换成……” | `set-rivals --file <文件>`（`[{"name": "", "aliases": []}]`，最多 5 家），按 `geo-check` 重新算分 → `publish` |
-| “我的公众号叫……”“我的抖音号是……” | 记进 `channels`，`set-facts` 时加 `--confirmed-by-merchant`；抖音号还要按第 5 步查它的作品编号。然后按 `geo-check` 重新算分 → `publish` |
+| “我的公众号叫……”“我的抖音号是……” | 记进 `channels`，`set-facts` 时加 `--confirmed-by-merchant`；抖音号还要按第 6 步查它的作品编号。然后按 `geo-check` 重新算分 → `publish` |
 | “这些信息没问题，确认”“确认” | `confirm` → `publish` |
 | “这个抖音号不是我的”“那家店早就关了” | 先 `show --part facts`，改好后 `set-facts --file <文件> --confirmed-by-merchant` → `publish` |
 | “这类顾客说得不对，其实是……” | 改 `audience`，`set-facts --confirmed-by-merchant`；需要的话相应改问题 → `publish` |
+| “我们家主要是……便宜”“我们的特点是……” | 改 `edges`，`set-facts --confirmed-by-merchant`；挂不上新差异点的问题提出改法，他同意再改 → `publish` |
 | “写东西不要用某个词”“口吻随意一点” | 记进 `writingRules`，`set-facts --confirmed-by-merchant` → `publish` |
 | “营业时间是……”“我们搬到……了” | 这是店铺后台里的资料。按他说的先记下（`--confirmed-by-merchant`），并提醒他把店铺后台也改掉，否则下一期重读时又会变回去 |
 

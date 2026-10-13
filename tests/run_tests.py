@@ -136,6 +136,9 @@ def test_synthetic():
 
         saved = call(STATE, "set-questions", "--file", write(tmp, "questions.json", SYNTHETIC_QUESTIONS), env=env)
         check("问题库 10 加 2 写入成功", (saved["openQuestions"], saved["brandQuestions"], saved["questionsVersion"]) == (10, 2, 1), saved)
+        check("没写差异点、某类顾客题不够、题没写替谁问，都会提醒",
+              any("不一样" in w for w in saved["warnings"]) and any("“附近居民”只有 1 道题" in w for w in saved["warnings"])
+              and any("Q02" in w and "Q10" in w for w in saved["warnings"]), saved["warnings"])
         shown = call(STATE, "show", "--part", "questions", env=env)["questions"]["items"]
         check("不存在的顾客类型会被清空", shown[1]["audience"] == "" and shown[0]["audience"] == "附近居民")
         relabel = [dict(q, tag="改标签") if q["id"] == "q06" else q for q in SYNTHETIC_QUESTIONS]
