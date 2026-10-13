@@ -74,7 +74,8 @@ AI 推荐了哪些店、有什么值得商家知道的，脚本算不出来，�
 
 - 用 Agent 工具派，三个子 Agent 一次派出去，不要一个读完再派下一个。
 - 第一次体检、每周体检读全部题。只重跑了几道题时，`score` 的 `next` 会写明是哪几道，只派子 Agent 读这几道（任务说明里带上 `--only`）。
-- 子 Agent 把结果写进 `$YOUZAN_AGENT_SESSION_TEMP/geo/reading-<平台>.json`，交回时只说一句写好了、有几条发现。
+- 子 Agent 交回的是一段 JSON 文字。**原样**存成 `$YOUZAN_AGENT_SESSION_TEMP/geo/reading-<平台>.json`，一个字都不要改，也不要自己补写或重排。外面包着代码块标记、前后多一两句话没关系，脚本会只取 JSON 那一段。
+- 某个子 Agent 交回的不是 JSON，或者脚本说它不合法：让同一个子 Agent 重新交一次，不要自己动手改它的结果。
 
 三个都交回后：
 

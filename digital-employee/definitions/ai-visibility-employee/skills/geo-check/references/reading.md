@@ -1,6 +1,6 @@
 # 读全文：交给子 Agent 的任务说明
 
-每个平台派一个子 Agent。把下面“任务说明”整段交给它，只替换 `<平台>`（hunyuan / doubao / deepseek）、`<平台名>`（元宝 / 豆包 / DeepSeek）和 `<只读哪几道题>`（读全部时这一行删掉）。
+每个平台派一个子 Agent。子 Agent 要能执行命令（取回答全文要跑一条命令）。把下面“任务说明”整段交给它，只替换 `<平台>`（hunyuan / doubao / deepseek）、`<平台名>`（元宝 / 豆包 / DeepSeek）和 `<只读哪几道题>`（读全部时这一行删掉）。
 
 子 Agent 看不到你的对话，也不知道这家店。它需要的店名、品类、城市、差异点、同类店，`answers` 命令的输出里都有，不用你另外交代。
 
@@ -63,25 +63,14 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_sc
 - `action`：店主可以做的一件具体的事，120 个字以内；想不出来就留空。
 - `evidence`：1 到 4 句原话。
 
-### 4. 写进文件，交回
+### 4. 交回
 
-写进 `$YOUZAN_AGENT_SESSION_TEMP/geo/reading-<平台>.json`：
+最后交回的内容**只有一段 JSON**，前后不要加任何话，也不要加代码块标记：
 
-```json
-{
-  "provider": "<平台>",
-  "answers": {
-    "q01_<平台>#1": ["储缘蛋糕", "馋嘴蛋糕"],
-    "q01_<平台>#2": []
-  },
-  "names": {"储缘蛋糕": ["储缘生日蛋糕(留下镇店)"]},
-  "findings": [
-    {"kind": "misread", "title": "", "detail": "", "action": "",
-     "evidence": [{"answer": "b01_<平台>#1", "quote": ""}]}
-  ]
-}
-```
+{"provider": "<平台>",
+ "answers": {"q01_<平台>#1": ["储缘蛋糕", "馋嘴蛋糕"], "q01_<平台>#2": []},
+ "names": {"储缘蛋糕": ["储缘生日蛋糕(留下镇店)"]},
+ "findings": [{"kind": "misread", "title": "", "detail": "", "action": "",
+               "evidence": [{"answer": "b01_<平台>#1", "quote": ""}]}]}
 
-写完先自己核对一遍：`listShops` 为 true 的回答是不是每个都写了；每个店名和每句原话，是不是都能在原文里找到。
-
-交回时只说一句：文件写好了，读了几个回答，写了几条发现。不要把文件内容贴回来。
+交回之前先自己核对一遍：`listShops` 为 true 的回答是不是每个都写了；每个店名和每句原话，是不是都能在原文里找到。

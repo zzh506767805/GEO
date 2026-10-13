@@ -165,13 +165,25 @@ def write_json(path: Path, data) -> None:
 
 
 def load_input(file_path: str):
-    """读取由员工写好的 JSON 入参文件。"""
+    """读取由员工写好的 JSON 入参文件。
+
+    子 Agent 交回的是一段文字，员工原样存成文件：外面可能包着 ```json 代码块，前后可能带一两句话。
+    这里只取第一个 { 或 [ 到最后一个 } 或 ] 之间的部分，其余的一概不猜。
+    """
     if not file_path:
         raise GeoError("缺少 --file 参数")
-    data = read_json(Path(file_path))
-    if data is None:
-        raise GeoError("找不到入参文件：" + os.path.basename(file_path))
-    return data
+    try:
+        text = Path(file_path).read_text(encoding="utf-8")
+    except FileNotFoundError:
+        raise GeoError("找不到入参文件：" + os.path.basename(file_path)) from None
+    starts = [i for i in (text.find("{"), text.find("[")) if i >= 0]
+    end = max(text.rfind("}"), text.rfind("]"))
+    if not starts or end < min(starts):
+        raise GeoError("入参文件里没有 JSON：" + os.path.basename(file_path))
+    try:
+        return json.loads(text[min(starts):end + 1])
+    except json.JSONDecodeError as exc:
+        raise GeoError("入参文件不是合法的 JSON（%s 第 %d 行）：%s" % (os.path.basename(file_path), exc.lineno, exc.msg)) from exc
 
 
 # ── 工作台有没有跟上最新的数据 ──
