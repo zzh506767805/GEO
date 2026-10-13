@@ -26,7 +26,7 @@ SKILLS = ROOT / "digital-employee" / "definitions" / "ai-visibility-employee" / 
 STATE = SKILLS / "geo-profile" / "scripts" / "geo_state.py"
 RUN = SKILLS / "geo-check" / "scripts" / "geo_run.py"
 SCORE = SKILLS / "geo-check" / "scripts" / "geo_score.py"
-REPORT = SKILLS / "geo-weekly" / "scripts" / "geo_report.py"
+REPORT = SKILLS / "geo-workbench" / "scripts" / "geo_report.py"
 sys.path.insert(0, str(HERE))
 import demo_scenario as demo  # noqa: E402
 

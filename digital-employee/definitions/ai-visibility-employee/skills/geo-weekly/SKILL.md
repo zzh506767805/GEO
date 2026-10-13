@@ -1,44 +1,20 @@
 ---
 name: geo-weekly
-description: 出每期的体检报告、维护商家的“AI 曝光工作台”、发周报：把体检和核对的结果做成这一期的报告，写本期小结和建议，找内容缺口，同步工作台，给商家发周报和链接；第一份报告出来后问商家要不要开启每周体检，并替他开启。第一次体检和每周体检之后接在 geo-check 之后使用；任何时候数据有变化需要同步页面时使用；商家说“开启每周体检”“每周体检停掉”“把工作台发我”“把报告发我”“这周怎么样”“你都做了哪些事”“工作台上加一个页面”“页面换个颜色”“新增嵌入 tab”“固定工作台到客户端”时也使用。
+description: 每一期体检之后的收尾和周报：和上一期对比、找内容缺口、写本期小结和建议、生成这一期的报告，给商家发第一份报告或每周的周报；第一份报告出来后问商家要不要开启每周体检，并替他开启或停掉。第一次体检和每周体检之后接在 geo-check 之后使用；商家说“开启每周体检”“每周体检停掉”“这周怎么样”“你都做了哪些事”“AI 提到了谁”“为什么不提我”“你建议我写什么、往哪发”时也使用。
 ---
 
-# 报告、工作台和周报
+# 每一期的收尾和周报
 
-商家看这份工作只用打开一个地方：**工作台**，一个固定的链接，一直是最新的。
+体检（`geo-check`）算出数、读完回答、核对完以后，这一期的数据就齐了，但还没有结论，报告也还没生成。本 Skill 把这一期收尾：对比、找缺口、写小结和建议、生成报告，再把结果告诉商家。
 
-- 工作台自己只放跨期的东西：最新一期的结论、几个数的走势、每一期报告的入口、你替他写的内容、监测设置。
-- **体检报告**每期一份，是一个独立的文件：这一期问了什么、AI 提没提到、提到了谁、读了哪里的内容、怎么介绍这家店。
-- 商家看报告不用跳到别的页面：在工作台里点某一期，报告就在右边打开。周报里发的就是这个地址。
-
-页面都是只读的。商家在上面看到什么，回到对话里跟你说，你改数据，再同步。
-
-完整的对应关系见 `references/workbench.md`：你做的事落在哪、你要亲手写哪几样东西、商家从页面上复制过来的话怎么接、怎么填员工负责的页面、客户端页签。**每次用本 Skill 之前先读它**（每周的定时任务通常是一个新的会话，你上次读过的不会留下来）。
-
-替商家写内容按 `geo-content` Skill。
+它负责整体流程（见 `geo-profile`）里的第 4、5 步：第一份报告出来后汇报、问商家要不要开启每周体检；以后每周出周报。`geo_state.py status` 返回 `firstCheckPending` 为 true 时，还在等商家确认第一次体检，这时不收尾、不写内容。
 
 ## 开始前
 
-- 本 Skill 负责整体流程里的第 4、5 步（流程见 `geo-profile`）：第一份报告出来后汇报、问商家要不要开启每周体检；以后每周出周报。`geo_state.py status` 返回 `firstCheckPending` 为 true 时，还在等商家确认第一次体检，这时不出报告、不写内容。
-
-- 本 Skill 的脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py"`，店铺资料的脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py"`。下文表格里写的 `geo_report.py ...`、`geo_state.py ...` 都是全路径的简写，执行时写全。
+- 用到的脚本：页面和这一期结论在 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py"`，店铺资料在 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py"`。下文的 `geo_report.py ...`、`geo_state.py ...` 是简写，执行时写全。
 - 入参先写成 JSON 文件，放在 `$YOUZAN_AGENT_SESSION_TEMP/geo/` 下，再用 `--file` 传入。
-
-每个命令的输出里都有 `next`，写着下一步该做什么，照着做。
-
-## 同步：只有一条命令
-
-```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" publish
-```
-
-它重新生成这一期的报告和工作台、传到云盘、保存链接。**不要直接改生成出来的网页文件**，下次同步会被盖掉。商家想改页面的样子、加模块、加页面，按 `references/workbench.md` 的“改这家店的页面”做：内容块填一个页面，或者改这家店自己的页面模板。
-
-- `published: true`：同步成功。`pageUrl` 是工作台，`reportUrl` 是在工作台里打开这一期的报告（发给商家的是它），`links` 是可以直接发给商家的几个链接，`synced` 是这次同步上去的变化。`reportFileUrl` 是报告文件自己的链接，商家要单独转发给别人时才给。
-- `firstTime: true`：第一次开通。把 `pageUrl` 发给商家，告诉他以后都在这个链接看。
-- `published: false`：没全部传上去，按 `references/workbench.md` 的“同步失败时”处理，不要编链接。
-
-什么时候同步：建完档、发起体检之后、这一期的核对和动作都写完之后、登记或改了内容之后、商家让你改了任何东西之后。拿不准页面是不是最新的，执行 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" links`，`pending` 不为空就先同步。
+- 同步页面、发哪个链接、同步失败怎么办，按 `geo-workbench`。写内容按 `geo-content`。
+- 每个命令的输出里都有 `next`，写着下一步该做什么，照着做。
 
 ## 第一份报告（整体流程第 4 步）
 
@@ -93,7 +69,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 ### 1. 和上一期对比
 
 ```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" compare
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" compare
 ```
 
 `notes` 里的话要照办：第一期没有可比的上一期；没有连续两期同方向变化时，只能写“继续观察”，不能写“上升”或“下降”；数据不全时不和上一期比。
@@ -117,13 +93,13 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 这一步写的东西商家会逐字看到：
 
-- `brief`：本期小结，显示在工作台最上面和这一期报告的开头。两三句话：这一期最重要的一件事，和要商家做什么。只说存档里有的事实。这一期有发现（`geo-check` 第三步写的）时，最重要的一件事通常就是其中一条，小结里说一句，细节留在报告里。
+- `brief`：本期小结，显示在工作台最上面和这一期报告的开头。两三句话、240 字以内：这一期最重要的一件事，和要商家做什么。只说存档里有的事实，数字和脚本输出一致；`compare` 的 `trend` 不是 `up` 或 `down` 时不写“上升”“下降”。这一期有发现（`geo-check` 第三步写的）时，最重要的一件事通常就是其中一条，小结里说一句，细节留在报告里。
 - `todos`：建议商家做的事，最多三件，列在这一期报告的结论里。它只是建议，不是要打勾的清单。十分钟内能做完的排前面，每件写清做什么、为什么；核对出来的问题，只挑改得动、值得改的那一条。先看第 1 步输出里的 `previousTodos`（上一期建议过什么）：商家做了的不再提，没理会的最多再提一次。
-- `gaps`：第 2 步找到的缺口。
+- `gaps`：第 2 步找到的缺口，最多三条。`where` 写平台（公众号、抖音、地图和点评……），`note` 写缺什么、依据是什么。
 - `contentNote`：这一期没有写内容时，写一句原因。写了就留空。
 
 ```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" set-actions --file "$YOUZAN_AGENT_SESSION_TEMP/geo/actions.json"
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" set-actions --file "$YOUZAN_AGENT_SESSION_TEMP/geo/actions.json"
 ```
 
 ```json
@@ -135,17 +111,17 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 }
 ```
 
-以后只改其中一样时，只传那一样，其余保持不变。
+以后只改其中一样时，只传那一样，其余保持不变。真正要商家点头的只有两件事，页面上都有固定的入口，不用靠建议去催：确认一篇内容（工作台 · 内容）、确认你另外记下的信息（工作台 · 监测设置）。
 
-另外看一眼 `geo_report.py show` 输出里有没有 `pagesToFill`：那是工作台上登记了、还没填的页面。有的话执行 `geo_report.py pages` 看每一页放什么，按 `references/workbench.md` 的“员工负责的页面”填好。以前填过的页面，内容过时了也在这一步更新。
+另外看一眼 `geo_report.py show` 输出里有没有 `pagesToFill`：那是工作台上登记了、还没填的页面。有的话执行 `geo_report.py pages` 看每一页放什么，按 `geo-workbench` 的 `references/pages.md` 填好。以前填过的页面，内容过时了也在这一步更新。
 
-### 5. 同步
+### 5. 生成这一期的报告
 
 ```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" publish
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" publish
 ```
 
-这一步会生成这一期的报告，并把工作台换成这一期的结论。`reportUrl` 是在工作台里打开这一期报告的地址。
+这一步生成这一期的报告，并把工作台换成这一期的结论。输出怎么看、同步失败怎么办，按 `geo-workbench`。
 
 输出里有 `warnings` 时照着处理。最常见的两条：“这一期既没有登记内容，也没有写没写的原因”：内容写了就补登记，没写就补原因；“已经登记了内容，但 contentNote 里还写着没写的原因”：用 `set-actions` 传 `{"contentNote": ""}` 清掉，并看看小结要不要跟着改。
 
@@ -160,11 +136,24 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 每周定时任务触发的这一轮结束时，再按任务里的要求输出那一句总结。
 
-## 客户端页签
+## 工作台首页上的几个数怎么来的
 
-“新增嵌入 tab”“客户端里固定工作台”是管理客户端的页签，不是给工作台加页面。按 `references/workbench.md` 的“客户端页签”设置并读回。
+- 显示的永远是**最新一期**的数，不是累计。例如“没点名时提到你 7/60”，是最新一期 60 个回答里的 7 个。
+- 数的下面写着上一期是多少；连续两期朝同一个方向变，才会写“连续上升”或“连续下降”。
+- 数的旁边有一排小柱子，一期一根，最多 12 根。
+- 每一期各自的数，在下面“每一期的报告”那张表里，一行一期。
+- 商家改过问题以后，之前几期是按旧问题测的：小柱子不再画它们，表里标着“旧问题”，也不和现在的数比。所以改问题之前要提醒他这一点。
 
-## 商家平时来问
+## 商家问这一期、这几期怎么样
 
-商家的话很多是从工作台上点“可以这样跟员工说”复制过来的，会带着页面上的编号（Q3、第 4 篇、3 号）。报告、工作台、页面这几类话的做法在 `references/workbench.md` 的“商家会从页面上复制这些话”；问题、同类店、账号按 `geo-profile`，体检和“3 号”按 `geo-check`，“第 4 篇”按 `geo-content`。处理完都要 `publish`。
+问题（Q3）、同类店、账号按 `geo-profile`；体检和“3 号”按 `geo-check`；“第 4 篇”、写内容按 `geo-content`；要链接、加页面、改样子按 `geo-workbench`。下面是本 Skill 接的：
 
+| 商家说 | 做法 |
+| --- | --- |
+| “开启每周体检”“每周体检停掉” | 按上面的“开启每周体检” |
+| “你建议的那件事我做了”“这件我做不了” | 回一句就行，不用登记。做不了的，下一期不要再提；他处理的如果是报告里的某一号，按 `geo-check` 记一笔 |
+| “AI 提到了谁”“豆包推荐了哪些店” | 只用这一期报告“提到了谁”那一节的排行回答，说前几家和次数，给那一节的链接（`reportUrl` 后面加 `/rivals`）。不要自己翻回答原文另列一份：口径不一样，商家拿报告一对就对不上 |
+| “你建议我写什么”“往哪发”“AI 都读哪里” | `geo_report.py show`：`sourcesByProvider` 是各平台读哪里（和报告上的数一样），`gaps` 是本期写下的缺口，`refs` 是和这家店有关的内容被引用几次。按平台说，不要自己翻回答原文重新归类。给报告“读哪里的内容”一节的链接（`reportUrl` 后面加 `/sources`） |
+| “为什么元宝不提我”“怎么让 AI 多提我” | 用这一期报告里的内容回答：这道题 AI 引用的是谁的内容，这家店在那些地方有没有内容。给 `reportUrl` |
+| “这周怎么样” | `compare` 的结果，加 `reportUrl`。不重新体检 |
+| “你都做了哪些事”“之前几期怎么样” | `geo_report.py show` 的 `totals`（体检了几期、写了几篇、发了几篇），两三句话概括，给工作台首页的链接 |

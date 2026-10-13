@@ -19,7 +19,7 @@ description: 替商家写内容并登记到工作台：按 AI 常读的地方定
 内容登记、改状态用的是工作台的脚本，每条命令写全路径：
 
 ```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" contents
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" contents
 ```
 
 下文的 `add-content`、`mark-content`、`contents`、`publish` 都是这个脚本的子命令。
@@ -77,7 +77,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 1. **登记**：
 
    ```bash
-   python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" add-content --file "$YOUZAN_AGENT_SESSION_TEMP/geo/content.json"
+   python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" add-content --file "$YOUZAN_AGENT_SESSION_TEMP/geo/content.json"
    ```
 
    ```json

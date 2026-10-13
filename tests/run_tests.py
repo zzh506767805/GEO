@@ -25,8 +25,8 @@ SKILLS = ROOT / "digital-employee" / "definitions" / "ai-visibility-employee" / 
 STATE = SKILLS / "geo-profile" / "scripts" / "geo_state.py"
 RUN = SKILLS / "geo-check" / "scripts" / "geo_run.py"
 SCORE = SKILLS / "geo-check" / "scripts" / "geo_score.py"
-REPORT = SKILLS / "geo-weekly" / "scripts" / "geo_report.py"
-TEMPLATE = SKILLS / "geo-weekly" / "assets" / "page.html"
+REPORT = SKILLS / "geo-workbench" / "scripts" / "geo_report.py"
+TEMPLATE = SKILLS / "geo-workbench" / "assets" / "page.html"
 ARCHIVE = ROOT.parent / "GEO实测" / "2026-10-08-麦的日尝" / "结果"
 SAMPLE = ROOT / "示例" / "麦的日尝"  # 工作台和这一期的报告放在同一个文件夹里，本机打开时能互相跳转
 DATE = "2026-10-08"
@@ -651,8 +651,8 @@ def test_pages():
     """加页面：维护的人在 assets/pages.json 登记，员工用 set-page 填内容块；这家店也可以单独加一页。不用改模板和脚本。"""
     with tempfile.TemporaryDirectory() as tmp:
         # 复制一份技能目录，改它的页面清单，模拟维护的人加了一个“活动”页
-        skill = Path(tmp) / "geo-weekly"
-        shutil.copytree(SKILLS / "geo-weekly", skill)
+        skill = Path(tmp) / "geo-workbench"
+        shutil.copytree(SKILLS / "geo-workbench", skill)
         registry = json.loads((skill / "assets" / "pages.json").read_text(encoding="utf-8"))
         registry["pages"].insert(2, {"id": "events", "title": "活动", "icon": "clock", "subtitle": "这个月的活动",
                                      "guide": "放这个月店里的活动：时间、内容、怎么参加"})
@@ -706,8 +706,8 @@ def test_pages():
 def test_shop_template():
     """每家店可以有自己的模板，什么都能改；数据还是脚本放进去。标准模板升级时给出增量，员工自己合。"""
     with tempfile.TemporaryDirectory() as tmp:
-        skill = Path(tmp) / "geo-weekly"
-        shutil.copytree(SKILLS / "geo-weekly", skill)  # 复制一份，才能模拟“标准模板升级了”
+        skill = Path(tmp) / "geo-workbench"
+        shutil.copytree(SKILLS / "geo-workbench", skill)  # 复制一份，才能模拟“标准模板升级了”
         report = skill / "scripts" / "geo_report.py"
         env = base_env(tmp)
         call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
@@ -835,7 +835,7 @@ def test_trend_skips_incomplete():
 
 
 def test_copies():
-    copies = [(SKILLS / name / "scripts" / "geo_common.py").read_bytes() for name in ("geo-profile", "geo-check", "geo-weekly")]
+    copies = [(SKILLS / name / "scripts" / "geo_common.py").read_bytes() for name in ("geo-profile", "geo-check", "geo-workbench")]
     check("三个技能里的 geo_common.py 内容一致", copies[0] == copies[1] == copies[2])
 
 
@@ -846,7 +846,7 @@ def test_template():
     check("模板里只有数据这一个占位符，龙虾图标已经内嵌", html.count("__GEO_DATA__") == 1 and "__MASCOT_B64__" not in html)
     check("模板不引用外部资源", not re.search(r'(?:src|href)\s*=\s*["\']https?://', html) and "@import" not in html and "url(http" not in html)
     script = REPORT.read_text(encoding="utf-8")
-    registry = json.loads((SKILLS / "geo-weekly" / "assets" / "pages.json").read_text(encoding="utf-8"))["pages"]
+    registry = json.loads((SKILLS / "geo-workbench" / "assets" / "pages.json").read_text(encoding="utf-8"))["pages"]
     builtin = [p["id"] for p in registry if p.get("builtin")]
     renderers = re.findall(r"([a-z]+): page[A-Z]", html.split("var PAGES = {")[1].split("};")[0])
     fallback = re.findall(r"\{ id: '([a-z]+)'", html.split("var NAV_ITEMS")[1].split("]);")[0])
@@ -856,7 +856,7 @@ def test_template():
     sections_template = re.findall(r"\['([a-z]+)', '[^']+'\]", html.split("var SECTIONS = [")[1].split("];")[0])
     sections_script = re.findall(r'\("[^"]+", "([a-z]+)"\)', script.split("REPORT_SECTIONS = (")[1].split("REPORT_FILE")[0])
     check("报告里的小节，脚本和模板一致", len(sections_script) == 5 and sections_template == sections_script, (sections_template, sections_script))
-    docs = (SKILLS / "geo-weekly" / "references" / "workbench.md").read_text(encoding="utf-8")
+    docs = (SKILLS / "geo-workbench" / "SKILL.md").read_text(encoding="utf-8")
     in_docs = re.findall(r"`#/([a-z]+)", docs)
     check("工作台说明里的页面和脚本里的页面一致，并写了“在工作台里打开报告”的地址",
           sorted(set(in_docs) - {"report"}) == sorted(in_script) and "report" in in_docs, (sorted(set(in_docs)), sorted(in_script)))

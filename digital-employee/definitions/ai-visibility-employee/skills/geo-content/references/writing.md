@@ -26,7 +26,7 @@
 **确认后**：再次委派 `wechat-writer` 存进草稿箱，然后记一笔：
 
 ```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" mark-content --no 4 --channel 公众号草稿箱 --ref <它返回的草稿编号>
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" mark-content --no 4 --channel 公众号草稿箱 --ref <它返回的草稿编号>
 ```
 
 `ref` 以后改稿时原样交还给它，让它在原草稿上更新。存草稿失败时如实告诉商家，状态保持“已确认”。

@@ -64,7 +64,7 @@ def pages_dir() -> Path:
 
 
 def shop_template_path() -> Path:
-    """这家店自己的页面模板。有它就用它生成工作台和报告，没有就用 geo-weekly 自带的标准模板。"""
+    """这家店自己的页面模板。有它就用它生成工作台和报告，没有就用 geo-workbench 自带的标准模板。"""
     return data_root() / "template" / "page.html"
 
 
@@ -189,7 +189,7 @@ def load_input(file_path: str):
 # ── 工作台有没有跟上最新的数据 ──
 # 每个改了数据的命令调 mark_changed 记一笔；geo_report.py publish 同步成功后清掉。
 # 这样“工作台是不是最新的”是一个查得到的状态，不靠员工记得去同步。
-PUBLISH_COMMAND = "geo-weekly 技能里的 geo_report.py publish"
+PUBLISH_COMMAND = "geo-workbench 技能里的 geo_report.py publish"
 
 
 def _sync_path() -> Path:

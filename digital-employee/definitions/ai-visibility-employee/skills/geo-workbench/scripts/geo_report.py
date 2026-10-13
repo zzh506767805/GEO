@@ -59,7 +59,7 @@ sys.dont_write_bytecode = True
 import geo_common as gc  # noqa: E402
 
 TEMPLATE = Path(__file__).resolve().parent.parent / "assets" / "page.html"
-# 工作台有哪些页面。加页面只改这个文件，见 references/workbench.md 的“加一个页面”
+# 工作台有哪些页面。加页面只改这个文件，见员工定义目录下的 MAINTAINING.md
 PAGE_REGISTRY = Path(__file__).resolve().parent.parent / "assets" / "pages.json"
 PLACEHOLDER = "__GEO_DATA__"
 # 内容类型。稿子本身跟着类型走：公众号文章和小红书笔记不是同一份稿子换个排版，标题长度、正文长度、写法都不一样。
@@ -1179,7 +1179,7 @@ def cmd_publish(args) -> None:
                           "都不行就如实告诉商家页面暂时没更新，不要编链接"))
         return
     synced = gc.mark_published()
-    hint = "这是第一次开通工作台，请先按 workbench.md 的客户端页签流程调用 claw-admin-request 固定工作台，再把 pageUrl 发给商家。" if first_time else "工作台和报告已同步。"
+    hint = "这是第一次开通工作台，请先按 geo-workbench 的 references/tabs.md 调用 claw-admin-request 固定工作台，再把 pageUrl 发给商家。" if first_time else "工作台和报告已同步。"
     if payload["reportUrl"]:
         hint += "这一期的结果给 reportUrl（在工作台里打开这一期的报告）；"
     # synced：这次同步上去的变化，可以据此告诉商家哪里更新了
@@ -1194,7 +1194,7 @@ def cmd_publish(args) -> None:
     tabs_file = gc.profile_dir() / "employee-tabs.json"
     gc.write_json(tabs_file, payload["tabConfiguration"])
     payload["tabConfigFile"] = str(tabs_file)
-    payload["tabSetup"] = "用 Bash 里的 claw-admin-request 按 geo-weekly/references/workbench.md 的“客户端页签”固定工作台：先读，不对再写，写完读回核对。"
+    payload["tabSetup"] = "用 Bash 里的 claw-admin-request 按 geo-workbench/references/tabs.md固定工作台：先读，不对再写，写完读回核对。"
     if urlparse(saved).netloc != EXPECTED_PAGE_HOST:
         payload["hostWarning"] = "链接的域名不是 %s" % EXPECTED_PAGE_HOST
     template = _template_payload()
@@ -1252,7 +1252,7 @@ def cmd_render(args) -> None:
         else ("store", "providers", "periods", "settings", "actions")
     missing = [key for key in need if key not in data]
     if missing:
-        raise gc.GeoError("页面数据缺少这些部分：" + "、".join(missing) + "。说明见 references/workbench.md")
+        raise gc.GeoError("页面数据缺少这些部分：" + "、".join(missing) + "。说明见 geo-workbench 的 SKILL.md")
     target = Path(args.out)
     if target.suffix.lower() != ".html":
         raise gc.GeoError("输出文件要以 .html 结尾")

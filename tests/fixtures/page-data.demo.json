@@ -19,7 +19,7 @@
    "id": "content",
    "title": "内容",
    "icon": "doc",
-   "subtitle": "员工替你写的内容：公众号文章、小红书笔记、长文"
+   "subtitle": "员工替你写的内容：公众号文章、小红书笔记、长文、抖音视频文案"
   },
   {
    "id": "settings",
@@ -476,7 +476,8 @@
  "contentTypes": {
   "wechat": "公众号文章",
   "xhs": "小红书笔记",
-  "text": "长文"
+  "text": "长文",
+  "douyin": "抖音视频文案"
  },
  "questions": [
   {

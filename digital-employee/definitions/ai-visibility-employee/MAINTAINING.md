@@ -10,9 +10,9 @@
 | 流程 | `skills/*/SKILL.md` | 每件事按什么顺序做、每一步跑哪个命令 | 不用 |
 | 细则 | `skills/*/references/*.md` | 怎么出题、怎么核对、各类内容怎么写、页面上的东西从哪来 | 不用 |
 | 每周体检 | `skills/geo-weekly/SKILL.md` 的“开启每周体检” | 商家同意后员工替他建的定时任务：每周几点、触发时对员工说什么 | 不用 |
-| 页面清单 | `skills/geo-weekly/assets/pages.json` | 工作台导航里有哪些页面、什么顺序 | 不用 |
+| 页面清单 | `skills/geo-workbench/assets/pages.json` | 工作台导航里有哪些页面、什么顺序 | 不用 |
 | 护栏 | `skills/*/scripts/*.py` | 数据格式、硬性的上限和顺序、给员工的 `next` 提示 | 要 |
-| 页面样式 | `skills/geo-weekly/assets/page.html` | 标准模板：工作台和报告长什么样 | 要 |
+| 页面样式 | `skills/geo-workbench/assets/page.html` | 标准模板：工作台和报告长什么样 | 要 |
 | 每家店自己的页面 | `<会话工作区>/ai-visibility-employee/template/page.html` | 员工按商家的意思改出来的模板，有它就不用标准模板 | 员工自己改 |
 
 流程写在文档里，脚本只管“错了就拦住”的那几件事。改流程时先看下面这张表：表里的规矩由脚本卡住，只改文档改不掉；其余规矩都只写在文档里，改文档就行。
@@ -43,7 +43,7 @@
 
 ### 给所有店的工作台加一个页面
 
-不用写代码。在 `skills/geo-weekly/assets/pages.json` 里加一项：
+不用写代码。在 `skills/geo-workbench/assets/pages.json` 里加一项：
 
 ```json
 {"id": "events", "title": "活动", "icon": "clock", "subtitle": "这个月店里的活动",
@@ -52,7 +52,7 @@
 
 - `id`：小写英文，2 到 24 个字符，不能用 `report`、`embed`。它也是链接的末尾（`#/events`）。
 - `guide`：写给员工看的。这一页放什么、数据从哪来、什么时候更新。员工执行 `geo_report.py pages` 时会看到它，`show` 也会提醒“这几页还没填”。
-- 页面的内容由员工用 `geo_report.py set-page` 填，用的是固定的几种内容块（文字、列表、表格、几个数、链接、可以复制的话），怎么填写在 `skills/geo-weekly/references/workbench.md` 的“员工负责的页面”。
+- 页面的内容由员工用 `geo_report.py set-page` 填，用的是固定的几种内容块（文字、列表、表格、几个数、链接、可以复制的话），怎么填写在 `skills/geo-workbench/references/pages.md` 的“员工负责的页面”。
 - 员工还没填的页面不会出现在导航里。
 
 只有内容块拼不出来的页面（要画图、要从体检存档里算数）才需要写代码：在 `pages.json` 里把它标成 `"builtin": true`，在 `page.html` 的 `PAGES` 里加一个画它的函数，在 `geo_report.py` 的 `workbench_data` 里准备它要的数据。测试会核对每个内置页面在模板里都有画它的函数。
@@ -61,7 +61,7 @@
 
 ### 加一种内容块
 
-在 `geo_report.py` 的 `BLOCK_TYPES` 和 `normalize_blocks` 里加上这种块的格式和检查，在 `page.html` 的 `customBlock` 里加上怎么画，在 `workbench.md` 的块表里加一行。
+在 `geo_report.py` 的 `BLOCK_TYPES` 和 `normalize_blocks` 里加上这种块的格式和检查，在 `page.html` 的 `customBlock` 里加上怎么画，在 `skills/geo-workbench/references/pages.md` 的块表里加一行。
 
 ### 加一种内容类型（比如抖音脚本）
 
@@ -69,7 +69,7 @@
 
 ### 加报告的小节
 
-`geo_report.py` 的 `REPORT_SECTIONS`、`page.html` 的 `SECTIONS` 和画这一节的函数、`workbench.md` 的小节表，四处一起改，测试会核对。注意下面“报告嵌在工作台里”的约定。
+`geo_report.py` 的 `REPORT_SECTIONS`、`page.html` 的 `SECTIONS` 和画这一节的函数、`skills/geo-workbench/SKILL.md` 的小节表，四处一起改，测试会核对。注意下面“报告嵌在工作台里”的约定。
 
 ### 加或换 AI 平台
 
@@ -87,7 +87,7 @@
 
 ### 每家店自己的页面
 
-员工可以按商家的意思改页面，什么都能改：`geo_report.py template-init` 把标准模板复制到这家店的数据目录，员工改这一份，以后同步都用它。数据还是脚本放进去的（模板里唯一不能删的是 `__GEO_DATA__`）。员工怎么做写在 `workbench.md` 的“改这家店的页面”。
+员工可以按商家的意思改页面，什么都能改：`geo_report.py template-init` 把标准模板复制到这家店的数据目录，员工改这一份，以后同步都用它。数据还是脚本放进去的（模板里唯一不能删的是 `__GEO_DATA__`）。员工怎么做写在 `skills/geo-workbench/references/pages.md` 的“改这家店的页面”。
 
 这对改标准模板有两个影响：
 

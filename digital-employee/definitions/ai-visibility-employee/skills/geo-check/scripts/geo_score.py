@@ -20,7 +20,7 @@
   geo_score.py mark-issue --no <序号> --status done|dismissed|open
       done 商家已经改了；dismissed 核实后 AI 没说错（先把店铺资料改对）；open 改回待处理
 
-改了数据的命令都会记一笔“待同步”，做完后执行 geo-weekly 技能里的 geo_report.py publish。
+改了数据的命令都会记一笔“待同步”，做完后执行 geo-workbench 技能里的 geo_report.py publish。
 """
 from __future__ import annotations
 

@@ -24,10 +24,10 @@ description: 数字员工首次初始化时必须调用。商家要求查看或�
 
 **不去搜商家在别的平台的账号。** 搜到的账号认不准，还要商家一个个确认，收益不值这一步。商家自己说了公众号、抖音号，再记下来。
 
-监测设置每改一次，都要同步一次工作台（同步的命令在 `geo-weekly` Skill 里，下面用 `publish` 指代）：
+监测设置每改一次，都要同步一次工作台（同步的命令在 `geo-workbench` Skill 里，下面用 `publish` 指代）：
 
 ```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" publish
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" publish
 ```
 
 ## 开始前
@@ -180,14 +180,14 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 ### 开通工作台
 
 ```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" publish
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" publish
 ```
 
 这时还没有体检结果，工作台首页是“现在到哪一步了”，“监测设置”页上是差异点和问题。输出里 `firstTime: true`，`pageUrl` 就是工作台的链接，以后一直是这一个。
 
 ### 固定到客户端页签
 
-开通工作台后，按 `geo-weekly` 的 `references/workbench.md` 的“客户端页签”把工作台固定到客户端。
+开通工作台后，按 `geo-workbench` 的 `references/tabs.md` 把工作台固定到客户端。
 
 ### 请商家确认，然后停下来等
 

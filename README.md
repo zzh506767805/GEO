@@ -43,7 +43,7 @@
 写内容（按类型登记）──→ 工作台 · 内容             ┘
 ```
 
-- 说明在 `geo-weekly/references/workbench.md`：每一步落在哪、员工要亲手写哪五样东西、商家从页面上复制过来的话怎么接、什么时候同步、传不上去怎么办。
+- 说明在 `geo-workbench/SKILL.md`：每一步落在哪、什么时候同步、传不上去怎么办、商家说到页面和链接怎么接；员工要亲手写的小结和建议在 `geo-weekly`。
 - `geo_state.py status`、`geo_report.py links`、`geo_report.py show` 都会说页面是不是最新的（`pending` 是还没同步上去的变化）。
 - 商家看到的编号员工都对得上：问题是 Q3（`q03`），内容是“第 4 篇”（`mark-content --no 4`），报告里对不上的说法是“3 号”（`mark-issue --no 3`）。
 
@@ -115,7 +115,7 @@ node tests/page_smoke.cjs <工作台或报告.html> [更多文件]
 
 1. **问 AI 能不能调通**。`geo_run.py` 调的是 `$YOUZAN_GLOBAL_SKILLS_PATH/youzan-ai-search/scripts/ai-data-query.mjs` 的 `run` 和 `get` 两个命令，参数是 `provider`、`question`、`concurrency`。Pod 里要有 `AI_DATA_API_KEY` 和 `CLAW_TYPE` 两个环境变量，测试店（43729418）目前没有。
 2. **页面能不能同步上去，报告能不能在工作台里打开**。`geo_report.py publish` 生成 `<会话工作区>/ai-visibility-employee/pages/` 下的 `report-<日期>.html` 和 `ai-visibility.html`，然后依次调 `$YOUZAN_GLOBAL_SKILLS_PATH/youzan-oss/scripts/upload.js --file-path <文件>`，取输出里的 `url`。要确认五件事：脚本里这样调行不行；重复上传同一个文件链接是否不变；一次传两个文件会不会超时（每个文件最多等 50 秒）；网页会不会被上传前的安全检查拦下；**打开工作台、点左边的某一期，报告能不能在右边显示出来**（云盘上的网页能不能把另一个云盘网页嵌进来，没有实测；嵌不进来时 6 秒后会出现“单独打开这份报告”）。调不通时脚本会返回 `published: false`，说明里写了退路（员工改为调用 `youzan-oss` 技能，再执行 `set-page-url`，报告加 `--report <日期>`）。
-3. **首次初始化**。先按 `geo-profile` 整理店铺资料、差异点和监测问题，开通工作台，在对话里确认方向。收到商家明确同意后才开始体检；`firstCheckPending` 会拦住未经确认的查询。客户端固定页签按 `geo-weekly/references/workbench.md` 的签名命令流程执行，读回正确结果才算成功。
+3. **首次初始化**。先按 `geo-profile` 整理店铺资料、差异点和监测问题，开通工作台，在对话里确认方向。收到商家明确同意后才开始体检；`firstCheckPending` 会拦住未经确认的查询。客户端固定页签按 `geo-workbench/references/tabs.md` 的签名命令流程执行，读回正确结果才算成功。
 4. **读店铺资料**。员工能不能从现有的店铺、商品技能里拿到门店地址、营业时间、商品和小程序名，并在 `set-facts` 时写上 `"from": "backend"`；每周体检前会不会重新读一遍。
 5. **员工会不会照着同步**。看三个时点页面有没有更新：建完档、发起体检后、这一期做完后。再看周报里给的是不是 `reportUrl`（在工作台里打开这一期报告）。
 6. **员工会不会老实等**。一轮体检要 5 到 10 分钟，`wait` 每次最多等 90 秒。看员工会不会中途放弃、提交问题反馈或改用别的办法。
@@ -156,14 +156,14 @@ geo_report.py  publish | links | show | compare | set-actions
 
 - `geo_common.py` 在三个技能目录里各有一份，内容必须完全一样。技能目录是独立安装的只读目录，不能跨目录 import。测试会校验三份一致。
 - 改了数据的命令要调 `gc.mark_changed("变了什么")`，否则员工不会被提醒同步。
-- 工作台和报告共用一个模板：`geo-weekly/assets/page.html`，数据里的 `kind` 决定出哪一种。样式、图标、交互全在这一个文件里。员工可以给某一家店复制一份随便改（`template-init`），那家店以后就用自己的；标准模板升级时，员工用 `template-diff` 拿增量自己合。所以 `geo-data` 里的字段只加不改。
+- 工作台和报告共用一个模板：`geo-workbench/assets/page.html`，数据里的 `kind` 决定出哪一种。样式、图标、交互全在这一个文件里。员工可以给某一家店复制一份随便改（`template-init`），那家店以后就用自己的；标准模板升级时，员工用 `template-diff` 拿增量自己合。所以 `geo-data` 里的字段只加不改。
 - 以前各期的报告文件生成后不再更新。所以报告嵌在工作台里用到的两个约定（地址里的 `#embed`、`report-ready` 消息）以后只能加、不能改，否则旧报告在新工作台里会显示不对。
 - **往工作台加页面或者往首页加模块之前先问两件事：它放的是不是跨期的东西；商家要在上面做什么。** 某一期分析出来的东西，放进报告当一节。导航和首页上放什么，等于告诉商家我们主要做什么。
-- 加工作台的页面：只在 `geo-weekly/assets/pages.json` 里加一项，员工用 `geo_report.py set-page` 填内容块，不用改模板和脚本；商家也可以让员工单独给他加一页。只有内容块拼不出来的页面才要写代码。增减报告的小节：`geo_report.py` 的 `REPORT_SECTIONS`、模板里的 `SECTIONS`、`workbench.md` 里的小节表要一起改，测试会核对。详见 `MAINTAINING.md`。
+- 加工作台的页面：只在 `geo-workbench/assets/pages.json` 里加一项，员工用 `geo_report.py set-page` 填内容块，不用改模板和脚本；商家也可以让员工单独给他加一页。只有内容块拼不出来的页面才要写代码。增减报告的小节：`geo_report.py` 的 `REPORT_SECTIONS`、模板里的 `SECTIONS`、`geo-workbench/SKILL.md` 里的小节表要一起改，测试会核对。详见 `MAINTAINING.md`。
 - **脚本里有一类文字会原样出现在商家的报告上：`readerNotes` 和报告里追加的 `notes`（“读这份报告前要知道的”）。** 它们要用对商家说话的口吻，称呼用“你”，不能写给员工看的提示。给员工的提示放在命令输出的 `notes` 和 `next` 里。测试会查这类文字里有没有“商家”“周报”这类词。
 - 模板里动态拼出来的类名要加前缀。踩过两次：条形图的 `.bar` 和顶栏撞名；时间线图标直接用事件类型当类名，`content` 和页面容器撞名。这类问题逐页渲染检查抓不到，要看截图。
 - 颜色用的是龙虾客户端的主题变量；页面里的龙虾形象取自客户端仓库的应用图标（`src/renderer/src/assets/images/app-icon.png`，缩到 88 像素后内嵌）。
-- 网页模板放在 `geo-weekly/assets/`，不要挪到 `references/` 或 `scripts/`。运行时的安全检查会给内置技能这两个目录里的内容做指纹，照着模板生成的网页可能被当成泄露技能内容。
+- 网页模板放在 `geo-workbench/assets/`，不要挪到 `references/` 或 `scripts/`。运行时的安全检查会给内置技能这两个目录里的内容做指纹，照着模板生成的网页可能被当成泄露技能内容。
 - 网页里的数据放在 `<script type="application/json">` 里，不要拼进脚本。云盘上传前会检查内联脚本的语法。
 - 网页文件名用英文，而且位置固定。云盘按文件在工作区里的位置给链接，换了位置链接就变了。
 - 日期一律按北京时间算，用 `geo_common.now()`。

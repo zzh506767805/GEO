@@ -9,10 +9,10 @@ description: 给店铺做一次“AI 曝光体检”：按问题库向元宝、�
 
 每一期体检的结果做成**一份体检报告**：有没有提到这家店、没提到时提到了谁、AI 读哪里的内容、AI 怎么介绍这家店。报告每期一份，是独立的文件；商家在工作台里点开看，不用跳到别的页面。工作台首页只显示最新一期的结论和每一期报告的入口。
 
-**体检不会自己变成报告。** 报告由 `geo-weekly` Skill 里的同步命令生成（下面用 `publish` 指代）：
+**体检不会自己变成报告。** 报告由 `geo-workbench` Skill 里的同步命令生成（下面用 `publish` 指代）：
 
 ```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" publish
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" publish
 ```
 
 ## 开始前
