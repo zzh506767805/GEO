@@ -19,7 +19,7 @@
 用法（脚本用绝对路径执行）：
   geo_report.py publish [--date D]        生成并同步工作台和这一期的报告（最常用）
   geo_report.py links                      工作台各页面和每一期报告的链接，以及它们是不是最新的
-  geo_report.py show                       最新一期的小结、建议和最近的内容（商家说“第 2 篇”时先看这里）
+  geo_report.py show                       最新一期的小结、建议、各平台读哪里，和最近的内容（商家说“第 2 篇”时先看这里）
   geo_report.py compare [--date D]         和上一期对比
   geo_report.py set-actions --file <json> [--date D]   本期小结、建议商家做的事、缺的内容、这一期没写内容的原因
   geo_report.py add-content --file <json>              登记一条内容（公众号文章、小红书笔记、长文……）；带 no 是改稿
@@ -332,8 +332,14 @@ def cmd_show(_args) -> None:
     items = sorted(ledger, key=lambda a: -a["no"])
     live = [a for a in ledger if a["status"] != "dropped"]
     state = gc.workbench_state()
+    summary = _summary(dates[-1]) if dates else {}
     payload = {"ok": True, "date": dates[-1] if dates else "", "brief": actions["brief"],
                "todos": actions["todos"], "gaps": actions["gaps"], "contentNote": actions["contentNote"],
+               # 商家问“写什么、往哪发”“AI 读哪里”时用这两样回答：和报告“读哪里的内容”一节是同一份数，分平台，
+               # 不要再去翻原始回答自己归类，也不要把几个平台合起来说。
+               "sources": {gc.PROVIDER_NAMES.get(p, p): [{"type": i["type"], "pct": i["pct"]} for i in items[:5]]
+                           for p, items in ((summary.get("sources") or {}).get("byProvider") or {}).items()},
+               "refs": {k: (summary.get("refs") or {}).get(k, 0) for k in ("total", "own", "storePages", "aboutStore")},
                "contents": [_content_view(item) for item in items[:5]],
                # 商家问“你都做了哪些事”时用这几个数回答
                "totals": {"periods": len(dates), "contents": len(live),

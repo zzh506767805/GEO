@@ -181,6 +181,12 @@ def test_synthetic():
         check("本店公众号被引用 12 次，门店页 12 次", (digest["refs"]["own"], digest["refs"]["storePages"]) == (12, 12), digest["refs"])
         check("竞品次数按有效回答数", digest["rivals"][0] == {"name": "甲记面包", "count": 55}, digest["rivals"])
         check("缺失 2 条不到四分之一，数据算完整", digest["complete"] is True and len(digest["missing"]) == 2)
+        summary = json.loads((Path(env["GEO_DATA_ROOT"]) / "runs" / DATE / "summary.json").read_text(encoding="utf-8"))
+        names = {"hunyuan": "元宝", "doubao": "豆包", "deepseek": "DeepSeek"}
+        check("算分输出的“读哪里”按平台给，和报告上的是同一份数，没有几个平台合起来的数",
+              "topSources" not in digest and sorted(digest["sources"]) == sorted(names.values())
+              and all([i["type"] for i in digest["sources"][names[p]]] == [i["type"] for i in v[:5]]
+                      for p, v in summary["sources"]["byProvider"].items()), digest.get("sources"))
 
         material = call(SCORE, "brand-digest", "--date", DATE, env=env)
         tags = [row["answer"] for row in material["answers"]]
@@ -226,6 +232,9 @@ def test_synthetic():
         check("建议不是要打勾的清单：没有给待办打勾的命令了", gone.returncode != 0 and "mark-todo" in gone.stderr, gone.stderr[-120:])
         call(REPORT, "set-actions", "--date", DATE, "--file", write(tmp, "a2.json", {"gaps": [{"where": "公众号", "note": "没有文章被引用"}]}), env=env)
         shown = call(REPORT, "show", env=env)
+        check("问“写什么、往哪发”时有数可答：各平台读哪里，和算分输出的一样",
+              {k: [i["pct"] for i in v] for k, v in shown["sources"].items()} == {k: [i["pct"] for i in v] for k, v in digest["sources"].items()}
+              and shown["refs"]["own"] == digest["refs"]["own"], shown.get("sources"))
         check("只传要改的部分，其余保持不变（小结、建议都在）；建议只有做什么和为什么",
               shown["brief"].startswith("本期小结") and [sorted(t) for t in shown["todos"]] == [["text", "why"]] * 3
               and [t["text"] for t in shown["todos"]] == ["一", "二", "三"] and len(shown["gaps"]) == 1 and shown["contents"] == [], shown)

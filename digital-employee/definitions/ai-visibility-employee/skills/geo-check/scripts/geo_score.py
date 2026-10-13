@@ -30,7 +30,7 @@ sys.dont_write_bytecode = True
 
 import geo_common as gc  # noqa: E402
 
-# 顺序有意义：地图要排在“百度系”前面，否则 map.baidu.com 会被归错。
+# 顺序有意义：地图、爱企查要排在“百度系”前面，否则 map.baidu.com、aiqicha.baidu.com 会被归错。
 SOURCE_TYPES = [
     ("微信公众号", ("mp.weixin.qq.com", "weixin.qq.com")),
     ("抖音", ("douyin.com", "iesdouyin.com")),
@@ -40,6 +40,8 @@ SOURCE_TYPES = [
     ("小红书", ("xiaohongshu.com", "xhslink.com")),
     ("今日头条", ("toutiao.com",)),
     ("携程", ("ctrip.com",)),
+    # 店名、地址、电话的登记信息。AI 报门牌号、电话时常读这里，不单列就全混进“其他网站”。
+    ("黄页和企业信息", ("tianyancha.com", "qcc.com", "qichacha.com", "aiqicha.baidu.com", "dianhua.cn", "bendibao.com")),
     ("搜狐", ("sohu.com",)),
     ("百度系", ("baidu.com",)),
     ("网易", ("163.com",)),
@@ -199,6 +201,12 @@ def _ratio(counter: Counter, total: int, top: int = 8) -> list:
     return [{"type": k, "count": v, "pct": round(v * 100 / total)} for k, v in counter.most_common(top)] if total else []
 
 
+def source_view(summary: dict) -> dict:
+    """各平台最常读哪里，按平台名给出，每个平台前 5 类。报告、算分输出、工作台问答都用这一份。"""
+    return {gc.PROVIDER_NAMES.get(p, p): [{"type": i["type"], "count": i["count"], "pct": i["pct"]} for i in items[:5]]
+            for p, items in ((summary.get("sources") or {}).get("byProvider") or {}).items()}
+
+
 def build_summary(date: str) -> dict:
     profile = load_profile()
     run = load_run(date)
@@ -311,7 +319,9 @@ def cmd_score(args) -> None:
         "questionsMentioned": sorted(q for q, v in mention["byQuestion"].items() if v["hits"]),
         "memoryFlagged": summary["memoryFlagged"],
         "refs": {k: summary["refs"][k] for k in ("total", "own", "storePages", "aboutStore")},
-        "topSources": summary["sources"]["all"][:5],
+        # 分平台给，和报告“读哪里的内容”一节是同一份数。不给合计：各平台读的地方差别很大，
+        # 合起来看会把元宝读公众号的次数算到 DeepSeek 头上。
+        "sources": source_view(summary),
         "rivals": [{"name": r["name"], "count": r["count"]} for r in summary["rivals"]],
         "buyEntry": summary["buyEntry"],
         "notes": [],
