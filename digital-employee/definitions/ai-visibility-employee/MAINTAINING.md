@@ -6,7 +6,7 @@
 
 | 层 | 文件 | 管什么 | 改它要不要动代码 |
 | --- | --- | --- | --- |
-| 角色和红线 | `prompt.md` | 员工是谁、什么能做什么不能做、对商家怎么说话、哪句话找哪个 Skill | 不用 |
+| 角色和红线 | `prompt.md` | 员工是谁、什么能做什么不能做、对商家怎么说话、哪句话找哪个 Skill。每次对话都加载，Skill 里不再重复这里的规矩 | 不用 |
 | 流程 | `skills/*/SKILL.md` | 每件事按什么顺序做、每一步跑哪个命令 | 不用 |
 | 细则 | `skills/*/references/*.md` | 怎么出题、怎么核对、各类内容怎么写、页面上的东西从哪来 | 不用 |
 | 每周体检 | `skills/geo-weekly/SKILL.md` 的“开启每周体检” | 商家同意后员工替他建的定时任务：每周几点、触发时对员工说什么 | 不用 |
@@ -65,7 +65,7 @@
 
 ### 加一种内容类型（比如抖音脚本）
 
-`geo_report.py` 的 `CONTENT_TYPES` 里加一行规格（标题上限、正文上下限、要不要话题、成品是不是带排版的页面），`references/content-types.md` 里加一节写法、谁来写、确认后怎么交。工作台的“内容”页按类型自动展示，不用改模板。
+`geo_report.py` 的 `CONTENT_TYPES` 里加一行规格（标题上限、正文上下限、要不要话题、成品是不是带排版的页面），`skills/geo-content/references/writing.md` 里加一节写法、登记字段、确认后怎么交，`skills/geo-content/SKILL.md` 的类型表和“定类型”里各加一行。工作台的“内容”页按类型自动展示，不用改模板。
 
 ### 加报告的小节
 
@@ -79,7 +79,7 @@
 
 | 想调的 | 在哪 |
 | --- | --- |
-| 每期主动写几篇 | `geo_report.py` 的 `WEEKLY_CONTENT_CAP`，同时改 `prompt.md` 和 `content-types.md` 里写的数 |
+| 每期主动写几篇 | `geo_report.py` 的 `WEEKLY_CONTENT_CAP`，同时改 `skills/geo-content/SKILL.md` 和 `prompt.md` 里写的数 |
 | 一家店能单独加几个页面 | `geo_report.py` 的 `CUSTOM_PAGE_CAP` |
 | 问题的数量 | `geo_state.py` 的 `OPEN_RANGE`、`BRAND_RANGE`、`RECOMMENDED` |
 | 一条查询等多久算缺失 | `geo_run.py` 的 `DEADLINE_SECONDS` |

@@ -63,7 +63,7 @@ TEMPLATE = Path(__file__).resolve().parent.parent / "assets" / "page.html"
 PAGE_REGISTRY = Path(__file__).resolve().parent.parent / "assets" / "pages.json"
 PLACEHOLDER = "__GEO_DATA__"
 # 内容类型。稿子本身跟着类型走：公众号文章和小红书笔记不是同一份稿子换个排版，标题长度、正文长度、写法都不一样。
-# 加一种类型：这里加一行规格，再在 references/content-types.md 里写清这种稿子怎么写、谁来写、商家怎么审。
+# 加一种类型：这里加一行规格，再在 geo-content 技能的 references/writing.md 里写清这种稿子怎么写、谁来写、商家怎么审。
 #   preview 为 True 表示这种类型的成品是带排版的页面，登记时必须带排版预览链接（公众号技能产出的就是这个）。
 CONTENT_TYPES = {
     "wechat": {"name": "公众号文章", "titleMax": 64, "bodyMin": 0, "bodyMax": 8000, "tagsMax": 0, "preview": True},
@@ -1188,7 +1188,7 @@ def cmd_publish(args) -> None:
     tabs_file = gc.profile_dir() / "employee-tabs.json"
     gc.write_json(tabs_file, payload["tabConfiguration"])
     payload["tabConfigFile"] = str(tabs_file)
-    payload["tabSetup"] = "你可以直接用 Bash 调 claw-admin-request 管理当前员工的客户端页签，无需商家提供实例 ID、内部 Host 或密钥。按 geo-weekly/references/workbench.md 的“客户端页签”执行 GET，缺少工作台时 PUT，再 GET 核实；配置已正确时不重复写入。生成配置不等于已执行设置，也不能据此声称没有权限。"
+    payload["tabSetup"] = "用 Bash 里的 claw-admin-request 按 geo-weekly/references/workbench.md 的“客户端页签”固定工作台：先读，不对再写，写完读回核对。"
     if urlparse(saved).netloc != EXPECTED_PAGE_HOST:
         payload["hostWarning"] = "链接的域名不是 %s" % EXPECTED_PAGE_HOST
     template = _template_payload()

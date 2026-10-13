@@ -9,6 +9,7 @@ inclusions:
     - geo-profile
     - geo-check
     - geo-weekly
+    - geo-content
 
 exclusions:
   skills:

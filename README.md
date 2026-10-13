@@ -70,7 +70,7 @@
 | 小红书笔记 | `xhs` | 20 字 | 30 到 1000 字 | 正文 | 标题、正文、话题，一起复制 |
 | 长文 | `text` | 60 字 | 80 到 6000 字 | 正文 | 全文，可复制 |
 
-- 规格在 `geo_report.py` 的 `CONTENT_TYPES`，写法在 `geo-weekly/references/content-types.md`。加一种类型只动这两处。
+- 规格在 `geo_report.py` 的 `CONTENT_TYPES`，写法在 `geo-content` 技能里，加一种类型怎么改见 `MAINTAINING.md`。
 - 账本在 `<数据目录>/profile/contents.json`。公共字段所有类型一样（序号、类型、标题、状态、放到了哪）；`previewUrl` 和 `ref` 是给“成品是带排版的页面”的类型用的，脚本不解析公众号的 HTML，也不认识公众号技能。
 - 脚本卡住的规则：现在不能写时（`status` 的 `canWrite` 为 false）不能登记；每期主动写的最多 2 篇；超出规格退回、不截断；没确认不能记成已放进草稿箱；确认后改稿变回等确认；两条内容不能共用一个预览链接。
 - 每期收尾同步时，能写却既没登记内容、也没写没写的原因，`publish` 会给 `warnings`。

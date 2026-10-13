@@ -169,7 +169,7 @@ def test_synthetic():
         check("同步后工作台是最新的，不再提醒", status["workbench"]["upToDate"] and "next" not in status, status)
         keep_page("刚建档", first["file"])
 
-        check("页签输出明确员工可调用签名命令，不要求平台代办", "claw-admin-request" in first["tabSetup"] and "无需商家提供" in first["tabSetup"], first["tabSetup"])
+        check("页签输出告诉员工用签名命令固定并读回", "claw-admin-request" in first["tabSetup"] and "读回" in first["tabSetup"], first["tabSetup"])
         blocked = call(RUN, "start", "--phase", "open", "--date", DATE, env=env, expect=2)
         check("首次初始化未经确认不发查询", "商家确认" in blocked.get("error", "") and not Path(env["MOCK_STATE"]).exists(), blocked)
         early = call(STATE, "set-schedule", "--status", "on", env=env, expect=2)

@@ -14,8 +14,8 @@ description: 数字员工首次初始化时必须调用。商家要求查看或�
 | 1 | 首次获取信息：从店铺后台读资料 | 本 Skill | 不用 |
 | 2 | 写差异点、出题 | 本 Skill | 不用 |
 | 3 | 开通工作台、固定到客户端页签，请商家确认问题，确认后开始第一次体检 | 本 Skill → `geo-check` | **要**：商家明确同意才体检 |
-| 4 | 出第一份报告、写第一篇内容、汇报结果，问他要不要开启每周体检 | `geo-weekly` | 开启每周体检要他同意 |
-| 5 | 每周：重读资料、体检、出报告、写建议和内容，让商家去发 | `geo-check` → `geo-weekly` | 内容发出去之前要他确认 |
+| 4 | 出第一份报告、写第一篇内容、汇报结果，问他要不要开启每周体检 | `geo-weekly`、`geo-content` | 开启每周体检要他同意 |
+| 5 | 每周：重读资料、体检、出报告、写建议和内容，让商家去发 | `geo-check` → `geo-weekly`、`geo-content` | 内容发出去之前要他确认 |
 
 本 Skill 管两样东西：
 
@@ -32,15 +32,15 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 ## 开始前
 
-- **每条命令都写全路径**，例如：
+- 本 Skill 的脚本：
 
 ```bash
 python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" status
 ```
 
-  不要先定义 `S=...` 这类变量、在后面的命令里再用：两次命令之间 shell 变量不一定保留。下文表格里写的 `geo_state.py ...`、`set-facts`、`show` 都是这个全路径的简写。工作目录保持在当前会话工作目录。
+  下文表格里写的 `geo_state.py ...`、`set-facts`、`show` 都是这个全路径的简写，执行时写全。
 
-- 入参先写成 JSON 文件，放在会话临时目录 `$YOUZAN_AGENT_SESSION_TEMP/geo/` 下，再用 `--file` 传入。不要把 JSON 写在命令行里。
+- 入参先写成 JSON 文件，放在会话临时目录 `$YOUZAN_AGENT_SESSION_TEMP/geo/` 下，再用 `--file` 传入。
 - 先执行 `status`，按结果决定从哪一步接着做：
 
 | `status` 的结果 | 接着做 |
@@ -52,7 +52,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 | 其他 | 已经在每周的节奏里，商家要改设置就看下面的“修改” |
 
 - `status` 里的 `workbench` 是工作台的情况：`pending` 不为空，说明有变化还没同步上去，做完手上的事要 `publish`。
-- 脚本返回 `ok: false` 时，`error` 是可以直接转述的原因；按原因修正后重试，不要绕过脚本直接改存档文件。
+- 脚本返回 `ok: false` 时，按 `error` 修正后重试。存档只通过脚本改。
 
 ## 哪些要商家确认，哪些不用
 
@@ -99,7 +99,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 
 ### 要用的能力不可用时
 
-哪个不可用，按下表降级，接着往下做，不要停在那里等，也不要改用别的办法抓数据：
+哪个不可用，按下表降级，接着往下做：
 
 | 不可用的能力 | 怎么办 |
 | --- | --- |
@@ -187,7 +187,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 ### 固定到客户端页签
 
-首次发布成功后，由你自己按 `geo-weekly` 的 `references/workbench.md` 的“客户端页签”调用签名命令设置，并读回验证。不要把这一步交给商家或平台操作人员，也不向商家索要实例 ID、内部 Host 或密钥。固定失败不影响往下做，把工作台链接发给商家就行。
+开通工作台后，按 `geo-weekly` 的 `references/workbench.md` 的“客户端页签”把工作台固定到客户端。
 
 ### 请商家确认，然后停下来等
 
@@ -210,8 +210,6 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 
   然后按 `geo-check` 跑第一次体检，接着按 `geo-weekly` 的“第一份报告”走第 4 步。
 - 资料是从公开信息整理的，商家同时说了“资料没问题”：再执行一次 `confirm`，之后才能替他写内容。
-
-换了会话、或者商家隔了几天才回来，先执行 `status`：`firstCheckPending` 为 true 就还在这一步，不自己开始体检。
 
 ## `set-facts` 是合并，不是覆盖
 

@@ -1,9 +1,9 @@
 ---
 name: geo-weekly
-description: 出每期的体检报告、维护商家的“AI 曝光工作台”、替商家写内容：把体检和核对的结果做成这一期的报告，同步工作台，写本期小结和建议，找内容缺口，按类型写内容（公众号文章、小红书笔记、长文、抖音视频文案）并登记，给商家发周报和链接；第一份报告出来后问商家要不要开启每周体检，并替他开启。第一次体检和每周体检之后接在 geo-check 之后使用；商家说“开启每周体检”“每周体检停掉”时使用；任何时候数据有变化需要同步页面时使用；商家说“把工作台发我”“把报告发我”“这周怎么样”“你都做了哪些事”“写一篇公众号文章”“写一条小红书笔记”“第 2 篇可以发”“新增嵌入 tab”“固定工作台到客户端”“查看客户端页签”时也使用。
+description: 出每期的体检报告、维护商家的“AI 曝光工作台”、发周报：把体检和核对的结果做成这一期的报告，写本期小结和建议，找内容缺口，同步工作台，给商家发周报和链接；第一份报告出来后问商家要不要开启每周体检，并替他开启。第一次体检和每周体检之后接在 geo-check 之后使用；任何时候数据有变化需要同步页面时使用；商家说“开启每周体检”“每周体检停掉”“把工作台发我”“把报告发我”“这周怎么样”“你都做了哪些事”“工作台上加一个页面”“页面换个颜色”“新增嵌入 tab”“固定工作台到客户端”时也使用。
 ---
 
-# 报告、工作台和内容
+# 报告、工作台和周报
 
 商家看这份工作只用打开一个地方：**工作台**，一个固定的链接，一直是最新的。
 
@@ -13,15 +13,15 @@ description: 出每期的体检报告、维护商家的“AI 曝光工作台”�
 
 页面都是只读的。商家在上面看到什么，回到对话里跟你说，你改数据，再同步。
 
-完整的对应关系见 `references/workbench.md`：你做的事落在哪、你要亲手写哪几样东西、商家从页面上复制过来的话怎么接、怎么填员工负责的页面。**每次用本 Skill 之前先读它**（每周的定时任务通常是一个新的会话，你上次读过的不会留下来）。
+完整的对应关系见 `references/workbench.md`：你做的事落在哪、你要亲手写哪几样东西、商家从页面上复制过来的话怎么接、怎么填员工负责的页面、客户端页签。**每次用本 Skill 之前先读它**（每周的定时任务通常是一个新的会话，你上次读过的不会留下来）。
 
-替商家写内容的规则在 `references/content-types.md`：内容分类型，稿子跟着类型走，写完必须登记。**每次要写内容之前先读它。**
+替商家写内容按 `geo-content` Skill。
 
 ## 开始前
 
 - 本 Skill 负责整体流程里的第 4、5 步（流程见 `geo-profile`）：第一份报告出来后汇报、问商家要不要开启每周体检；以后每周出周报。`geo_state.py status` 返回 `firstCheckPending` 为 true 时，还在等商家确认第一次体检，这时不出报告、不写内容。
 
-- **每条命令都写全路径**：本 Skill 的脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py"`，店铺资料的脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py"`。不要先定义 `REPORT=...` 这类变量、在后面的命令里再用：两次命令之间 shell 变量不一定保留，变量丢了命令就会去执行一个空路径。下文表格里写的 `geo_report.py ...`、`geo_state.py ...` 都是全路径的简写。工作目录保持在当前会话工作目录。
+- 本 Skill 的脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py"`，店铺资料的脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py"`。下文表格里写的 `geo_report.py ...`、`geo_state.py ...` 都是全路径的简写，执行时写全。
 - 入参先写成 JSON 文件，放在 `$YOUZAN_AGENT_SESSION_TEMP/geo/` 下，再用 `--file` 传入。
 
 每个命令的输出里都有 `next`，写着下一步该做什么，照着做。
@@ -84,7 +84,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 | 商家说先不开 | `set-schedule --status declined`。告诉他想做的时候说一声“开启每周体检”，或者随时说“重新体检” |
 | 商家后来说“开启每周体检” | 照上面建任务，`set-schedule --status on` |
 | 商家说“每周体检停掉” | 用运行时的能力停掉或删掉这个任务，`set-schedule --status off` |
-| 当前环境没有创建定时任务的能力，或者建了读不回来 | `set-schedule --status unavailable`。如实告诉商家暂时开不了自动体检，他想看新结果时说“重新体检”。不要说已经开启 |
+| 当前环境没有创建定时任务的能力，或者建了读不回来 | `set-schedule --status unavailable`。如实告诉商家暂时开不了自动体检，他想看新结果时说“重新体检” |
 
 ## 每周出周报（整体流程第 5 步）
 
@@ -111,31 +111,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 ### 3. 这一期的内容
 
-先看现在能不能写：
-
-```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" status
-```
-
-- `canWrite` 为 false：**这一期不写**。这说明资料不是从店铺后台读的，还没经过商家确认；在周报里请他看一眼“监测设置”。脚本也不会让你登记。
-- `canWrite` 为 true：按 `references/content-types.md` 定类型、选题、写稿。每期主动写 1 篇，最多 2 篇。`pendingConfirm` 为 true 时，`toConfirm` 里列着的那几样信息还没经过商家确认，不能写进稿子。
-
-内容分类型，稿子跟着类型走：
-
-| 类型 | 谁写 | 登记时带什么 |
-| --- | --- | --- |
-| 公众号文章 `wechat` | 委派 `wechat-writer` 子 Agent，只让它出排版预览 | 标题、排版预览链接 |
-| 小红书笔记 `xhs` | 你自己写 | 标题（20 字以内）、正文（1000 字以内）、话题 |
-| 长文 `text` | 你自己写 | 标题、全文、建议发在哪 |
-| 抖音视频文案 `douyin` | 你自己写 | 标题（30 字以内）、口播稿、话题、拍摄提示 |
-
-写完马上登记，再接着做下一步：
-
-```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py" add-content --file "$YOUZAN_AGENT_SESSION_TEMP/geo/content.json"
-```
-
-登记了，工作台“内容”页才有它。不登记，它就只存在于对话里，商家在工作台上看不到，你也没法按序号跟他对。
+按 `geo-content` Skill 定类型、选题、写稿、登记，用的就是上一步找到的缺口。资料还不能用来写（`canWrite` 为 false）或者没有合适的选题时，这一期不写，原因在下一步写进 `contentNote`。
 
 ### 4. 写本期小结、建议，保存
 
@@ -186,20 +162,9 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 ## 客户端页签
 
-“新增嵌入 tab”“客户端里固定工作台”是管理客户端页签，不是给 HTML 工作台加页面。由员工自己通过 Bash 调 claw-admin-request，按 references/workbench.md 的“客户端页签”执行和读回验证。没有尝试实际命令前，不要说没有能力或需要平台代操作。
+“新增嵌入 tab”“客户端里固定工作台”是管理客户端的页签，不是给工作台加页面。按 `references/workbench.md` 的“客户端页签”设置并读回。
 
 ## 商家平时来问
 
-商家的话很多是从工作台上点“可以这样跟员工说”复制过来的，会带着页面上的编号（Q3、第 4 篇、3 号）。**完整的对照表只有一份，在 `references/workbench.md` 的“商家会从页面上复制这些话”**，照那张表做。
+商家的话很多是从工作台上点“可以这样跟员工说”复制过来的，会带着页面上的编号（Q3、第 4 篇、3 号）。报告、工作台、页面这几类话的做法在 `references/workbench.md` 的“商家会从页面上复制这些话”；问题、同类店、账号按 `geo-profile`，体检和“3 号”按 `geo-check`，“第 4 篇”按 `geo-content`。处理完都要 `publish`。
 
-涉及问题、同类店、账号的话按 `geo-profile` 处理，涉及体检和核对结果的话按 `geo-check` 处理，处理完都要回到这里 `publish`。
-
-## 不可违反的规则
-
-- 数字只用脚本输出里的。
-- 不承诺 AI 一定推荐、排第几或多久见效。
-- 内容只写店铺资料里有的事实和店铺数据里查得到的内容；你另外记下、商家还没确认的信息不写进稿子。细则见 `references/content-types.md`。
-- 每一篇替商家写的内容都要登记到工作台，不管是哪种类型、是每周主动写的还是商家临时要的。不要只在对话里给。
-- 存草稿和发布之前，必须得到商家对这一篇的明确确认。
-- 工作台和报告的链接只用脚本输出里的，逐字照抄；没有拿到链接就如实说，不要编。
-- 不向商家展示脚本、命令、文件路径和内部报错。

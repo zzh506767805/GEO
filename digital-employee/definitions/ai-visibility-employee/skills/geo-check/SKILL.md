@@ -17,9 +17,9 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 ## 开始前
 
-- 先执行 geo_state.py status 确认已建档。firstCheckPending 为 true 时回到 geo-profile 等商家确认，不能开始查询；没有建档时先建档。
+- 先执行 `geo_state.py status`：没有建档先按 `geo-profile` 建档；`firstCheckPending` 为 true 说明商家还没同意体检，回到 `geo-profile` 的第 3 步。
 - 每周体检之前，按 `geo-profile` 的“每期体检前”重新读一遍店铺资料。核对用的是它，旧了会对错。
-- **每条命令都写全路径**：两个脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py"` 和 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py"`。不要先定义 `RUN=...` 这类变量、在后面的命令里再用：两次命令之间 shell 变量不一定保留，变量丢了命令就会去执行一个空路径。下文表格里写的 `geo_run.py ...`、`geo_score.py ...` 都是全路径的简写。工作目录保持在当前会话工作目录。
+- 两个脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py"` 和 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py"`。下文表格里写的 `geo_run.py ...`、`geo_score.py ...` 都是全路径的简写，执行时写全。
 - 每个命令的输出里都有 `next`，写着下一步该做什么，照着做。
 
 ## 第一步：提问和等待
@@ -35,12 +35,11 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_ru
 
 第一次 `start` 之后执行一次 `publish`：工作台会显示“体检进行中”，商家这时打开不会以为看到的是最新结果。之后等待的过程中不用再同步。
 
-**等待的规则（必须遵守）：**
+**等待：**
 
-- 一轮通常要 5 到 10 分钟。`wait` 每次最多等 90 秒就返回进度，`running` 不为 0 时再执行一次，直到 `next` 让你进入下一步。
-- 查询还在运行是正常情况，不是出错。不要提交问题反馈，不要改用别的办法去问 AI 或抓网页，也不要重新 `start`。
-- 一段超过 15 分钟还没返回的查询，脚本会自动记为缺失，这一期该题该平台不计分。缺失不需要你补救。
-- `start` 返回 `ok: false` 时按 `error` 处理。如果是“还没有开通问 AI 能力”，告诉商家暂时不能体检，不要尝试其他途径。
+- 一轮通常要 5 到 10 分钟。`wait` 每次最多等 90 秒就返回进度，`running` 不为 0 时再执行一次，直到 `next` 让你进入下一步。查询还在运行是正常的，继续 `wait`，不要重新 `start`。
+- 超过 15 分钟还没返回的查询，脚本会自动记为缺失，这一期该题该平台不计分，不用补救。
+- `start` 返回 `ok: false` 时按 `error` 处理。如果是“还没有开通问 AI 能力”，告诉商家暂时不能体检。
 
 只想重跑个别问题（例如商家改了某道题）：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --only q03,q07`。改过原文的题会重新问，没改的不会。
 
@@ -157,7 +156,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_sc
 - `descriptions`：每个平台一句话，AI 点名介绍这家店时怎么说。**每一期都要写**，它是报告“怎么介绍你”这一节的正文。
 - `issues`：AI 的说法里和店铺资料对不上的具体事实。**没有就传空数组，这是最常见的正常结果**，不要为了有东西可写去凑。
 
-脚本会拒绝两种情况：`evidence` 里的回答编号不存在；`sourceUrl` 不在这些回答自己的引用列表里。被拒绝时回到 `brand-digest` 的输出里核对，不要改成别的链接硬试。
+脚本会拒绝两种情况：`evidence` 里的回答编号不存在；`sourceUrl` 不在这些回答自己的引用列表里。被拒绝时回到 `brand-digest` 的输出里核对；找不到出处就留空。
 
 这两样商家会在报告里逐字看到，写的时候当成是在对商家说话。
 
@@ -195,6 +194,4 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_sc
 
 ## 对外表达
 
-- 数字只用脚本输出里的，不估算，不凑整。
-- 只说“几个回答里提到几个”，不说百分比；单独一期的涨跌不下结论。
-- 不向商家展示脚本、命令、查询编号、文件路径和内部报错。
+数字只用脚本输出里的，不估算，不凑整。
