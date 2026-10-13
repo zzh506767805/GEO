@@ -102,6 +102,13 @@ def normalize_facts(raw: dict) -> dict:
         }
         if person["name"] and person["name"] not in [p["name"] for p in audience]:
             audience.append(person)
+    edges = []
+    for item in (raw.get("edges") or [])[:3]:
+        if not isinstance(item, dict):
+            continue
+        edge = {"text": _text(item.get("text"), 30), "basis": _text(item.get("basis"), 40)}
+        if edge["text"] and edge["text"] not in [e["text"] for e in edges]:
+            edges.append(edge)
     entry = raw.get("buyEntry") or {}
     channels = raw.get("channels") or {}
     rules = raw.get("writingRules") or {}
@@ -116,6 +123,8 @@ def normalize_facts(raw: dict) -> dict:
             "city": _text(brand_raw.get("city"), 20),
         },
         "audience": audience,
+        # 和同类店不一样的地方。不带店名的问题要挂在这上面出，才有机会赢。
+        "edges": edges,
         "stores": stores,
         "products": products,
         "buyEntry": {
@@ -191,6 +200,8 @@ def facts_warnings(facts: dict) -> list:
         warnings.append("电商版缺少核心商品，没法比对 AI 说的价格和规格")
     if not facts.get("audience"):
         warnings.append("还没有写“顾客是谁”，问题会缺少针对性；请按客群说明先归纳 2 到 4 类顾客")
+    if not facts.get("edges"):
+        warnings.append("还没有写这家店和同类店不一样在哪，问题容易出成同类店都能答的题；请按 geo-profile 第 4 步先写 1 到 3 条")
     if not facts["channels"]["wechatOfficial"]:
         warnings.append("没有登记公众号名称，统计“本店内容被引用”时会漏掉公众号文章")
     return warnings
@@ -233,6 +244,20 @@ def normalize_questions(raw, facts: dict) -> list:
     if not BRAND_RANGE[0] <= n_brand <= BRAND_RANGE[1]:
         raise gc.GeoError("带店名的问题应有 %d 到 %d 个，建议 %d 个" % (BRAND_RANGE + (RECOMMENDED[1],)))
     return sorted(out, key=lambda q: (q["kind"] != "open", q["id"]))
+
+
+def question_warnings(items: list, facts: dict) -> list:
+    """出题不合配比的地方：哪类顾客题太少、哪道题没写替谁问。只提醒，不拦。"""
+    opens = [q for q in items if q["kind"] == "open"]
+    warnings = []
+    unassigned = [q["id"].upper() for q in opens if not q["audience"]]
+    if unassigned:
+        warnings.append("这几道题没写替哪类顾客问（或写的不是已归纳的顾客类型）：" + "、".join(unassigned))
+    for person in facts.get("audience") or []:
+        n = sum(1 for q in opens if q["audience"] == person["name"])
+        if n < 2:
+            warnings.append("“%s”只有 %d 道题，每类顾客至少 2 道；题出不出来，说明这类顾客可能归纳得不对" % (person["name"], n))
+    return warnings
 
 
 def normalize_rivals(raw, facts: dict) -> list:
@@ -425,6 +450,7 @@ def cmd_set_questions(args) -> None:
     n_open, n_brand = payload["openQuestions"], payload["brandQuestions"]
     if (n_open, n_brand) != RECOMMENDED:
         payload["warnings"].append("建议用 %d 个不带店名加 %d 个带店名的问题，现在是 %d 加 %d" % (RECOMMENDED + (n_open, n_brand)))
+    payload["warnings"].extend(question_warnings(items, facts))
     gc.emit(payload)
 
 
