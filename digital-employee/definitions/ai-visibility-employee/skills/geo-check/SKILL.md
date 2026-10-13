@@ -5,7 +5,7 @@ description: 给店铺做一次“AI 曝光体检”：按问题库向元宝、�
 
 # 体检
 
-一轮体检分四步：提问和等待、算分、读全文、核对。前两步由脚本完成；读全文由你派子 Agent 做，核对由你做，结果都交给脚本校验。
+一轮体检分四步：提问和等待、算分、读全文、核对。前两步由脚本完成；读全文和核对由你做（读全文派子 Agent），结果都交给脚本校验。
 
 每一期体检的结果做成**一份体检报告**：有没有提到这家店、没提到时提到了谁、AI 读哪里的内容、AI 怎么介绍这家店。报告每期一份，是独立的文件；商家在工作台里点开看，不用跳到别的页面。工作台首页只显示最新一期的结论和每一期报告的入口。
 
@@ -70,24 +70,30 @@ AI 推荐了哪些店、有什么值得商家知道的，脚本算不出来，�
 
 ## 第三步：读全文
 
-每个平台派一个子 Agent，三个同时派出去，各读一个平台的全部回答。**子 Agent 怎么读、交回什么，写在 `references/reading.md`，派之前先读它，把里面的任务说明原样交给子 Agent**，只替换平台和文件路径。
+派子 Agent 把这一期每个平台的回答全部读一遍，看 AI 推荐了哪些店、有什么值得商家知道的。怎么派、派几个、怎么交代，你自己定；子 Agent 交回文字就行，整理成下面的格式是你的事。
 
-- 用 Agent 工具派，三个子 Agent 一次派出去，不要一个读完再派下一个。
-- 第一次体检、每周体检读全部题。只重跑了几道题时，`score` 的 `next` 会写明是哪几道，只派子 Agent 读这几道（任务说明里带上 `--only`）。
-- 子 Agent 交回的是一段 JSON 文字。**原样**存成 `$YOUZAN_AGENT_SESSION_TEMP/geo/reading-<平台>.json`，一个字都不要改，也不要自己补写或重排。外面包着代码块标记、前后多一两句话没关系，脚本会只取 JSON 那一段。
-- 某个子 Agent 交回的不是 JSON，或者脚本说它不合法：让同一个子 Agent 重新交一次，不要自己动手改它的结果。
+取一个平台回答全文的命令（只重跑了几道题时，`score` 的 `next` 会写明是哪几道，加 `--only`）：
 
-三个都交回后：
+```bash
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" answers --provider doubao
+```
 
-1. **写回店名**，三个文件一次传：
+收回来以后，整理成两样写回：
+
+1. **每个回答推荐了哪几家店**。`answers` 输出里 `listShops` 为 true 的回答每个都要写，没推荐店的写空列表。只写店（门店、品牌、网店、连锁），不写品类、商圈、平台，不写本店。同一家店的不同写法，在 `names` 里写上原文的写法。
 
    ```bash
-   python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" set-shops --file "$YOUZAN_AGENT_SESSION_TEMP/geo/reading-hunyuan.json" --file "$YOUZAN_AGENT_SESSION_TEMP/geo/reading-doubao.json" --file "$YOUZAN_AGENT_SESSION_TEMP/geo/reading-deepseek.json"
+   python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" set-shops --file "$YOUZAN_AGENT_SESSION_TEMP/geo/shops.json"
    ```
 
-   脚本逐个核对：店名（或 `names` 里写的原文写法）必须出现在那个回答的原文里，本店不能写进来，要读的回答一个都不能漏。有对不上的整份退回，按 `error` 改；`stillMissing` 里列着还没写的回答，让对应的子 Agent 补。
+   ```json
+   {"answers": {"q01_doubao#1": ["储缘蛋糕", "馋嘴蛋糕"], "q01_doubao#2": []},
+    "names": {"储缘蛋糕": ["储缘生日蛋糕(留下镇店)"]}}
+   ```
 
-2. **挑发现，最多 5 条，宁缺毋滥。** 三个文件的 `findings` 都是候选。合并说的是同一件事的，去掉商家做不了什么、或者只是常识的，按对商家的影响排序，留最多 5 条。没有值得说的就传空列表，不要凑。
+   可以一次传，也可以按平台分几个文件传（`--file` 写多次）。脚本会核对：店名或原文写法必须出现在那个回答里，要写的回答不能漏。对不上的整份退回，按 `error` 改；`stillMissing` 里是还没写的回答，漏了就让子 Agent 补。
+
+2. **这一期的发现，最多 5 条，宁缺毋滥。** 没有值得说的就传空列表，不要凑。
 
    ```bash
    python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" set-findings --file "$YOUZAN_AGENT_SESSION_TEMP/geo/findings.json"
@@ -98,13 +104,13 @@ AI 推荐了哪些店、有什么值得商家知道的，脚本算不出来，�
                "evidence": [{"answer": "b01_doubao#1", "quote": "回答里的一句原话"}]}]}
    ```
 
-   `kind`：`misread` 认错了你、`lead` 线索（比如疑似你家、但没写店名的内容）、`against` 对你不利的说法、`rivals` 同行的做法、`other` 其他。每条至少一句原话，脚本会逐字核对；**数字只用脚本算出来的**，子 Agent 自己数的次数不要写进去。
+   `kind`：`misread` 认错了你、`lead` 线索（比如疑似你家、但没写店名的内容）、`against` 对你不利的说法、`rivals` 同行的做法、`other` 其他。每条至少一句原话，脚本会逐字核对；数字只用脚本算出来的，子 Agent 自己数的次数不要写进去。
 
-3. **重新算分**，报告的“提到了谁”这时才有数：
+写完重新算分，报告的“提到了谁”这时才有数：
 
-   ```bash
-   python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" score
-   ```
+```bash
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" score
+```
 
 如果输出里有 `candidates`（这时 `next` 也会让你先选同类店），说明同类店还没定：从里面挑 3 家和本店同品类、同区域的店，带上常见的别名，用 `geo-profile` 的 `set-rivals` 保存，再执行一次 `score`。
 
