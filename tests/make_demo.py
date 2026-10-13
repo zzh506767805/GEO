@@ -222,6 +222,25 @@ def actions(week):
     return payload
 
 
+def read_all(week, date, now):
+    """模拟读全文的子 Agent：每个平台取回全文，记下推荐的店；最后一期再写两条发现。"""
+    files, brand_tag = [], None
+    for provider in ("hunyuan", "doubao", "deepseek"):
+        out = call(SCORE, "answers", "--provider", provider, "--date", date, now=now)
+        answers = {a["answer"]: [r["name"] for r in RIVALS if r["name"] in a["text"]] for a in out["answers"] if a["listShops"]}
+        files += ["--file", write("reading-%d-%s.json" % (week, provider), {"provider": provider, "answers": answers})]
+        brand_tag = brand_tag or next((a["answer"] for a in out["answers"] if "偏素" in a["text"]), None)
+    call(SCORE, "set-shops", "--date", date, *files, now=now)
+    if week == len(demo.WEEKS) and brand_tag:
+        findings = [
+            {"kind": "against", "title": "AI 提醒想吃甜口的顾客：你家可能偏素",
+             "detail": "带着店名问你家怎么样时，AI 先夸低糖、扎实，再补一句甜口软面包的顾客可能会觉得偏素。爱吃甜的顾客看到这句，可能就不来了。",
+             "action": "在门店页和公众号里写上两三款甜口的面包，让 AI 有东西可说",
+             "evidence": [{"answer": brand_tag, "quote": "想吃甜口软面包的可能会觉得偏素"}]},
+        ]
+        call(SCORE, "set-findings", "--date", date, "--file", write("findings.json", {"items": findings}), now=now)
+
+
 def run_week(week, date):
     day = lambda clock, offset=0: "%sT%s:00+08:00" % (shift(date, offset), clock)  # noqa: E731
     mock = {"MOCK_DEMO_WEEK": str(week), "MOCK_STATE": str(Path(TMP) / ("mock-%d.json" % week)), "MOCK_POLLS": "1"}
@@ -230,6 +249,8 @@ def run_week(week, date):
     call(RUN, "wait", "--date", date, "--max-seconds", "5", now=day("09:09"), extra=mock)
     call(RUN, "start", "--phase", "brand", "--date", date, now=day("09:10"), extra=mock)
     call(RUN, "wait", "--date", date, "--max-seconds", "5", now=day("09:13"), extra=mock)
+    call(SCORE, "score", "--date", date, now=day("09:14"))
+    read_all(week, date, day("09:14"))
     call(SCORE, "score", "--date", date, now=day("09:14"))
     if week == 1:
         call(STATE, "set-rivals", "--file", write("rivals.json", RIVALS), now=day("09:15"))

@@ -3505,6 +3505,24 @@
    "rival": true
   }
  ],
+ "shopsPending": 0,
+ "findings": [
+  {
+   "kind": "against",
+   "kindName": "对你不利的说法",
+   "title": "AI 提醒想吃甜口的顾客：你家可能偏素",
+   "detail": "带着店名问你家怎么样时，AI 先夸低糖、扎实，再补一句甜口软面包的顾客可能会觉得偏素。爱吃甜的顾客看到这句，可能就不来了。",
+   "action": "在门店页和公众号里写上两三款甜口的面包，让 AI 有东西可说",
+   "evidence": [
+    {
+     "answer": "b01_hunyuan#1",
+     "quote": "想吃甜口软面包的可能会觉得偏素",
+     "provider": "hunyuan",
+     "qid": "b01"
+    }
+   ]
+  }
+ ],
  "sources": {
   "hunyuan": [
    {

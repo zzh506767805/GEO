@@ -193,7 +193,7 @@ def _archive_round(date: str, state: dict) -> str:
     folder = gc.run_dir(date)
     target = folder / ("old-" + gc.now().strftime("%H%M%S"))
     target.mkdir(parents=True, exist_ok=True)
-    for name in ("queries.json", "summary.json", "judgement.json", "raw"):
+    for name in ("queries.json", "summary.json", "judgement.json", "shops.json", "findings.json", "raw"):
         if (folder / name).exists():
             shutil.move(str(folder / name), str(target / name))
     return target.name

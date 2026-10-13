@@ -118,7 +118,7 @@ def _empty_summary() -> dict:
         "questionsVersion": 0, "expected": 0, "returned": 0, "missing": [], "complete": True, "memoryFlagged": 0,
         "answers": {}, "mention": dict(bucket(), byProvider={p: bucket() for p in gc.PROVIDERS}, byQuestion={}),
         "refs": {"total": 0, "own": 0, "storePages": 0, "aboutStore": 0, "ownItems": [], "storePageItems": [], "aboutItems": []},
-        "sources": {"all": [], "byProvider": {p: [] for p in gc.PROVIDERS}}, "rivals": [], "shops": [], "buyEntry": None,
+        "sources": {"all": [], "byProvider": {p: [] for p in gc.PROVIDERS}}, "rivals": [], "shops": [], "shopsPending": [], "findings": [], "buyEntry": None,
     }
 
 
@@ -718,6 +718,10 @@ def report_data(day: str) -> dict:
         "answers": _answers(day, summary),
         "rivals": summary.get("rivals") or [],
         "shops": summary.get("shops") or [],
+        # 还没读过的回答数：不为 0 时“提到了谁”不出数
+        "shopsPending": len(summary.get("shopsPending") or []),
+        # 员工读全文后写的发现，最多 5 条，每条带 AI 的原话
+        "findings": summary.get("findings") or [],
         "sources": (summary.get("sources") or {}).get("byProvider") or {},
         "related": {"own": summary["refs"]["ownItems"], "store": summary["refs"]["storePageItems"], "about": summary["refs"]["aboutItems"]},
         "descriptions": judgement.get("descriptions") or {},

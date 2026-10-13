@@ -5,7 +5,7 @@ description: 给店铺做一次“AI 曝光体检”：按问题库向元宝、�
 
 # 体检
 
-一轮体检分四步：提问、等待、算分、核对。前三步由脚本完成，核对由你完成后交给脚本校验。
+一轮体检分四步：提问和等待、算分、读全文、核对。前两步由脚本完成；读全文由你派子 Agent 做，核对由你做，结果都交给脚本校验。
 
 每一期体检的结果做成**一份体检报告**：有没有提到这家店、没提到时提到了谁、AI 读哪里的内容、AI 怎么介绍这家店。报告每期一份，是独立的文件；商家在工作台里点开看，不用跳到别的页面。工作台首页只显示最新一期的结论和每一期报告的入口。
 
@@ -59,22 +59,55 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_sc
 输出里重点看：
 
 - `mention`：顾客没点名时，多少个回答提到了本店，分平台。
-- `shops`：顾客没点名时，AI 点名提到的所有店，按出现在几个回答里排序，最多 15 家。报告的“提到了谁”列的就是它。
-- `rivals`：其中选定的同类店各几次。
+- `rivals`：选定的同类店各被几个回答提到。
 - `refs`：本店账号的内容、以本店命名的门店页、别人写本店的内容，各被引用多少次。
 - `topSources`：AI 这一期最常读哪里的内容。
 - `memoryFlagged`：带着之前对话痕迹的回答数，已自动剔除。
+- `shopsPending`：还没读过的回答数。不为 0 时，`next` 会让你先做第三步。
 - `notes`：需要在周报里说明的情况。
 
-看一眼 `shops`：里面有不是店的名字（品类词如“生日蛋糕”、商圈、平台名），用下面的命令去掉，再执行一次 `score`。连锁品牌、网店也算店，不要去掉。去掉的名字以后各期都不算；去错了加 `--remove` 放回来。
+AI 推荐了哪些店、有什么值得商家知道的，脚本算不出来，要读回答全文，这是第三步。
 
-```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" exclude-shops --names "生日蛋糕,西溪商圈"
-```
+## 第三步：读全文
 
-如果输出里有 `candidates`（这时 `next` 也会让你先选同类店），说明同类店还没定：从里面挑 3 家和本店同品类、同区域的店（不要挑商圈、平台和品类词），带上常见的别名，用 `geo-profile` 的 `set-rivals` 保存，再执行一次 `score`。
+每个平台派一个子 Agent，三个同时派出去，各读一个平台的全部回答。**子 Agent 怎么读、交回什么，写在 `references/reading.md`，派之前先读它，把里面的任务说明原样交给子 Agent**，只替换平台和文件路径。
 
-## 第三步：核对 AI 怎么介绍这家店
+- 用 Agent 工具派，三个子 Agent 一次派出去，不要一个读完再派下一个。
+- 第一次体检、每周体检读全部题。只重跑了几道题时，`score` 的 `next` 会写明是哪几道，只派子 Agent 读这几道（任务说明里带上 `--only`）。
+- 子 Agent 把结果写进 `$YOUZAN_AGENT_SESSION_TEMP/geo/reading-<平台>.json`，交回时只说一句写好了、有几条发现。
+
+三个都交回后：
+
+1. **写回店名**，三个文件一次传：
+
+   ```bash
+   python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" set-shops --file "$YOUZAN_AGENT_SESSION_TEMP/geo/reading-hunyuan.json" --file "$YOUZAN_AGENT_SESSION_TEMP/geo/reading-doubao.json" --file "$YOUZAN_AGENT_SESSION_TEMP/geo/reading-deepseek.json"
+   ```
+
+   脚本逐个核对：店名（或 `names` 里写的原文写法）必须出现在那个回答的原文里，本店不能写进来，要读的回答一个都不能漏。有对不上的整份退回，按 `error` 改；`stillMissing` 里列着还没写的回答，让对应的子 Agent 补。
+
+2. **挑发现，最多 5 条，宁缺毋滥。** 三个文件的 `findings` 都是候选。合并说的是同一件事的，去掉商家做不了什么、或者只是常识的，按对商家的影响排序，留最多 5 条。没有值得说的就传空列表，不要凑。
+
+   ```bash
+   python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" set-findings --file "$YOUZAN_AGENT_SESSION_TEMP/geo/findings.json"
+   ```
+
+   ```json
+   {"items": [{"kind": "misread", "title": "", "detail": "", "action": "",
+               "evidence": [{"answer": "b01_doubao#1", "quote": "回答里的一句原话"}]}]}
+   ```
+
+   `kind`：`misread` 认错了你、`lead` 线索（比如疑似你家、但没写店名的内容）、`against` 对你不利的说法、`rivals` 同行的做法、`other` 其他。每条至少一句原话，脚本会逐字核对；**数字只用脚本算出来的**，子 Agent 自己数的次数不要写进去。
+
+3. **重新算分**，报告的“提到了谁”这时才有数：
+
+   ```bash
+   python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" score
+   ```
+
+如果输出里有 `candidates`（这时 `next` 也会让你先选同类店），说明同类店还没定：从里面挑 3 家和本店同品类、同区域的店，带上常见的别名，用 `geo-profile` 的 `set-rivals` 保存，再执行一次 `score`。
+
+## 第四步：核对 AI 怎么介绍这家店
 
 ```bash
 python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" brand-digest

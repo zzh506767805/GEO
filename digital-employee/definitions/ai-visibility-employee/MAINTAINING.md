@@ -25,6 +25,8 @@
 | 每期主动写的内容最多 2 篇 | `geo_report.py` 的 `WEEKLY_CONTENT_CAP` |
 | 每种内容的标题、正文长度 | `geo_report.py` 的 `CONTENT_TYPES` |
 | 核对时出处链接必须来自回答自己的引用 | `geo_score.py` 的 `cmd_set_judgement` |
+| 读全文写回的店名必须出现在那个回答的原文里；没点名的回答一个都不能漏，漏了“提到了谁”不出数 | `geo_score.py` 的 `cmd_set_shops`、`count_shops` |
+| 发现最多 5 条，每条至少一句能在原文里逐字找到的原话 | `geo_score.py` 的 `cmd_set_findings`、`FINDINGS_CAP` |
 | 存草稿、记发布之前必须先确认 | `geo_report.py` 的 `cmd_mark_content` |
 | 一家店单独加的页面最多 5 个；内容块的格式 | `geo_report.py` 的 `CUSTOM_PAGE_CAP`、`normalize_blocks` |
 

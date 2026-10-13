@@ -84,6 +84,16 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
   .rpt-h2 small { display: block; margin: 2px 0 0; }
 }
 .demo-strip { border: 1px dashed var(--warn); border-radius: 10px; padding: 8px 14px; background: var(--warn-soft); color: var(--warn); font-size: 13px; font-weight: 600; }
+.finding { padding: 14px 0; border-top: 1px solid var(--line); }
+.finding:first-of-type { border-top: 0; padding-top: 4px; }
+.finding-t { font-weight: 700; line-height: 1.5; }
+.finding-t .tag { margin-right: 8px; }
+.finding-d { margin-top: 6px; color: var(--ink-2); line-height: 1.7; }
+.finding-a { margin-top: 6px; line-height: 1.7; }
+.finding-a .k { margin-right: 8px; color: var(--ink-3); font-size: 12px; }
+.finding-q { display: block; width: 100%; margin-top: 8px; padding: 8px 12px; border: 0; border-left: 3px solid var(--line); border-radius: 0 8px 8px 0; background: var(--hover); color: var(--ink-2); font: inherit; font-size: 13px; line-height: 1.6; text-align: left; cursor: pointer; }
+.finding-q:hover { border-left-color: var(--brand); }
+.finding-q .who { display: block; font-size: 12px; color: var(--ink-3); }
 .edge-list { margin: 4px 0 0; padding-left: 20px; }
 .edge-list li { margin: 6px 0; line-height: 1.6; }
 .edge-list .tag { margin-left: 8px; }
@@ -788,7 +798,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       t.body.appendChild(cells.apply(null, args));
     });
     var wrap = add(el('div', 'tbl-wrap rank-table'), t);
-    root.appendChild(add(box, wrap, el('div', 'small muted note-gap', '只数 AI 在回答里点了名的店（列出来、加粗的那几家），最多列 15 家。标着“同类店”的是你选定要比的几家，想换直接告诉员工。')));
+    root.appendChild(add(box, wrap, el('div', 'small muted note-gap', '员工读完每个回答，记下 AI 推荐了哪几家店，同一家店的不同写法算一家。最多列 15 家。标着“同类店”的是你选定要比的几家，想换直接告诉员工。')));
   }
 
   /* 员工建议商家做的事。只在报告里列出来，不是一张要打勾的清单 */
@@ -1285,6 +1295,27 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (sub) { node.appendChild(el('small', '', sub)); }
     return node;
   }
+  /* 这一期的发现：员工读完全部回答后写的，最多 5 条，每条带 AI 的原话，点了看整段回答 */
+  function findingsCard(root) {
+    var items = DATA.findings || [];
+    if (!items.length) { return; }
+    var box = card('这一期的发现', items.length + ' 条');
+    var questions = {};
+    (DATA.questions || []).forEach(function (q) { questions[q.id] = q; });
+    items.forEach(function (item) {
+      var block = add(el('div', 'finding'), add(el('div', 'finding-t'), el('span', 'tag', item.kindName), item.title), el('div', 'finding-d', item.detail));
+      if (item.action) { block.appendChild(add(el('div', 'finding-a'), el('span', 'k', '可以怎么做'), item.action)); }
+      (item.evidence || []).forEach(function (e) {
+        var q = questions[e.qid];
+        var quote = add(el('button', 'finding-q'), el('span', 'who', providerName(e.provider) + (q ? ' · ' + qno(q.id) : '')), '“' + e.quote + '”');
+        quote.type = 'button';
+        if (q) { quote.onclick = function () { openSheet(q, e.provider); }; } else { quote.disabled = true; }
+        block.appendChild(quote);
+      });
+      box.appendChild(block);
+    });
+    root.appendChild(box);
+  }
   function reportSummary(root, S) {
     root.appendChild(h2('summary', '结论'));
     var before = DATA.compare && DATA.compare.previous ? DATA.compare : null;
@@ -1301,6 +1332,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       kpi('ext', S.refs.own ? 'ok' : 'plain', '你的内容被引用', S.refs.own, '次', before && before.ownRefs.before !== null ? '上一期 ' + before.ownRefs.before + ' 次' : '门店页 ' + S.refs.storePages + ' 次 · 别人写你 ' + S.refs.aboutStore + ' 次'),
       third,
       kpi('list', 'plain', '这一期拿到的回答', S.returned, '/ ' + S.expected, S.complete ? '数据完整' : '这一期数据不全')));
+    findingsCard(root);
     if ((DATA.actions.todos || []).length) {
       var todos = card('这一期建议你做的', DATA.actions.todos.length + ' 件');
       todoList(todos);
@@ -1368,7 +1400,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   function reportRivals(root, S) {
     root.appendChild(h2('rivals', '顾客没点名时，AI 提到了哪些店'));
     var period = { shops: DATA.shops || [], mention: S.mention };
-    if (!period.shops.length) { root.appendChild(add(card(), el('div', 'empty', '这一期 AI 的回答里没有点名别的店。'))); return; }
+    if (DATA.shopsPending) { root.appendChild(add(card(), el('div', 'empty', '员工还有 ' + DATA.shopsPending + ' 个回答没读完，读完这里才会列出来。'))); return; }
+    if (!period.shops.length) { root.appendChild(add(card(), el('div', 'empty', '这一期 AI 的回答里没有推荐别的店。'))); return; }
     rivalsSection(root, period);
   }
   function reportSources(root, S) {
