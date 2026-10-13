@@ -7,11 +7,10 @@
 用法（脚本用绝对路径执行，入参写成 JSON 文件后用 --file 传入）：
   geo_state.py status
   geo_state.py init --segment local|ecom --brand <店名>
-  geo_state.py show [--part facts|questions|rivals|assets|all]
+  geo_state.py show [--part facts|questions|rivals|all]
   geo_state.py set-facts --file <json> [--confirmed-by-merchant] [--replace]
   geo_state.py set-questions --file <json>
   geo_state.py set-rivals --file <json>
-  geo_state.py set-assets --file <json>
   geo_state.py confirm
   geo_state.py confirm-monitoring
   geo_state.py set-schedule --status on|declined|off|unavailable
@@ -91,19 +90,6 @@ def normalize_facts(raw: dict) -> dict:
         }
         if product["name"]:
             products.append(product)
-    audience = []
-    for item in (raw.get("audience") or [])[:4]:
-        if not isinstance(item, dict):
-            continue
-        person = {
-            "name": _text(item.get("name"), 12),
-            "who": _text(item.get("who"), 60),
-            "scene": _text(item.get("scene"), 60),
-            "worry": _text(item.get("worry"), 60),
-            "basis": _text(item.get("basis"), 40),
-        }
-        if person["name"] and person["name"] not in [p["name"] for p in audience]:
-            audience.append(person)
     edges = []
     for item in (raw.get("edges") or [])[:3]:
         if not isinstance(item, dict):
@@ -124,7 +110,6 @@ def normalize_facts(raw: dict) -> dict:
             "category": _text(brand_raw.get("category"), 30),
             "city": _text(brand_raw.get("city"), 20),
         },
-        "audience": audience,
         # 和同类店不一样的地方。不带店名的问题要挂在这上面出，才有机会赢。
         "edges": edges,
         "stores": stores,
@@ -268,28 +253,9 @@ def normalize_rivals(raw, facts: dict) -> list:
     return out
 
 
-def normalize_assets(raw) -> dict:
-    items = raw.get("items") if isinstance(raw, dict) else raw
-    if not isinstance(items, list):
-        raise gc.GeoError("内容资产应为一个列表")
-    out = []
-    for item in items[:12]:
-        if not isinstance(item, dict):
-            continue
-        platform = _text(item.get("platform"), 20)
-        if platform:
-            out.append({
-                "platform": platform,
-                "found": bool(item.get("found")),
-                "note": _text(item.get("note"), 160),
-                "url": _text(item.get("url"), 300),
-            })
-    return {"checkedAt": gc.now_iso(), "items": out}
-
-
 def _paths() -> dict:
     root = gc.profile_dir()
-    return {name: root / (name + ".json") for name in ("facts", "questions", "rivals", "assets", "meta")}
+    return {name: root / (name + ".json") for name in ("facts", "questions", "rivals", "meta")}
 
 
 def _load() -> dict:
@@ -383,7 +349,7 @@ def cmd_show(args) -> None:
     data = _load()
     if not data["facts"]:
         raise gc.GeoError("还没有建档，请先执行 init")
-    parts = ("facts", "questions", "rivals", "assets", "meta") if args.part == "all" else (args.part,)
+    parts = ("facts", "questions", "rivals", "meta") if args.part == "all" else (args.part,)
     payload = {"ok": True}
     for part in parts:
         payload[part] = data[part]
@@ -460,13 +426,6 @@ def cmd_set_rivals(args) -> None:
     gc.emit(payload)
 
 
-def cmd_set_assets(args) -> None:
-    _require_facts()
-    gc.write_json(_paths()["assets"], normalize_assets(gc.load_input(args.file)))
-    gc.mark_changed("已有的内容")
-    gc.emit(status_payload())
-
-
 def cmd_confirm(_args) -> None:
     facts = _require_facts()
     questions = (gc.read_json(_paths()["questions"], {}) or {}).get("items") or []
@@ -504,14 +463,14 @@ def main() -> None:
     p.add_argument("--brand", required=True)
     p.set_defaults(func=cmd_init)
     p = sub.add_parser("show")
-    p.add_argument("--part", default="all", choices=("facts", "questions", "rivals", "assets", "meta", "all"))
+    p.add_argument("--part", default="all", choices=("facts", "questions", "rivals", "meta", "all"))
     p.set_defaults(func=cmd_show)
     p = sub.add_parser("set-facts")
     p.add_argument("--file", required=True)
     p.add_argument("--confirmed-by-merchant", action="store_true")
     p.add_argument("--replace", action="store_true")  # 整份覆盖：没传的字段全部清空。只在要从头重写资料时用
     p.set_defaults(func=cmd_set_facts)
-    for name, func in (("set-questions", cmd_set_questions), ("set-rivals", cmd_set_rivals), ("set-assets", cmd_set_assets)):
+    for name, func in (("set-questions", cmd_set_questions), ("set-rivals", cmd_set_rivals)):
         p = sub.add_parser(name)
         p.add_argument("--file", required=True)
         p.set_defaults(func=func)

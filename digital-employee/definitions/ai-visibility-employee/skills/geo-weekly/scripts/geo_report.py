@@ -587,7 +587,6 @@ def _settings(facts: dict, meta: dict, questions: list, rivals: list) -> dict:
         "from": state["from"], "confirmed": state["confirmed"], "pending": state["pending"], "canWrite": state["canWrite"],
         "questions": questions,
         "edges": facts.get("edges") or [],
-        "audience": facts.get("audience") or [],
         "rivals": [{"name": r["name"]} for r in rivals],
         "extras": {
             "aliases": brand.get("aliases") or [],

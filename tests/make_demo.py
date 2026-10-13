@@ -34,10 +34,9 @@ FACTS = {
     "from": "backend",
     "segment": "local",
     "brand": {"name": demo.BRAND, "aliases": ["禾木面包", "HEMU BAKERY"], "category": "面包烘焙", "city": "杭州"},
-    "audience": [
-        {"name": "附近的年轻家庭", "who": "住在拱墅区、家里有小孩的住户", "scene": "想找一家能放心给孩子买早餐的面包店", "worry": "配料干不干净、甜不甜", "basis": "商品评价"},
-        {"name": "附近的上班族", "who": "在运河一带上班的人", "scene": "上班路上买早餐，或者提前订好到店取", "worry": "几点开门、能不能提前订", "basis": "订单"},
-        {"name": "面包爱好者", "who": "冲着全麦吐司和贝果专门来的人", "scene": "想找某一种面包做得好的店", "worry": "这一款做得扎不扎实", "basis": "商品评价"},
+    "edges": [
+        {"text": "运河边少见的全麦吐司和贝果专门店", "basis": "热销品"},
+        {"text": "早上 8 点开门，能小程序提前订、到店取", "basis": "门店营业时间"},
     ],
     "stores": [
         {"name": "拱墅店", "address": "杭州市拱墅区演示路 18 号", "hours": "08:00–20:00", "phone": "", "status": "在营", "source": "有赞后台"},
@@ -62,11 +61,6 @@ QUESTIONS = [
     ("b02", "brand", "门店", "禾木烘焙在哪里，几点开门，有什么招牌？", "", ""),
 ]
 RIVALS = [{"name": "麦田工坊"}, {"name": "暖炉面包"}, {"name": "巷口烘焙"}]
-ASSETS = {"items": [
-    {"platform": "抖音门店", "found": True, "note": "拱墅店有门店页，评价 86 条，团购 2 个，没有写营业时间。"},
-    {"platform": "公众号", "found": True, "note": "有同名公众号“禾木烘焙”，上岗前最近一篇文章是三个月前发的。"},
-    {"platform": "小红书", "found": True, "note": "能搜到顾客写的笔记 20 多篇。"},
-]}
 DESCRIPTIONS = {
     "hunyuan": "拱墅区的社区面包店，主打全麦吐司和贝果，走低糖、现烤的路线。",
     "doubao": "运河边的社区店，全麦和贝果是招牌，适合买早餐。",
@@ -262,7 +256,7 @@ def main():
     call(STATE, "set-facts", "--file", write("facts.json", FACTS), now=at("09:02"))
     questions = [{"id": q[0], "kind": q[1], "tag": q[2], "text": q[3], "audience": q[4], "worry": q[5]} for q in QUESTIONS]
     call(STATE, "set-questions", "--file", write("questions.json", questions), now=at("09:03"))
-    call(STATE, "set-assets", "--file", write("assets.json", ASSETS), now=at("09:03"))
+    call(STATE, "confirm-monitoring", now=at("09:04"))
     first_publish = call(REPORT, "publish", now=at("09:03"))  # 建档后先开通工作台，再去体检
     assert first_publish["firstTime"] and first_publish["periods"] == 0, first_publish
     for week, date in enumerate(demo.WEEKS, 1):

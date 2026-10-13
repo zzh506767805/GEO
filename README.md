@@ -130,7 +130,7 @@ node tests/page_smoke.cjs <工作台或报告.html> [更多文件]
 脚本都要用绝对路径执行，入参写成 JSON 文件后用 `--file` 传。每个命令输出一段 JSON，`ok: false` 时 `error` 是原因，退出码是 2。输出里的 `next` 是下一步该做什么。
 
 ```
-geo_state.py   status | init | show | set-facts [--replace]（默认合并，没传的字段保留）| set-questions | set-rivals | set-assets（不再用于建档，留着兼容旧存档）| confirm | confirm-monitoring | set-schedule --status on|declined|off|unavailable
+geo_state.py   status | init | show | set-facts [--replace]（默认合并，没传的字段保留）| set-questions | set-rivals | confirm | confirm-monitoring | set-schedule --status on|declined|off|unavailable
 geo_run.py     start --phase open|brand [--only q01,q03] [--retry] [--fresh 同一天重新测] | wait [--max-seconds 90] | status
 geo_score.py   score | brand-digest | set-judgement | issues [--status S] | mark-issue --no N --status done|dismissed|open
 geo_report.py  publish | links | show | compare | set-actions

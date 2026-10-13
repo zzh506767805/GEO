@@ -351,11 +351,6 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .gap-row .tag { flex: none; margin-top: 2px; }
 
 /* ───────── 监测设置 ───────── */
-.persona .nm { display: flex; flex-wrap: wrap; align-items: center; font-weight: 700; }
-.persona .nm .tag { margin: 0 0 0 8px; }
-.persona dl { margin: 6px 0 0; font-size: 13px; }
-.persona dt { margin-top: 6px; font-size: 12px; color: var(--ink-3); }
-.persona dd { margin: 0; }
 .rowlist { margin: 0; padding: 0; list-style: none; }
 .rowlist li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .rowlist li:first-child { border-top: 0; padding-top: 0; }
@@ -1203,19 +1198,6 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
         list.appendChild(add(el('li'), edge.text, edge.basis ? el('span', 'tag', '依据：' + edge.basis) : null));
       });
       root.appendChild(add(edgeBox, list, el('div', 'small muted note-gap', '小店被 AI 提到，靠的是和别家不一样的地方。说得不对，或者你家还有别的特点，直接告诉员工，问题会跟着改。')));
-    }
-    var people = st.audience || [];
-    if (people.length) {
-      root.appendChild(el('div', 'sec-label', '这些问题是替这几类顾客问的'));
-      var grid = el('div', 'row c2');
-      people.forEach(function (person) {
-        var dl = el('dl');
-        if (person.who) { add(dl, el('dt', '', '是谁'), el('dd', '', person.who)); }
-        if (person.scene) { add(dl, el('dt', '', '什么时候会问 AI'), el('dd', '', person.scene)); }
-        if (person.worry) { add(dl, el('dt', '', '最在意'), el('dd', '', person.worry)); }
-        grid.appendChild(add(el('div', 'card persona'), add(el('div', 'nm'), person.name, person.basis ? el('span', 'tag', '依据：' + person.basis) : null), dl));
-      });
-      root.appendChild(grid);
     }
     var rivals = st.rivals || [];
     var rivalBox = card('和谁比', rivals.length ? rivals.length + ' 家同类店' : '');

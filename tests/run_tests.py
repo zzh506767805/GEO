@@ -96,7 +96,6 @@ def base_env(tmp, **extra):
 SYNTHETIC_FACTS = {
     "segment": "local",
     "brand": {"name": "示例小店", "aliases": ["Sample Shop"], "category": "面包", "city": "测试市"},
-    "audience": [{"name": "附近居民", "who": "住在周边的人", "scene": "想找一家常去的面包店", "worry": "离得近不近", "basis": "商品评价"}],
     "stores": [{"name": "测试路店", "address": "测试市测试路 1 号", "hours": "09:00-20:00", "status": "在营", "source": "有赞后台"}],
     "channels": {"wechatOfficial": "示例小店官方号"},
 }
@@ -371,13 +370,13 @@ def test_synthetic():
         check("数据不全时说明缺哪部分", "缺少" in error.get("error", ""), error)
         check("网页文件名是英文", Path(built["file"]).name == "ai-visibility.html")
 
-        call(STATE, "set-assets", "--file", write(tmp, "assets.json", {"items": [{"platform": "公众号", "found": False, "note": "没有搜到同名的号"}]}), env=env)
+        call(STATE, "set-rivals", "--file", write(tmp, "rivals2.json", [{"name": "甲记面包"}, {"name": "乙家烘焙"}]), env=env)
         failed = call(REPORT, "publish", env=dict(env, MOCK_UPLOAD_FAIL="1"))
         check("上传失败时如实返回，不给新链接，并说明退路",
               failed["published"] is False and failed["pageUrl"] == first["pageUrl"] and "工作台" in failed["reason"] and "报告" in failed["reason"]
               and "youzan-oss" in failed["next"] and "不要编链接" in failed["next"], failed)
         stale = call(REPORT, "links", env=env)
-        check("没同步上去的变化会一直提醒", stale["upToDate"] is False and stale["pending"] == ["已有的内容"] and "publish" in stale["next"], stale)
+        check("没同步上去的变化会一直提醒", stale["upToDate"] is False and stale["pending"] == ["同类店"] and "publish" in stale["next"], stale)
         error = call(REPORT, "set-page-url", "--url", "http://claw-cloud.youzan.com/f/x", env=env, expect=2)
         check("非 https 的链接会被拒绝", "https" in error.get("error", ""))
         saved = call(REPORT, "set-page-url", "--url", "https://claw-cloud.youzan.com/f/abc/ai-visibility.html", env=env)
@@ -431,7 +430,6 @@ def test_replay():
         call(STATE, "set-facts", "--file", str(fixtures / "facts.json"), env=env)
         call(STATE, "set-questions", "--file", str(fixtures / "questions.json"), env=env)
         call(STATE, "set-rivals", "--file", str(fixtures / "rivals.json"), env=env)
-        call(STATE, "set-assets", "--file", str(fixtures / "assets.json"), env=env)
         call(REPORT, "publish", env=env)  # 和员工的真实顺序一样：建完档先开通工作台
         call(STATE, "confirm-monitoring", env=env)
         call(RUN, "start", "--phase", "open", "--date", DATE, env=env)
@@ -512,7 +510,7 @@ def test_facts_merge():
         call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
         first = call(STATE, "set-facts", "--file", write(tmp, "f0.json", {k: v for k, v in SYNTHETIC_FACTS.items() if k != "segment"}), env=env)
         check("资料没写 from 时提醒：后台读来的要写 backend", any("from" in w for w in first["warnings"]), first["warnings"])
-        full = dict(SYNTHETIC_FACTS, **{"from": "backend",
+        full = dict(SYNTHETIC_FACTS, **{"from": "backend", "edges": [{"text": "测试路上唯一一家现烤面包", "basis": "门店位置"}],
                     "channels": {"wechatOfficial": "示例小店官方号", "douyin": "示例抖音", "ownContentKeys": ["1234567890"]},
                     "writingRules": {"bannedWords": ["网红"]},
                     "stores": SYNTHETIC_FACTS["stores"] + [{"name": "旧店", "address": "测试市旧路 2 号", "status": "已关闭", "source": "大众点评"}]})
@@ -521,9 +519,9 @@ def test_facts_merge():
                   "stores": [dict(SYNTHETIC_FACTS["stores"][0], hours="09:00-21:00")]}
         merged = call(STATE, "set-facts", "--file", write(tmp, "f2.json", weekly), env=env)
         facts = call(STATE, "show", "--part", "facts", env=env)["facts"]
-        check("只传后台的几样：别名、账号、作品编号、顾客类型、写作要求、后台以外的门店都保留，并列出保留了哪些",
+        check("只传后台的几样：别名、账号、作品编号、差异点、写作要求、后台以外的门店都保留，并列出保留了哪些",
               facts["brand"]["aliases"] == ["Sample Shop"] and facts["channels"]["ownContentKeys"] == ["1234567890"]
-              and facts["audience"] and facts["writingRules"]["bannedWords"] == ["网红"]
+              and facts["edges"] and facts["writingRules"]["bannedWords"] == ["网红"]
               and [s["name"] for s in facts["stores"]] == ["测试路店", "旧店"] and facts["stores"][0]["hours"] == "09:00-21:00"
               and "brand.aliases" in merged.get("kept", []) and "channels" in merged.get("kept", []), (facts, merged.get("kept")))
         cleared = call(STATE, "set-facts", "--file", write(tmp, "f3.json", {"channels": {"douyin": ""}}), env=env)
@@ -532,7 +530,7 @@ def test_facts_merge():
               and cleared["changed"] is True, facts["channels"])
         call(STATE, "set-facts", "--replace", "--file", write(tmp, "f4.json", weekly), env=env)
         facts = call(STATE, "show", "--part", "facts", env=env)["facts"]
-        check("--replace 整份覆盖：没传的都清空", facts["brand"]["aliases"] == [] and facts["audience"] == [] and len(facts["stores"]) == 1, facts)
+        check("--replace 整份覆盖：没传的都清空", facts["brand"]["aliases"] == [] and facts["edges"] == [] and len(facts["stores"]) == 1, facts)
 
 
 def test_new_agent_guards():

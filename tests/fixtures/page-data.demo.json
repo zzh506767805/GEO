@@ -8,6 +8,27 @@
   "segmentName": "本地门店",
   "demo": true
  },
+ "nav": [
+  {
+   "id": "overview",
+   "title": "工作台",
+   "icon": "home",
+   "subtitle": "最新的结论，和每一期的体检报告"
+  },
+  {
+   "id": "content",
+   "title": "内容",
+   "icon": "doc",
+   "subtitle": "员工替你写的内容：公众号文章、小红书笔记、长文"
+  },
+  {
+   "id": "settings",
+   "title": "监测设置",
+   "icon": "list",
+   "subtitle": "员工每周替你问什么、和谁比"
+  }
+ ],
+ "customPages": {},
  "providers": [
   {
    "id": "hunyuan",
@@ -641,27 +662,14 @@
     "worry": ""
    }
   ],
-  "audience": [
+  "edges": [
    {
-    "name": "附近的年轻家庭",
-    "who": "住在拱墅区、家里有小孩的住户",
-    "scene": "想找一家能放心给孩子买早餐的面包店",
-    "worry": "配料干不干净、甜不甜",
-    "basis": "商品评价"
+    "text": "运河边少见的全麦吐司和贝果专门店",
+    "basis": "热销品"
    },
    {
-    "name": "附近的上班族",
-    "who": "在运河一带上班的人",
-    "scene": "上班路上买早餐，或者提前订好到店取",
-    "worry": "几点开门、能不能提前订",
-    "basis": "订单"
-   },
-   {
-    "name": "面包爱好者",
-    "who": "冲着全麦吐司和贝果专门来的人",
-    "scene": "想找某一种面包做得好的店",
-    "worry": "这一款做得扎不扎实",
-    "basis": "商品评价"
+    "text": "早上 8 点开门，能小程序提前订、到店取",
+    "basis": "门店营业时间"
    }
   ],
   "rivals": [
