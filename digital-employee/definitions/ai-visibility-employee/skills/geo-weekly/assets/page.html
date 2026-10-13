@@ -815,8 +815,12 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     });
     return box;
   }
-  /* 复制出去的文字：小红书笔记是“标题 + 正文 + 话题”，其他类型去掉小标题和加粗的记号 */
+  /* 复制出去的文字：小红书笔记是“标题 + 正文 + 话题”；抖音视频文案只复制发布时要填的“标题 + 话题”，口播稿是拍的时候照着念的；
+     其他类型去掉小标题和加粗的记号 */
   function contentPlain(item) {
+    if (item.type === 'douyin') {
+      return item.title + ((item.tags || []).length ? ' ' + item.tags.map(function (tag) { return '#' + tag; }).join(' ') : '');
+    }
     if (item.type === 'xhs') {
       var tags = (item.tags || []).map(function (tag) { return '#' + tag; }).join(' ');
       return item.title + '\n\n' + item.body + (tags ? '\n\n' + tags : '');
@@ -855,9 +859,10 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (item.body) {
       var details = el('details', 'art-body');
       if (open) { details.open = true; }
-      var paper = el('div', 'paper ans-text' + (item.type === 'xhs' ? ' note' : ''));
+      var plain = item.type === 'xhs' || item.type === 'douyin';
+      var paper = el('div', 'paper ans-text' + (plain ? ' note' : ''));
       paper.appendChild(el('div', 'paper-title', item.title));
-      if (item.type === 'xhs') {
+      if (plain) {
         renderPlain(paper, item.body);
         if ((item.tags || []).length) {
           var tags = el('div', 'note-tags');
@@ -869,9 +874,9 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
         if (body.split('\n')[0].replace(/^\s*#+\s*/, '').trim() === item.title) { body = body.slice(body.indexOf('\n') + 1); }
         renderText(paper, body, true);
       }
-      add(details, el('summary', '', (item.previewUrl ? '看文字版' : '看稿子') + ' · ' + item.bodyChars + ' 字'), paper);
+      add(details, el('summary', '', (item.previewUrl ? '看文字版' : (item.type === 'douyin' ? '看口播稿' : '看稿子')) + ' · ' + item.bodyChars + ' 字'), paper);
       box.appendChild(details);
-      acts.appendChild(button('btn', item.type === 'xhs' ? '复制标题、正文和话题' : '复制全文', function () { copy(contentPlain(item), '已复制，可以直接粘贴去发'); }));
+      acts.appendChild(button('btn', item.type === 'xhs' ? '复制标题、正文和话题' : (item.type === 'douyin' ? '复制标题和话题' : '复制全文'), function () { copy(contentPlain(item), '已复制，可以直接粘贴去发'); }));
     }
     var hint = item.status === 'dropped' ? '这一篇不发了。'
       : (!item.body && !item.previewUrl ? '更早的内容这里只保留标题和状态。要看稿子，回到龙虾跟员工说“把第 ' + item.no + ' 篇发我”。'
@@ -942,7 +947,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   /* 导航来自数据里的 nav（脚本按 assets/pages.json 和员工填过的页面生成）。旧数据没有 nav 时用这三个页面 */
   var NAV_ITEMS = (DATA.nav && DATA.nav.length ? DATA.nav : [
     { id: 'overview', title: '工作台', icon: 'home', subtitle: '最新的结论，和每一期的体检报告' },
-    { id: 'content', title: '内容', icon: 'doc', subtitle: '员工替你写的内容：公众号文章、小红书笔记、长文' },
+    { id: 'content', title: '内容', icon: 'doc', subtitle: '员工替你写的内容：公众号文章、小红书笔记、长文、抖音视频文案' },
     { id: 'settings', title: '监测设置', icon: 'list', subtitle: '员工每周替你问什么、和谁比' }
   ]);
   var NAV = [{ items: NAV_ITEMS.map(function (p) { return [p.id, p.title, p.icon || 'doc']; }) }];

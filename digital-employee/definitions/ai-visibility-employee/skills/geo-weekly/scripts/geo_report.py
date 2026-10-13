@@ -22,7 +22,7 @@
   geo_report.py show                       最新一期的小结、建议和最近的内容（商家说“第 2 篇”时先看这里）
   geo_report.py compare [--date D]         和上一期对比
   geo_report.py set-actions --file <json> [--date D]   本期小结、建议商家做的事、缺的内容、这一期没写内容的原因
-  geo_report.py add-content --file <json>              登记一条内容（公众号文章、小红书笔记、长文……）；带 no 是改稿
+  geo_report.py add-content --file <json>              登记一条内容（公众号文章、小红书笔记、长文、抖音视频文案）；带 no 是改稿
   geo_report.py contents [--no N]                      内容清单；带 --no 时给出那一条的全文
   geo_report.py mark-content [--no N] [--status S] [--channel 放到了哪] [--ref 交付凭据]
   geo_report.py build [--date D]           只在本地生成，不上传
@@ -69,6 +69,8 @@ CONTENT_TYPES = {
     "wechat": {"name": "公众号文章", "titleMax": 64, "bodyMin": 0, "bodyMax": 8000, "tagsMax": 0, "preview": True},
     "xhs": {"name": "小红书笔记", "titleMax": 20, "bodyMin": 30, "bodyMax": 1000, "tagsMax": 10, "preview": False},
     "text": {"name": "长文", "titleMax": 60, "bodyMin": 80, "bodyMax": 6000, "tagsMax": 0, "preview": False},
+    # 抖音视频文案：标题是作品描述的第一句，正文是口播稿（画面提示写在括号里），话题 3 到 5 个
+    "douyin": {"name": "抖音视频文案", "titleMax": 30, "bodyMin": 50, "bodyMax": 1500, "tagsMax": 5, "preview": False},
 }
 # 状态和类型无关：等商家确认 → 商家确认了 → 已发布；或者不发了。放到了哪（公众号草稿箱、知乎……）另外记在 channels 里。
 CONTENT_STATUS = ("preview", "confirmed", "published", "dropped")

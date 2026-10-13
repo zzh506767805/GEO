@@ -973,9 +973,35 @@ def test_pages_render():
         check("工作台能渲染，每一期的报告都在工作台里打开：%s" % label, ok, item["errors"][:3] or (routes, item.get("frames")))
 
 
+def test_douyin_and_sources():
+    """抖音视频文案按自己的规格登记；算分输出给出每个 AI 各自最常读哪里，员工建议往哪发时照这个说。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
+        video = {"type": "douyin", "origin": "asked", "title": "测试路示例小店：每天现烤的全麦吐司",
+                 "body": "（镜头：门头）我是示例小店，在测试市测试路 1 号。（镜头：出炉）每天早上 9 点现烤全麦吐司，晚上 8 点关门。",
+                 "tags": ["测试市美食", "#吐司"], "tip": "早上出炉时拍"}
+        error = call(REPORT, "add-content", "--file", write(tmp, "dy-long.json", dict(video, title="这是一个超过三十个字的抖音作品标题所以放不进作品描述的第一句里面")), env=env, expect=2)
+        check("抖音视频文案的标题超过 30 个字会被退回", "最多 30 个字" in error.get("error", ""), error)
+        added = call(REPORT, "add-content", "--file", write(tmp, "dy.json", video), env=env)
+        check("登记抖音视频文案：类型名、话题去掉 #、带拍摄提示",
+              (added["type"], added["typeName"], added["tags"], added["tip"]) == ("douyin", "抖音视频文案", ["测试市美食", "吐司"], "早上出炉时拍"), added)
+        questions = [q for q in SYNTHETIC_QUESTIONS if q["id"] not in ("q04", "q05")]
+        call(STATE, "set-questions", "--file", write(tmp, "q.json", questions), env=env)
+        call(STATE, "confirm-monitoring", env=env)
+        call(RUN, "start", "--phase", "open", "--date", DATE, env=env)
+        wait_all(env, DATE)
+        call(RUN, "start", "--phase", "brand", "--date", DATE, env=env)
+        wait_all(env, DATE)
+        digest = call(SCORE, "score", "--date", DATE, env=env)
+        check("算分输出给出每个 AI 各自最常读哪里、各占多少",
+              set(digest["sourcesByProvider"]) == {"元宝", "豆包", "DeepSeek"} and digest["sourcesByProvider"]["豆包"][0].startswith("抖音 "), digest["sourcesByProvider"])
+
+
 if __name__ == "__main__":
     try:
-        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_facts_merge, test_new_agent_guards, test_pages, test_shop_template, test_data_reliability, test_trend_skips_incomplete, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render):
+        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_facts_merge, test_new_agent_guards, test_pages, test_shop_template, test_data_reliability, test_trend_skips_incomplete, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render, test_douyin_and_sources):
             try:
                 test()
             except AssertionError as exc:

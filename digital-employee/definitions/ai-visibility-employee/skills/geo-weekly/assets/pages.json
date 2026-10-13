@@ -2,7 +2,7 @@
  "_说明": "工作台左边导航里的页面，按这里的顺序排。加一个页面只改这个文件：写上 id、title、icon、subtitle、guide。builtin 为 true 的三个页面由模板里的代码画；其余页面由员工用 geo_report.py set-page 填内容块，不用改模板和脚本。guide 写给员工看：这一页放什么、什么时候更新。icon 可选：home、doc、list、clock、users、user、store、activity、cart、chat、eye、info、alert、check。",
  "pages": [
   {"id": "overview", "title": "工作台", "icon": "home", "subtitle": "最新的结论，和每一期的体检报告", "builtin": true},
-  {"id": "content", "title": "内容", "icon": "doc", "subtitle": "员工替你写的内容：公众号文章、小红书笔记、长文", "builtin": true},
+  {"id": "content", "title": "内容", "icon": "doc", "subtitle": "员工替你写的内容：公众号文章、小红书笔记、长文、抖音视频文案", "builtin": true},
   {"id": "settings", "title": "监测设置", "icon": "list", "subtitle": "员工每周替你问什么、和谁比", "builtin": true}
  ]
 }

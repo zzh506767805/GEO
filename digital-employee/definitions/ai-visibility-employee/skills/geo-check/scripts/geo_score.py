@@ -404,6 +404,9 @@ def cmd_score(args) -> None:
         "notUs": summary["notUs"],
         "refs": {k: summary["refs"][k] for k in ("total", "own", "storePages", "aboutStore")},
         "topSources": summary["sources"]["all"][:5],
+        # 每个平台各自最常读哪里。建议商家往哪发内容时，依据只用这里的数
+        "sourcesByProvider": {gc.PROVIDER_NAMES[p]: ["%s %d%%" % (x["type"], x["pct"]) for x in v[:4]]
+                              for p, v in summary["sources"]["byProvider"].items()},
         "rivals": [{"name": r["name"], "count": r["count"]} for r in summary["rivals"]],
         "shops": [{"name": s["name"], "count": s["count"]} for s in summary["shops"]],
         "buyEntry": summary["buyEntry"],
