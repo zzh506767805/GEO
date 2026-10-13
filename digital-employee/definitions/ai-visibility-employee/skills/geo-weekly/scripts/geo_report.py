@@ -1167,12 +1167,22 @@ def cmd_publish(args) -> None:
                           "都不行就如实告诉商家页面暂时没更新，不要编链接"))
         return
     synced = gc.mark_published()
-    hint = "这是第一次开通工作台，请把 pageUrl 发给商家，告诉他以后都在这个链接看。" if first_time else "工作台和报告已同步。"
+    hint = "这是第一次开通工作台，请先按 workbench.md 的客户端页签流程调用 claw-admin-request 固定工作台，再把 pageUrl 发给商家。" if first_time else "工作台和报告已同步。"
     if payload["reportUrl"]:
         hint += "这一期的结果给 reportUrl（在工作台里打开这一期的报告）；"
     # synced：这次同步上去的变化，可以据此告诉商家哪里更新了
     payload.update(published=True, firstTime=first_time, synced=synced,
                    next=hint + "说到内容、监测设置时给 links 里对应页面的链接。商家要把报告单独转发给别人时，才给 reportFileUrl。链接逐字照抄")
+    payload["tabConfiguration"] = {"tabs": [
+        {"tabKey": "conversation", "tabName": "对话", "render_source": "internal",
+         "tabUrl": "/digital-employees/{employeeId}/conversation"},
+        {"tabKey": None, "tabName": "AI 曝光工作台", "render_source": "external",
+         "tabUrl": saved + "#/overview"},
+    ]}
+    tabs_file = gc.profile_dir() / "employee-tabs.json"
+    gc.write_json(tabs_file, payload["tabConfiguration"])
+    payload["tabConfigFile"] = str(tabs_file)
+    payload["tabSetup"] = "你可以直接用 Bash 调 claw-admin-request 管理当前员工的客户端页签，无需商家提供实例 ID、内部 Host 或密钥。按 geo-weekly/references/workbench.md 的“客户端页签”执行 GET，缺少工作台时 PUT，再 GET 核实；配置已正确时不重复写入。生成配置不等于已执行设置，也不能据此声称没有权限。"
     if urlparse(saved).netloc != EXPECTED_PAGE_HOST:
         payload["hostWarning"] = "链接的域名不是 %s" % EXPECTED_PAGE_HOST
     template = _template_payload()

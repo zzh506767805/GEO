@@ -1,6 +1,6 @@
 ---
 name: geo-weekly
-description: 出每期的体检报告、维护商家的“AI 曝光工作台”、替商家写内容：把体检和核对的结果做成这一期的报告，同步工作台，写本期小结和建议，找内容缺口，按类型写内容（公众号文章、小红书笔记、长文）并登记，给商家发周报和链接。每周定时任务里接在 geo-check 之后使用；任何时候数据有变化需要同步页面时使用；商家说“把工作台发我”“把报告发我”“这周怎么样”“你都做了哪些事”“写一篇公众号文章”“写一条小红书笔记”“第 2 篇可以发”时也使用。
+description: 出每期的体检报告、维护商家的“AI 曝光工作台”、替商家写内容：把体检和核对的结果做成这一期的报告，同步工作台，写本期小结和建议，找内容缺口，按类型写内容（公众号文章、小红书笔记、长文）并登记，给商家发周报和链接。每周定时任务里接在 geo-check 之后使用；任何时候数据有变化需要同步页面时使用；商家说“把工作台发我”“把报告发我”“这周怎么样”“你都做了哪些事”“写一篇公众号文章”“写一条小红书笔记”“第 2 篇可以发”“新增嵌入 tab”“固定工作台到客户端”“查看客户端页签”时也使用。
 ---
 
 # 报告、工作台和内容
@@ -18,6 +18,8 @@ description: 出每期的体检报告、维护商家的“AI 曝光工作台”�
 替商家写内容的规则在 `references/content-types.md`：内容分类型，稿子跟着类型走，写完必须登记。**每次要写内容之前先读它。**
 
 ## 开始前
+
+- 首次初始化只开通工作台，不做体检或写内容。geo_state.py status 返回 firstCheckPending 为 true 时，在对话里等待商家确认，不因定时任务触发就绕过确认。
 
 - **每条命令都写全路径**：本 Skill 的脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_report.py"`，店铺资料的脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py"`。不要先定义 `REPORT=...` 这类变量、在后面的命令里再用：两次命令之间 shell 变量不一定保留，变量丢了命令就会去执行一个空路径。下文表格里写的 `geo_report.py ...`、`geo_state.py ...` 都是全路径的简写。工作目录保持在当前会话工作目录。
 - 入参先写成 JSON 文件，放在 `$YOUZAN_AGENT_SESSION_TEMP/geo/` 下，再用 `--file` 传入。
@@ -129,6 +131,10 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 4. 要他做的一件事：有内容等他确认，就给工作台“内容”页的链接；有你另外记下的信息等他确认，就给“监测设置”的链接；都没有，就说建议里的第一件。
 
 每周定时任务结束时，再按任务要求输出那一句总结。
+
+## 客户端页签
+
+“新增嵌入 tab”“客户端里固定工作台”是管理客户端页签，不是给 HTML 工作台加页面。由员工自己通过 Bash 调 claw-admin-request，按 references/workbench.md 的“客户端页签”执行和读回验证。没有尝试实际命令前，不要说没有能力或需要平台代操作。
 
 ## 商家平时来问
 

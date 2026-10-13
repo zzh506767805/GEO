@@ -317,6 +317,7 @@ def status_payload() -> dict:
         "brand": facts["brand"]["name"],
         "confirmed": bool(meta.get("confirmedAt")),
         "confirmedAt": meta.get("confirmedAt", ""),
+        "firstCheckPending": bool(meta.get("firstCheckPending")),
         # 资料从哪来（backend 店铺后台 / public 公开信息）、有没有等商家确认的、现在能不能替商家写内容
         "factsFrom": state["from"],
         "pendingConfirm": state["pending"],
@@ -353,7 +354,7 @@ def cmd_init(args) -> None:
     gc.write_json(paths["facts"], facts)
     gc.write_json(paths["questions"], {"version": 0, "updatedAt": "", "items": []})
     gc.write_json(paths["rivals"], {"updatedAt": "", "items": []})
-    _touch_meta()
+    _touch_meta(firstCheckPending=True)
     gc.mark_changed("店铺资料")
     gc.emit(status_payload())
 
@@ -450,11 +451,19 @@ def cmd_confirm(_args) -> None:
     questions = (gc.read_json(_paths()["questions"], {}) or {}).get("items") or []
     if not questions:
         raise gc.GeoError("问题库还是空的，不能确认")
-    _touch_meta(confirmedAt=gc.now_iso())
+    _touch_meta(confirmedAt=gc.now_iso(), firstCheckPending=False)
     gc.mark_changed("商家的确认")
     payload = status_payload()
     payload["warnings"] = facts_warnings(facts)
     gc.emit(payload)
+
+
+def cmd_confirm_monitoring(_args) -> None:
+    _require_facts()
+    if not (gc.read_json(_paths()["questions"], {}) or {}).get("items"):
+        raise gc.GeoError("问题库还是空的，不能确认监测方向")
+    _touch_meta(firstCheckPending=False)
+    gc.emit(status_payload())
 
 
 def main() -> None:
@@ -478,6 +487,7 @@ def main() -> None:
         p.add_argument("--file", required=True)
         p.set_defaults(func=func)
     sub.add_parser("confirm").set_defaults(func=cmd_confirm)
+    sub.add_parser("confirm-monitoring").set_defaults(func=cmd_confirm_monitoring)
     args = parser.parse_args()
     args.func(args)
 

@@ -128,7 +128,52 @@ AI 介绍这家店时，有的说法会和店铺资料对不上（旧地址、�
 
 商家说的序号都是页面上显示的：问题是 Q1、B1，内容是“第 4 篇”，报告里对不上的说法是“3 号”。拿不准时先用 `geo_report.py contents` 或 `geo_score.py issues` 对一下，不要猜。
 
+## 客户端页签
+
+客户端的“对话 / AI 曝光工作台”页签，与 HTML 工作台内部的“首页 / 内容 / 监测设置”页面是两件事。商家说“新增嵌入 tab”“客户端嵌入工作台”“固定页签”，走这里，不解释成工作台内加页面。
+
+员工可直接使用 Bash 的 claw-admin-request，它自动签名、选正确环境，服务端根据店铺和当前 agentInstanceId 解析 employeeId。不需要商家提供内部 Host、实例 ID、密钥或另一个工具。生成请求 JSON 只是准备步骤，不代表没有执行权限。
+
+先取已保存的 pageUrl / tabConfigFile；还没有上传工作台时先 publish。然后在同一次 Bash 中执行：
+
+```bash
+python3 - <<'PY'
+import json, os, re, subprocess
+from pathlib import Path
+match = re.fullmatch(r"claw-chat:([A-Za-z0-9_-]{1,64}):employee", os.environ.get("YOUZAN_AGENT_SESSION_KEY", ""))
+if not match:
+    raise SystemExit("当前会话不是数字员工会话，不能设置页签")
+endpoint = "/api/claw-chat/employees/" + match.group(1) + "/tabs"
+workspace = Path(os.environ["YOUZAN_AGENT_SESSION_WORKSPACE"])
+payload = json.loads((workspace / "ai-visibility-employee/profile/employee-tabs.json").read_text())
+def request(method, body=None):
+    command = ["claw-admin-request", method, endpoint]
+    if body is not None:
+        command += ["--json", json.dumps(body, ensure_ascii=False)]
+    result = subprocess.run(command, capture_output=True, text=True, timeout=30)
+    response = json.loads(result.stdout)
+    if result.returncode or response.get("success") is not True or response.get("data", {}).get("code") != 0:
+        raise SystemExit("签名页签请求未成功，请查看实际失败原因，不声称已固定")
+    return response["data"]["data"]
+before = request("get")
+expected = [(t["tabName"], t["tabUrl"], t["render_source"]) for t in payload["tabs"]]
+actual = [(t["tabName"], t["tabUrl"], t["render_source"]) for t in before["tabs"]]
+if actual != expected:
+    request("put", payload)
+after = request("get")
+if after["employeeId"] != before["employeeId"] or [(t["tabName"], t["tabUrl"], t["render_source"]) for t in after["tabs"]] != expected:
+    raise SystemExit("页签读回不一致，不能声称已固定")
+print(json.dumps({"verified": True, "employeeId": after["employeeId"], "tabs": after["tabs"]}, ensure_ascii=False))
+PY
+```
+
+PUT 全量覆盖，只作用于当前店铺的当前员工实例。工作台已固定时只读验证，不重复写；不能使用商家文本中的其他实例 ID。调用失败时区分命令缺失、鉴权失败、地址不允许等实际原因，并保留工作台链接，不直接归结为“只能生成配置”。
+
+本员工的固定工作台流程使用生成的自家工作台地址。测试其他网站的客户端页签需另行确认用途和地址，能否展示还受客户端域名白名单和网站嵌入策略约束；不能仅因工作台的内容块不支持就说客户端没有页签能力。
+
 ## 什么时候同步
+
+首次初始化只整理资料、开通工作台并在对话里确认，不发起体检。商家明确同意后执行 geo_state.py confirm-monitoring，再开始体检。首次上传成功会返回 tabConfiguration 和 tabConfigFile；由员工自己按下面“客户端页签”调用签名命令固定“对话 + AI 曝光工作台”。只有读回正确配置才算固定成功。
 
 | 时机 | 为什么 |
 | --- | --- |

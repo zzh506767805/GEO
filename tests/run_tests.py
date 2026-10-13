@@ -154,6 +154,14 @@ def test_synthetic():
         check("同步后工作台是最新的，不再提醒", status["workbench"]["upToDate"] and "next" not in status, status)
         keep_page("刚建档", first["file"])
 
+        check("页签输出明确员工可调用签名命令，不要求平台代办", "claw-admin-request" in first["tabSetup"] and "无需商家提供" in first["tabSetup"], first["tabSetup"])
+        blocked = call(RUN, "start", "--phase", "open", "--date", DATE, env=env, expect=2)
+        check("首次初始化未经确认不发查询", "商家确认" in blocked.get("error", "") and not Path(env["MOCK_STATE"]).exists(), blocked)
+        consent = call(STATE, "confirm-monitoring", env=env)
+        check("监测方向确认与第三方账号确认分开", consent["firstCheckPending"] is False and consent["confirmed"] is False, consent)
+        check("工作台页签配置保留对话和真实工作台链接", first["tabConfiguration"]["tabs"][0]["tabKey"] == "conversation"
+              and first["tabConfiguration"]["tabs"][1]["tabUrl"] == first["pageUrl"] + "#/overview", first["tabConfiguration"])
+
         error = call(RUN, "start", "--phase", "brand", "--date", DATE, env=env, expect=2)
         check("带店名的问题不能先于不带店名的问题", "还没有跑完" in error.get("error", ""), error)
         started = call(RUN, "start", "--phase", "open", "--date", DATE, env=env)
@@ -391,6 +399,7 @@ def test_environment_error():
         env = base_env(tmp, MOCK_RUN_ERROR="1")
         call(STATE, "init", "--segment", "ecom", "--brand", "示例小店", env=env)
         call(STATE, "set-questions", "--file", write(tmp, "q.json", SYNTHETIC_QUESTIONS), env=env)
+        call(STATE, "confirm-monitoring", env=env)
         error = call(RUN, "start", "--phase", "open", "--date", DATE, env=env, expect=2)
         check("一条都发不出去时给出明确原因", "一条都没有发起成功" in error.get("error", ""), error)
         env2 = dict(env)
@@ -415,6 +424,7 @@ def test_replay():
         call(STATE, "set-rivals", "--file", str(fixtures / "rivals.json"), env=env)
         call(STATE, "set-assets", "--file", str(fixtures / "assets.json"), env=env)
         call(REPORT, "publish", env=env)  # 和员工的真实顺序一样：建完档先开通工作台
+        call(STATE, "confirm-monitoring", env=env)
         call(RUN, "start", "--phase", "open", "--date", DATE, env=env)
         wait_all(env, DATE)
         call(RUN, "start", "--phase", "brand", "--date", DATE, env=env)
@@ -519,6 +529,7 @@ def test_new_agent_guards():
         call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
         questions = [q for q in SYNTHETIC_QUESTIONS if q["id"] not in ("q04", "q05")]
         call(STATE, "set-questions", "--file", write(tmp, "q.json", questions), env=env)
+        call(STATE, "confirm-monitoring", env=env)
         call(RUN, "start", "--phase", "open", "--date", DATE, env=env)
         wait_all(env, DATE)
         call(RUN, "start", "--phase", "brand", "--date", DATE, env=env)
@@ -646,6 +657,7 @@ def test_shop_template():
 
 
 def _quick_round(env, tmp, date, questions):
+    call(STATE, "confirm-monitoring", env=env)
     call(RUN, "start", "--phase", "open", "--date", date, env=env)
     wait_all(env, date)
     call(RUN, "start", "--phase", "brand", "--date", date, env=env)
@@ -733,6 +745,8 @@ def test_copies():
 
 def test_template():
     html = TEMPLATE.read_text(encoding="utf-8")
+    check("默认模板不显示信息待确认侧栏提示", "有信息等你确认" not in html)
+    check("工作台更新时间只展示一处", html.count("'更新于 ' + updatedAt()") == 1)
     check("模板里只有数据这一个占位符，龙虾图标已经内嵌", html.count("__GEO_DATA__") == 1 and "__MASCOT_B64__" not in html)
     check("模板不引用外部资源", not re.search(r'(?:src|href)\s*=\s*["\']https?://', html) and "@import" not in html and "url(http" not in html)
     script = REPORT.read_text(encoding="utf-8")

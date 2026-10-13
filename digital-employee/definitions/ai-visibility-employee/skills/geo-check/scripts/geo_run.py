@@ -200,6 +200,9 @@ def _archive_round(date: str, state: dict) -> str:
 
 
 def cmd_start(args) -> None:
+    meta = gc.read_json(gc.profile_dir() / "meta.json", {}) or {}
+    if meta.get("firstCheckPending"):
+        raise gc.GeoError("首次体检还没有得到商家确认。先说明店铺信息和监测方向，收到明确确认后执行 geo_state.py confirm-monitoring，再开始体检")
     date = gc.check_date(args.date) if args.date else gc.today()
     phase = args.phase
     questions = _load_questions()

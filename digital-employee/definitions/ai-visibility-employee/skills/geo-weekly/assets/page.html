@@ -952,7 +952,6 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   function renderShell() {
     side = el('aside', 'side');
     add(side, add(el('div', 'side-brand'), mascot(), add(el('div'), el('div', 't1', 'AI 曝光专员'), el('div', 't2', DATA.store.name || '本店'))));
-    if (DATA.settings.pending) { side.appendChild(add(nav(null, 'settings', 'side-state'), pill('warn', '有信息等你确认'))); }
     var navBox = el('nav', 'nav');
     NAV.forEach(function (group) {
       if (group.label) { navBox.appendChild(el('div', 'nav-label', group.label)); }
@@ -979,7 +978,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
         navBox.appendChild(a);
       });
     }
-    add(side, navBox, add(el('div', 'side-foot'), '有赞龙虾 · AI 曝光专员', el('br'), '更新于 ' + updatedAt()));
+    add(side, navBox, el('div', 'side-foot', '有赞龙虾 · AI 曝光专员'));
     scrim = el('div', 'scrim');
     scrim.onclick = closeSide;
     mainEl = el('div', 'main');
@@ -1084,8 +1083,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       ['出第一份报告', '', 'todo']
     ];
     root.appendChild(add(el('div', 'banner'), mascot(), add(el('div', 'body'), el('div', 'tt', 'AI 曝光专员'),
-      el('div', 'verdict', asked ? '第一次体检正在进行，报告出来后会显示在这里' : '店铺资料读好了，接下来做第一次体检'),
-      el('div', 'brief', '员工会拿 ' + DATA.questions.length + ' 个问题去问' + names + '，看它们有没有提到你、怎么介绍你。一轮大约要 5 到 10 分钟。趁这会儿先看看要问的问题对不对。'),
+      el('div', 'verdict', asked ? '第一次体检正在进行，报告出来后会显示在这里' : '店铺资料和问题已整理好，确认方向后再开始体检'),
+      el('div', 'brief', asked ? '员工正在查询，完成后会在这里展示报告。' : '先看看店铺信息、顾客类型和要问的问题。回到对话确认或告诉员工哪里需要调整，现在还没有开始查询。'),
       add(el('div', 'acts'), nav('看要问的问题', 'settings', 'btn primary')))));
     var progress = card('现在到哪一步了');
     var list = el('ol', 'steps');

@@ -11,10 +11,76 @@ inclusions:
     - geo-weekly
 
 exclusions:
-  skills: []
+  skills:
+    - dingtalk-aitable
+    - dingtalk-doc
+    - dingtalk-drive
+    - dingtalk-markdown
+    - dingtalk-sheet
+    - dingtalk-wiki
+    - docx
+    - dws-shared
+    - eleme
+    - lark-base
+    - lark-doc
+    - lark-drive
+    - lark-event
+    - lark-im
+    - lark-markdown
+    - lark-shared
+    - lark-sheets
+    - lark-slides
+    - lark-whiteboard
+    - lark-wiki
+    - pdf
+    - pptx
+    - weather
+    - wecom-cli
+    - xlsx
+    - youzan-bakery-expert
+    - youzan-booking
+    - youzan-cloud-open-api-fallback
+    - youzan-customer-operations-expert
+    - youzan-dataviz
+    - youzan-digital-store-designer
+    - youzan-feature-page
+    - youzan-fenxiao
+    - youzan-guide
+    - youzan-ima
+    - youzan-inner-courier
+    - youzan-inner-edu
+    - youzan-inner-pllive
+    - youzan-jushuitan
+    - youzan-kdocs
+    - youzan-kuaidi100
+    - youzan-ma
+    - youzan-map
+    - youzan-marketing
+    - youzan-material
+    - youzan-mei-coupon
+    - youzan-mei-decoration
+    - youzan-mei-dept
+    - youzan-mei-goods
+    - youzan-mei-member
+    - youzan-mei-order
+    - youzan-mei-promoter
+    - youzan-mei-report
+    - youzan-mei-share
+    - youzan-mei-staff
+    - youzan-mei-stock
+    - youzan-member
+    - youzan-qcc
+    - youzan-rpa-research
+    - youzan-share
+    - youzan-staff
+    - youzan-supplychain
+    - youzan-tencent-docs
+    - youzan-traffic
+    - youzan-valuecard
+    - youzan-wecom
+    - youzan-yuandian
   tools:
     - mcp__agent__send_capability_menu
     - mcp__agent__list_skills
     - mcp__agent__whoami
-  subagents:
-    - youzan-image
+  subagents: []

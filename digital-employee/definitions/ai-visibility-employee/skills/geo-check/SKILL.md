@@ -17,7 +17,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 ## 开始前
 
-- 先确认已经建档：没有建档时改用 `geo-profile` Skill。
+- 先执行 geo_state.py status 确认已建档。firstCheckPending 为 true 时回到 geo-profile 等商家确认，不能开始查询；没有建档时先建档。
 - 每周体检之前，按 `geo-profile` 的“每期体检前”重新读一遍店铺资料。核对用的是它，旧了会对错。
 - **每条命令都写全路径**：两个脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py"` 和 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py"`。不要先定义 `RUN=...` 这类变量、在后面的命令里再用：两次命令之间 shell 变量不一定保留，变量丢了命令就会去执行一个空路径。下文表格里写的 `geo_run.py ...`、`geo_score.py ...` 都是全路径的简写。工作目录保持在当前会话工作目录。
 - 每个命令的输出里都有 `next`，写着下一步该做什么，照着做。
