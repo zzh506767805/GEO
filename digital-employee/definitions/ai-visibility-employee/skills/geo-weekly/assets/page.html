@@ -754,26 +754,26 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     return add(box, source, add(el('div', 'issue-fix'), el('span', 'k', '可以怎么办'), issue.fix));
   }
   function rankRows(box, period, limit) {
-    var rows = (period.rivals || []).map(function (r) { return { name: r.name, count: r.count, self: false }; });
+    var rows = (period.shops || []).map(function (r) { return { name: r.name, count: r.count, rival: r.rival, self: false }; });
     rows.push({ name: DATA.store.name || '本店', count: period.mention.hits, self: true });
     rows.sort(function (a, b) { return b.count - a.count || (a.self ? 1 : -1); });
     var max = Math.max.apply(null, rows.map(function (r) { return r.count; }).concat([1]));
-    if (rows.length === 1) { box.appendChild(el('div', 'empty', '还没有选定同类店。')); return; }
+    if (rows.length === 1) { box.appendChild(el('div', 'empty', 'AI 的回答里没有点名别的店。')); return; }
     (limit ? rows.slice(0, limit) : rows).forEach(function (r, index) {
       var fill = el('i');
       fill.style.width = Math.round(r.count * 100 / max) + '%';
       var name = el('span', 'n', r.name);
       if (r.self) { add(name, ' ', pill('brand', '你')); }
+      else if (r.rival) { add(name, ' ', el('span', 'tag', '同类店')); }
       add(box, add(el('div', 'rank' + (r.self ? ' self' : '')), el('span', 'i', index + 1), name, add(el('span', 'track'), fill), el('span', 'v', r.count + ' 次')));
     });
   }
-  /* 没提到你的时候提到了谁：排行加分平台的表，放在提及分析的最下面 */
+  /* 顾客没点名时 AI 提到了哪些店：排行加分平台的表。同类店只是在里面标出来，不决定列哪些店 */
   function rivalsSection(root, period) {
-    if (!(period.rivals || []).length) { return; }
-    var box = card('被 AI 提到的次数', '顾客没点名的 ' + period.mention.valid + ' 个有效回答里');
+    var box = card('被 AI 提到的店', '顾客没点名的 ' + period.mention.valid + ' 个有效回答里，各出现在几个回答里');
     rankRows(box, period, 0);
     var t = table([['店名']].concat(DATA.providers.map(function (p) { return [p.name, 'r']; })).concat([['合计', 'r']]));
-    var list = period.rivals.map(function (r) { return { name: r.name, by: r.byProvider || {}, count: r.count, self: false }; });
+    var list = (period.shops || []).map(function (r) { return { name: r.name, by: r.byProvider || {}, count: r.count, rival: r.rival, self: false }; });
     var mine = {};
     DATA.providers.forEach(function (p) { mine[p.id] = (period.mention.byProvider[p.id] || {}).hits || 0; });
     list.push({ name: DATA.store.name || '本店', by: mine, count: period.mention.hits, self: true });
@@ -781,14 +781,14 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     list.forEach(function (item) {
       var tr = el('tr');
       var name = document.createDocumentFragment();
-      add(name, item.self ? el('b', '', item.name) : item.name, item.self ? ' ' : '', item.self ? pill('brand', '你') : null);
+      add(name, item.self ? el('b', '', item.name) : item.name, ' ', item.self ? pill('brand', '你') : (item.rival ? el('span', 'tag', '同类店') : null));
       var args = [tr, { node: name }];
       DATA.providers.forEach(function (p) { args.push({ node: item.by[p.id] || 0, cls: 'r tnum' }); });
       args.push({ node: el('b', 'tnum', item.count), cls: 'r' });
       t.body.appendChild(cells.apply(null, args));
     });
     var wrap = add(el('div', 'tbl-wrap rank-table'), t);
-    root.appendChild(add(box, wrap));
+    root.appendChild(add(box, wrap, el('div', 'small muted note-gap', '只数 AI 在回答里点了名的店（列出来、加粗的那几家），最多列 15 家。标着“同类店”的是你选定要比的几家，想换直接告诉员工。')));
   }
 
   /* 员工建议商家做的事。只在报告里列出来，不是一张要打勾的清单 */
@@ -1116,8 +1116,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     root.appendChild(summaryBanner(reportRoute(LATEST)));
     var third = LATEST.buyEntry
       ? kpi('cart', LATEST.buyEntry.count ? 'ok' : 'plain', '给出购买入口', LATEST.buyEntry.count, '/ ' + LATEST.buyEntry.valid, '回答里出现了你的小程序名或店铺链接', reportRoute(LATEST, 'mentions'))
-      : ((LATEST.rivals || []).length
-        ? kpi('users', 'plain', '最常被提到的店', LATEST.rivals[0].name, '', LATEST.rivals[0].count + ' 次，你 ' + mention.hits + ' 次', reportRoute(LATEST, 'rivals'), null, null, true)
+      : ((LATEST.shops || []).length
+        ? kpi('users', 'plain', '最常被提到的店', LATEST.shops[0].name, '', LATEST.shops[0].count + ' 次，你 ' + mention.hits + ' 次', reportRoute(LATEST, 'rivals'), null, null, true)
         : kpi('list', 'plain', '这一期拿到的回答', LATEST.returned, '/ ' + LATEST.expected, LATEST.complete ? '数据完整' : '这一期数据不全', reportRoute(LATEST, 'mentions')));
     root.appendChild(row('c4',
       kpi('eye', 'brand', '没点名时提到你', mention.hits, '/ ' + mention.valid, mentionHint, reportRoute(LATEST, 'mentions'),
@@ -1292,7 +1292,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       el('div', 'tt', '第 ' + P.no + ' 期 · ' + cnDate(P.date) + '体检 · 员工小结'), verdict(S.mention),
       DATA.actions.brief ? el('div', 'brief', DATA.actions.brief) : null)));
     var byProvider = DATA.providers.map(function (p) { return p.name + ' ' + ratio(S.mention.byProvider[p.id]); }).join(' · ');
-    var rivals = DATA.rivals || [];
+    var rivals = DATA.shops || [];
     var third = S.buyEntry
       ? kpi('cart', S.buyEntry.count ? 'ok' : 'plain', '给出购买入口', S.buyEntry.count, '/ ' + S.buyEntry.valid, '回答里出现了你的小程序名或店铺链接')
       : (rivals.length ? kpi('users', 'plain', '最常被提到的店', rivals[0].name, '', rivals[0].count + ' 次，你 ' + S.mention.hits + ' 次', null, null, null, true) : null);
@@ -1366,9 +1366,9 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     root.appendChild(box);
   }
   function reportRivals(root, S) {
-    root.appendChild(h2('rivals', '没提到你的时候，AI 提到了谁'));
-    var period = { rivals: DATA.rivals || [], mention: S.mention };
-    if (!period.rivals.length) { root.appendChild(add(card(), el('div', 'empty', '还没有选定要比的同类店。'))); return; }
+    root.appendChild(h2('rivals', '顾客没点名时，AI 提到了哪些店'));
+    var period = { shops: DATA.shops || [], mention: S.mention };
+    if (!period.shops.length) { root.appendChild(add(card(), el('div', 'empty', '这一期 AI 的回答里没有点名别的店。'))); return; }
     rivalsSection(root, period);
   }
   function reportSources(root, S) {

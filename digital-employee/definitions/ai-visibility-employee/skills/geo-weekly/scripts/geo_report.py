@@ -118,7 +118,7 @@ def _empty_summary() -> dict:
         "questionsVersion": 0, "expected": 0, "returned": 0, "missing": [], "complete": True, "memoryFlagged": 0,
         "answers": {}, "mention": dict(bucket(), byProvider={p: bucket() for p in gc.PROVIDERS}, byQuestion={}),
         "refs": {"total": 0, "own": 0, "storePages": 0, "aboutStore": 0, "ownItems": [], "storePageItems": [], "aboutItems": []},
-        "sources": {"all": [], "byProvider": {p: [] for p in gc.PROVIDERS}}, "rivals": [], "buyEntry": None,
+        "sources": {"all": [], "byProvider": {p: [] for p in gc.PROVIDERS}}, "rivals": [], "shops": [], "buyEntry": None,
     }
 
 
@@ -635,7 +635,8 @@ def workbench_data(date: str = "") -> dict:
     if current:
         summary = _summary(current)
         latest = dict(periods[-1], buyEntry=summary["buyEntry"],
-                      rivals=[{"name": r["name"], "count": r["count"]} for r in summary.get("rivals") or []])
+                      rivals=[{"name": r["name"], "count": r["count"]} for r in summary.get("rivals") or []],
+                      shops=[{"name": s["name"], "count": s["count"], "rival": s["rival"]} for s in (summary.get("shops") or [])[:3]])
         full = compare_payload(current)
         compare = {k: full[k] for k in compare}
     contents = _contents_for_page()
@@ -716,6 +717,7 @@ def report_data(day: str) -> dict:
         "dots": dots,
         "answers": _answers(day, summary),
         "rivals": summary.get("rivals") or [],
+        "shops": summary.get("shops") or [],
         "sources": (summary.get("sources") or {}).get("byProvider") or {},
         "related": {"own": summary["refs"]["ownItems"], "store": summary["refs"]["storePageItems"], "about": summary["refs"]["aboutItems"]},
         "descriptions": judgement.get("descriptions") or {},

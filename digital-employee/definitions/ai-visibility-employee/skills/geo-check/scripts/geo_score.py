@@ -10,6 +10,7 @@
 
 用法（脚本用绝对路径执行）：
   geo_score.py score [--date D]
+  geo_score.py exclude-shops --names "<名字>,<名字>" [--remove]   “提到了哪些店”里不是店的名字（品类词、商圈），以后各期都不算
   geo_score.py brand-digest [--date D] [--max-chars 900]
   geo_score.py set-judgement --file <json> [--date D]
   geo_score.py issues [--status open|done|dismissed|all]   对不上的说法清单，序号和报告上的一致
@@ -62,6 +63,8 @@ CANDIDATE_LINE = re.compile(r"^\s*(?:#{1,4}\s*)?(?:\d+[.、)）]\s*|[-*•]\s*)?
 CANDIDATE_STOP = ("推荐", "特点", "地址", "人均", "招牌", "优点", "缺点", "营业", "亮点", "总结", "建议", "注意",
                   "适合", "价格", "口味", "环境", "交通", "结论", "提示", "选购", "攻略", "对比", "理由", "位置",
                   "必点", "必买", "产品", "特色", "风格", "门店", "电话", "时间", "方式", "小贴士", "避雷")
+SHOPS_SHOWN = 15
+NOT_SHOPS_FILE = "not-shops.json"
 FACT_KINDS = ("address", "hours", "phone", "product", "price", "status", "other")
 SOURCE_KINDS = ("map", "note", "own", "other", "unknown")
 MISSING_LIMIT = 0.25
@@ -87,6 +90,17 @@ def ref_host(ref: dict) -> str:
     return str(ref.get("host") or urlparse(str(ref.get("url") or "")).netloc).lower()
 
 
+def cmd_exclude_shops(args) -> None:
+    names = [n.strip() for n in re.split(r"[,，、]", args.names) if n.strip()]
+    if not names:
+        raise gc.GeoError("没有给出要去掉的名字")
+    path = gc.profile_dir() / NOT_SHOPS_FILE
+    items = (gc.read_json(path, {}) or {}).get("items") or []
+    items = [n for n in items if n not in names] if args.remove else items + [n for n in names if n not in items]
+    gc.write_json(path, {"updatedAt": gc.now_iso(), "items": items})
+    gc.emit({"ok": True, "notShops": items, "next": "请重新执行 geo_score.py score，报告里的“提到了谁”才会更新"})
+
+
 def load_profile() -> dict:
     root = gc.profile_dir()
     facts = gc.read_json(root / "facts.json")
@@ -96,6 +110,7 @@ def load_profile() -> dict:
         "facts": facts,
         "questions": (gc.read_json(root / "questions.json", {}) or {}).get("items") or [],
         "rivals": (gc.read_json(root / "rivals.json", {}) or {}).get("items") or [],
+        "notShops": (gc.read_json(root / NOT_SHOPS_FILE, {}) or {}).get("items") or [],
     }
 
 
@@ -179,20 +194,26 @@ def analyse_answer(answer: dict, profile: dict, aliases: list) -> dict:
     }
 
 
-def candidates(texts: list, known: list) -> list:
-    """回答里被加粗点名的店名或品牌，按出现在几个回答里排序，供第一次体检后挑竞品。"""
-    counter = Counter()
-    for text in texts:
-        seen = set()
-        for match in CANDIDATE_LINE.finditer(text):
-            name = re.split(r"[（(：:｜|/]", match.group(1))[0].strip(" ·-—")
-            if not 2 <= len(name) <= 16 or any(stop in name for stop in CANDIDATE_STOP):
-                continue
-            if gc.contains_any(name, known) or re.fullmatch(r"[\d\s.%元]+", name):
-                continue
-            seen.add(name)
-        counter.update(seen)
-    return [{"name": name, "answers": count} for name, count in counter.most_common(25) if count >= 2]
+def shop_names(text: str, own: list) -> set:
+    """一个回答里被加粗点名的店名或品牌（列表项、小标题里加粗的那几个字）。不含本店。"""
+    names = set()
+    for match in CANDIDATE_LINE.finditer(text):
+        name = re.split(r"[（(：:｜|/]", match.group(1))[0].strip(" ·-—")
+        if not 2 <= len(name) <= 16 or any(stop in name for stop in CANDIDATE_STOP):
+            continue
+        if gc.contains_any(name, own) or re.fullmatch(r"[\d\s.%元]+", name):
+            continue
+        names.add(name)
+    return names
+
+
+def _as_rival(name: str, rivals: list) -> str:
+    """店名对得上某家同类店（名字或别名互相包含），就记在同类店的名字下，免得一家店算成两家。"""
+    for rival in rivals:
+        keys = [rival["name"]] + list(rival.get("aliases") or [])
+        if gc.contains_any(name, keys) or any(k and k in name or name in k for k in keys):
+            return rival["name"]
+    return name
 
 
 def _ratio(counter: Counter, total: int, top: int = 8) -> list:
@@ -205,12 +226,14 @@ def build_summary(date: str) -> dict:
     facts = profile["facts"]
     aliases = gc.brand_aliases(facts)
     kinds = {q["id"]: q["kind"] for q in profile["questions"]}
-    cells, answers, open_texts = {}, {}, []
+    cells, answers = {}, {}
     mention = {"hits": 0, "valid": 0, "byProvider": {}, "byQuestion": {}}
     for provider in gc.PROVIDERS:
         mention["byProvider"][provider] = {"hits": 0, "valid": 0}
     rival_counter = Counter()
     rival_by_provider = {}
+    shop_counter, shop_by_provider = Counter(), {}
+    not_shops = set(profile.get("notShops") or [])
     src_all, src_by_provider = Counter(), {p: Counter() for p in gc.PROVIDERS}
     related = {"own": {}, "store": {}, "about": {}}
     related_count = Counter()
@@ -236,10 +259,13 @@ def build_summary(date: str) -> dict:
             if kind == "brand":
                 brand_answers += 1
             elif not row["memory"]:
-                open_texts.append(answer_text(source))
                 for name in row["rivals"]:
                     rival_counter[name] += 1
                     rival_by_provider.setdefault(name, Counter())[provider] += 1
+                named = {_as_rival(n, profile["rivals"]) for n in shop_names(answer_text(source), aliases)} | set(row["rivals"])
+                for name in named - not_shops:
+                    shop_counter[name] += 1
+                    shop_by_provider.setdefault(name, Counter())[provider] += 1
             for ref in row["refs"]:
                 src_all[ref["type"]] += 1
                 src_by_provider[provider][ref["type"]] += 1
@@ -257,7 +283,9 @@ def build_summary(date: str) -> dict:
                 bucket["hits"] += cell["hits"]
                 bucket["valid"] += cell["valid"]
     expected = len(run["state"]["items"])
-    known = aliases + [n for r in profile["rivals"] for n in [r["name"]] + list(r.get("aliases") or [])]
+    rival_names = {r["name"] for r in profile["rivals"]}
+    shops = [{"name": name, "count": count, "byProvider": dict(shop_by_provider[name]), "rival": name in rival_names}
+             for name, count in sorted(shop_counter.items(), key=lambda kv: (-kv[1], kv[0]))]
     summary = {
         "date": date,
         "generatedAt": gc.now_iso(),
@@ -288,7 +316,10 @@ def build_summary(date: str) -> dict:
         "rivals": [{"name": r["name"], "count": rival_counter[r["name"]],
                     "byProvider": dict(rival_by_provider.get(r["name"], {}))} for r in profile["rivals"]],
         "buyEntry": buy_entry if facts["segment"] == "ecom" else None,
-        "candidates": candidates(open_texts, known),
+        # 顾客没点名时 AI 提到的所有店，按出现在几个回答里排序。报告“提到了谁”列的就是它
+        "shops": shops[:SHOPS_SHOWN],
+        # 还不是同类店、出现在两个以上回答里的，供第一次体检后挑同类店
+        "candidates": [{"name": s["name"], "answers": s["count"]} for s in shops if not s["rival"] and s["count"] >= 2][:25],
     }
     summary["rivals"].sort(key=lambda r: r["count"], reverse=True)
     return summary
@@ -329,6 +360,7 @@ def cmd_score(args) -> None:
         "refs": {k: summary["refs"][k] for k in ("total", "own", "storePages", "aboutStore")},
         "topSources": summary["sources"]["all"][:5],
         "rivals": [{"name": r["name"], "count": r["count"]} for r in summary["rivals"]],
+        "shops": [{"name": s["name"], "count": s["count"]} for s in summary["shops"]],
         "buyEntry": summary["buyEntry"],
         "notes": [],
     }
@@ -347,6 +379,9 @@ def cmd_score(args) -> None:
             digest["notes"].append("同类店还没定，先按 next 选好同类店，再重新执行 score")
         else:
             digest["notes"].append("AI 的回答里没有提到别的店，这一期先不选同类店")
+    if summary["shops"]:
+        digest["notes"].append("shops 是报告“提到了谁”要列的店。里面有不是店的名字（品类词、商圈、平台名），"
+                               "用 exclude-shops 去掉再重新 score；连锁品牌、网店也算店，不要去掉")
     digest.setdefault("next", "请执行 brand-digest，读完后用 set-judgement 写回 AI 怎么介绍本店；有和店铺资料对不上的说法才写进 issues，没有就传空数组")
     gc.emit(digest)
 
@@ -518,6 +553,10 @@ def main() -> None:
     p = sub.add_parser("score")
     p.add_argument("--date", default="")
     p.set_defaults(func=cmd_score)
+    p = sub.add_parser("exclude-shops")
+    p.add_argument("--names", required=True)
+    p.add_argument("--remove", action="store_true")
+    p.set_defaults(func=cmd_exclude_shops)
     p = sub.add_parser("brand-digest")
     p.add_argument("--date", default="")
     p.add_argument("--max-chars", type=int, default=900)

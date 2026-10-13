@@ -59,11 +59,18 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_sc
 输出里重点看：
 
 - `mention`：顾客没点名时，多少个回答提到了本店，分平台。
-- `rivals`：没提到本店的时候，AI 提到了哪些同类店、各几次。
+- `shops`：顾客没点名时，AI 点名提到的所有店，按出现在几个回答里排序，最多 15 家。报告的“提到了谁”列的就是它。
+- `rivals`：其中选定的同类店各几次。
 - `refs`：本店账号的内容、以本店命名的门店页、别人写本店的内容，各被引用多少次。
 - `topSources`：AI 这一期最常读哪里的内容。
 - `memoryFlagged`：带着之前对话痕迹的回答数，已自动剔除。
 - `notes`：需要在周报里说明的情况。
+
+看一眼 `shops`：里面有不是店的名字（品类词如“生日蛋糕”、商圈、平台名），用下面的命令去掉，再执行一次 `score`。连锁品牌、网店也算店，不要去掉。去掉的名字以后各期都不算；去错了加 `--remove` 放回来。
+
+```bash
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py" exclude-shops --names "生日蛋糕,西溪商圈"
+```
 
 如果输出里有 `candidates`（这时 `next` 也会让你先选同类店），说明同类店还没定：从里面挑 3 家和本店同品类、同区域的店（不要挑商圈、平台和品类词），带上常见的别名，用 `geo-profile` 的 `set-rivals` 保存，再执行一次 `score`。
 

@@ -98,6 +98,23 @@
     "name": "巷口烘焙",
     "count": 50
    }
+  ],
+  "shops": [
+   {
+    "name": "麦田工坊",
+    "count": 60,
+    "rival": true
+   },
+   {
+    "name": "巷口烘焙",
+    "count": 50,
+    "rival": true
+   },
+   {
+    "name": "暖炉面包",
+    "count": 50,
+    "rival": true
+   }
   ]
  },
  "actions": {

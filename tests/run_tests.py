@@ -193,6 +193,13 @@ def test_synthetic():
         check("本店公众号被引用 12 次，门店页 12 次", (digest["refs"]["own"], digest["refs"]["storePages"]) == (12, 12), digest["refs"])
         check("竞品次数按有效回答数", digest["rivals"][0] == {"name": "甲记面包", "count": 55}, digest["rivals"])
         check("缺失 2 条不到四分之一，数据算完整", digest["complete"] is True and len(digest["missing"]) == 2)
+        shops = {x["name"]: x["count"] for x in digest["shops"]}
+        check("提到了谁：列出 AI 点名的所有店，不只是同类店；不含本店",
+              shops.get("甲记面包") == 55 and shops.get("丙记吐司坊") == 6 and "示例小店" not in shops, digest["shops"])
+        excluded = call(SCORE, "exclude-shops", "--names", "手工面包", env=env)
+        rescored = call(SCORE, "score", "--date", DATE, env=env)
+        check("不是店的名字去掉以后，重新算分就不再列", excluded["notShops"] == ["手工面包"]
+              and "手工面包" in shops and "手工面包" not in {x["name"] for x in rescored["shops"]}, rescored["shops"])
 
         material = call(SCORE, "brand-digest", "--date", DATE, env=env)
         tags = [row["answer"] for row in material["answers"]]
@@ -356,7 +363,8 @@ def test_synthetic():
         check("报告带这一期的全部证据：逐题圆点、回答原文、同类店、内容来源",
               report["kind"] == "report" and report["period"] == {"date": DATE, "no": 1, "latest": True}
               and report["dots"]["q02"]["doubao"] == "hh" and report["dots"]["q03"]["doubao"] == "mn"
-              and len(report["answers"]["q02_doubao"]) == 2 and report["rivals"][0]["name"] == "甲记面包" and report["sources"]["doubao"], report["period"])
+              and len(report["answers"]["q02_doubao"]) == 2 and report["rivals"][0]["name"] == "甲记面包" and report["sources"]["doubao"]
+              and {(x["name"], x["rival"]) for x in report["shops"]} >= {("甲记面包", True), ("乙家烘焙", True), ("丙记吐司坊", False)}, report["period"])
         check("缺失的查询在报告的圆点里留空", report["dots"].get("q04", {}).get("deepseek", "") == "")
         check("和店铺资料对不上的说法只出现在报告里，带固定序号",
               [(i["no"], i["id"]) for i in report["issues"]] == [(1, "hours-wrong")] and report["workbenchUrl"] == first["pageUrl"], report["issues"])

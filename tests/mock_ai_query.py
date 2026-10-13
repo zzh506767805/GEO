@@ -55,6 +55,10 @@ def synthetic(provider, question):
         parts = ["先说结论，推荐这几家：", "1. **甲记面包**：口碑稳定。", "2. **乙家烘焙**：性价比高。"]
         if brand or ("附近" in question and provider == "doubao"):
             parts.append("3. **示例小店**：地址在测试路 1 号，营业到 20:00。")
+        if "吐司" in question:
+            parts.append("4. **丙记吐司坊**：吐司扎实。")
+        if "可颂" in question:
+            parts.append("4. **手工面包**：现做现卖的更好吃。")
         if "记忆" in question and provider == "doubao" and n == 1:
             parts.append("另外你之前问过的示例小店也可以考虑。")
         texts.append("\n".join(parts))

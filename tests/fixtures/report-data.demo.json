@@ -3473,6 +3473,38 @@
    }
   }
  ],
+ "shops": [
+  {
+   "name": "麦田工坊",
+   "count": 60,
+   "byProvider": {
+    "deepseek": 20,
+    "doubao": 20,
+    "hunyuan": 20
+   },
+   "rival": true
+  },
+  {
+   "name": "巷口烘焙",
+   "count": 50,
+   "byProvider": {
+    "deepseek": 20,
+    "doubao": 20,
+    "hunyuan": 10
+   },
+   "rival": true
+  },
+  {
+   "name": "暖炉面包",
+   "count": 50,
+   "byProvider": {
+    "deepseek": 10,
+    "doubao": 20,
+    "hunyuan": 20
+   },
+   "rival": true
+  }
+ ],
  "sources": {
   "hunyuan": [
    {
