@@ -60,6 +60,12 @@ SOURCE_TYPES = [
 STORE_PAGE_TYPES = ("地图", "大众点评和美团")
 
 SHOPS_SHOWN = 15
+
+
+def sources_by_provider(summary: dict) -> dict:
+    """各平台最常读哪里，前 4 类。算分输出和 geo_report.py show 用同一个写法。"""
+    return {gc.PROVIDER_NAMES.get(p, p): ["%s %d%%" % (x["type"], x["pct"]) for x in v[:4]]
+            for p, v in ((summary.get("sources") or {}).get("byProvider") or {}).items()}
 OTHER_SITE = "其他网站"
 READING_FILE = "reading.json"
 RELATED_FILE = "related.json"
@@ -403,10 +409,9 @@ def cmd_score(args) -> None:
         "questionsMentioned": sorted(q for q, v in mention["byQuestion"].items() if v["hits"]),
         "notUs": summary["notUs"],
         "refs": {k: summary["refs"][k] for k in ("total", "own", "storePages", "aboutStore")},
-        "topSources": summary["sources"]["all"][:5],
-        # 每个平台各自最常读哪里。建议商家往哪发内容时，依据只用这里的数
-        "sourcesByProvider": {gc.PROVIDER_NAMES[p]: ["%s %d%%" % (x["type"], x["pct"]) for x in v[:4]]
-                              for p, v in summary["sources"]["byProvider"].items()},
+        # 每个平台各自最常读哪里，和报告“读哪里的内容”一节是同一份数。不给几个平台合起来的数：
+        # 各平台读的地方差别很大，合起来看会把元宝读公众号的次数算到 DeepSeek 头上。
+        "sourcesByProvider": sources_by_provider(summary),
         "rivals": [{"name": r["name"], "count": r["count"]} for r in summary["rivals"]],
         "shops": [{"name": s["name"], "count": s["count"]} for s in summary["shops"]],
         "buyEntry": summary["buyEntry"],

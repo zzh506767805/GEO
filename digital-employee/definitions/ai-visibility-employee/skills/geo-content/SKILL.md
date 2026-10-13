@@ -46,7 +46,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 
 ## 定类型
 
-看三样东西：这一期每个 AI 最常读哪里（算分输出的 `sourcesByProvider`）、这家店在哪里没有内容（周报里找的内容缺口）、商家有哪些账号（店铺资料的 `channels`）。**按数据定类型，不按你能写什么定。**
+看三样东西：这一期每个 AI 最常读哪里（算分输出或 `show` 的 `sourcesByProvider`）、这家店在哪里没有内容（周报里找的内容缺口）、商家有哪些账号（店铺资料的 `channels`）。**按数据定类型，不按你能写什么定。**
 
 | 情况 | 写什么 |
 | --- | --- |

@@ -100,7 +100,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-weekly/scripts/geo_r
 
 ### 2. 找内容缺口
 
-看 `geo-check` 算分输出的 `sourcesByProvider`（每个 AI 各自最常读哪里、各占多少）和 `refs`（其中有多少是这家店的）。某个 AI 常读、而这家店在那里没有内容的地方，就是缺口。最多写 3 条。
+看 `geo-check` 算分输出的 `sourcesByProvider`（每个 AI 各自最常读哪里、各占多少）和 `refs`（其中有多少是这家店的）；不在同一轮对话里时用 `geo_report.py show`，里面是同一份数。某个 AI 常读、而这家店在那里没有内容的地方，就是缺口。最多写 3 条。
 
 **往哪发、补什么，依据只用这里的数**，规则：
 

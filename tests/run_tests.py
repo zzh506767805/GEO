@@ -206,8 +206,10 @@ def test_synthetic():
         check("本店公众号被引用 12 次，门店页 12 次", (digest["refs"]["own"], digest["refs"]["storePages"]) == (12, 12), digest["refs"])
         check("还没读全文时，同类店次数都是 0，不按名字另算", [r["count"] for r in digest["rivals"]] == [0, 0], digest["rivals"])
         check("对照表里没有的网站，被引用两次以上的单独成一行；天眼查归到企业信息",
-              {"测试论坛", "企业信息"} <= {x["type"] for x in digest["topSources"]} | {x["type"] for x in json.loads(
-                  (Path(env["GEO_DATA_ROOT"]) / "runs" / DATE / "summary.json").read_text(encoding="utf-8"))["sources"]["all"]}, digest["topSources"])
+              {"测试论坛", "企业信息"} <= {x["type"] for x in json.loads(
+                  (Path(env["GEO_DATA_ROOT"]) / "runs" / DATE / "summary.json").read_text(encoding="utf-8"))["sources"]["all"]})
+        check("算分输出的“读哪里”按平台给，没有几个平台合起来的数",
+              "topSources" not in digest and sorted(digest["sourcesByProvider"]) == sorted(["元宝", "豆包", "DeepSeek"]), digest.get("sourcesByProvider"))
         check("缺失 2 条不到四分之一，数据算完整", digest["complete"] is True and len(digest["missing"]) == 2)
         check("还没读全文时：提到了谁不出数，next 让员工派子 Agent 读全部题",
               digest["shops"] == [] and digest["shopsPending"] == 56 and "读全部题" in digest["next"], digest.get("next"))
@@ -303,6 +305,9 @@ def test_synthetic():
         check("建议不是要打勾的清单：没有给待办打勾的命令了", gone.returncode != 0 and "mark-todo" in gone.stderr, gone.stderr[-120:])
         call(REPORT, "set-actions", "--date", DATE, "--file", write(tmp, "a2.json", {"gaps": [{"where": "公众号", "note": "没有文章被引用"}]}), env=env)
         shown = call(REPORT, "show", env=env)
+        check("问“写什么、往哪发”时有数可答：show 的各平台读哪里和算分输出的一样",
+              shown["sourcesByProvider"] == call(SCORE, "score", "--date", DATE, env=env)["sourcesByProvider"]
+              and set(shown["refs"]) == {"total", "own", "storePages", "aboutStore"}, shown.get("sourcesByProvider"))
         check("只传要改的部分，其余保持不变（小结、建议都在）；建议只有做什么和为什么",
               shown["brief"].startswith("本期小结") and [sorted(t) for t in shown["todos"]] == [["text", "why"]] * 3
               and [t["text"] for t in shown["todos"]] == ["一", "二", "三"] and len(shown["gaps"]) == 1 and shown["contents"] == [], shown)

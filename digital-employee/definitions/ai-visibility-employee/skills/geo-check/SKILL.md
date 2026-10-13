@@ -60,7 +60,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_sc
 - `mention`：顾客没点名时，多少个回答提到了本店，分平台。
 - `rivals`：选定的同类店各被几个回答推荐（读全文写回以后才有数）。
 - `refs`：本店账号的内容、以本店命名的门店页、别人写本店的内容，各被引用多少次。
-- `topSources`：AI 这一期最常读哪里的内容。
+- `sourcesByProvider`：每个 AI 各自最常读哪里，和报告“读哪里的内容”一节是同一份数。说到 AI 读哪里，按平台说，不把几个平台合起来。
 - `shopsPending`：还没读过的回答数。不为 0 时，`next` 会让你先做第三步。
 - `notes`：需要在周报里说明的情况。
 
