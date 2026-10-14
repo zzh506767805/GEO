@@ -395,6 +395,8 @@ def cmd_score(args) -> None:
     date = gc.resolve_date(args.date)
     dropped = _drop_removed(date)
     summary = build_summary(date)
+    items = list(((gc.read_json(gc.run_dir(date) / "queries.json", {}) or {}).get("items") or {}).values())
+    summary["askedUpTo"] = gc.last_asked_at(items)  # 之后又重问了题，status 会提醒重新算分
     gc.write_json(gc.run_dir(date) / "summary.json", summary)
     mention = summary["mention"]
     gc.mark_changed("体检结果")
@@ -428,7 +430,7 @@ def cmd_score(args) -> None:
         pending_q = sorted({t.split("_")[0] for t in summary["shopsPending"]})
         open_q = sorted({q["id"] for q in load_profile()["questions"] if q["kind"] == "open"})
         scope = "读全部题" if pending_q == open_q else "只读这几道题：" + ",".join(pending_q)
-        digest["next"] = ("还有 %d 个回答没读过。按 geo-check 的“第三步：读全文”派子 Agent 读（%s），"
+        digest["next"] = ("还有 %d 个回答没读过。按 geo-check 的“第三步：读全文”读（%s；默认一个平台派一个子 Agent），"
                           "用 set-reading 写回、set-findings 写回发现，然后重新执行 score" % (len(summary["shopsPending"]), scope))
     elif not summary["rivals"]:
         digest["candidates"] = summary["candidates"]

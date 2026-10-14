@@ -386,7 +386,9 @@ def cmd_show(_args) -> None:
                "totals": {"periods": len(dates), "contents": len(live),
                           "contentsWaiting": sum(1 for a in live if a["status"] == "preview"),
                           "contentsPublished": sum(1 for a in live if a["status"] == "published")},
-               "workbench": state, "links": links(state["url"], _linkable(dates))}
+               "workbench": state, "links": links(state["url"], _linkable(dates)),
+               "reportUrl": report_link(state["url"], _linkable(dates)),
+               "reportSections": report_sections(state["url"], _linkable(dates))}
     todo = [r["title"] for r in _pages_payload() if not r["filled"]]
     if todo:
         # 维护的人在 assets/pages.json 里加了页面、这家店还没填的。用 pages 看每一页放什么
@@ -1008,6 +1010,12 @@ def report_link(url: str, day: str) -> str:
     return "%s#/report/%s" % (url, day) if url and day else ""
 
 
+def report_sections(url: str, day: str) -> dict:
+    """在工作台里直接打开这一期报告某一节的地址，按小节的 id：summary、mentions、rivals、sources、says。照抄，不用自己拼。"""
+    base = report_link(url, day)
+    return {section: base + "/" + section for _, section in REPORT_SECTIONS} if base else {}
+
+
 def links(url: str, report_day: str = "") -> dict:
     """员工跟商家说到某件事时给的链接：工作台上能打开的每一个页面，加“在工作台里打开这一期的报告”。"""
     out = {page["title"]: url + "#/" + page["id"] for page in visible_pages()} if url else {}
@@ -1167,6 +1175,7 @@ def cmd_publish(args) -> None:
     shown = current if urls.get(current) else ""  # 这一期的报告文件传上去了，工作台里才打得开
     # reportUrl：在工作台里打开这一期的报告，发给商家用它；reportFileUrl：报告文件自己的链接，商家要单独转发时才用
     payload = dict(built, ok=True, pageUrl=saved, reportUrl=report_link(saved, shown), reportFileUrl=urls.get(current, ""),
+                   reportSections=report_sections(saved, shown),
                    links=links(saved, shown), reportFiles=[str(path) for _, path in reports])
     payload.setdefault("warnings", [])
     payload["warnings"] += warnings
@@ -1180,8 +1189,16 @@ def cmd_publish(args) -> None:
         return
     synced = gc.mark_published()
     hint = "这是第一次开通工作台，请先按 geo-workbench 的 references/tabs.md 调用 claw-admin-request 固定工作台，再把 pageUrl 发给商家。" if first_time else "工作台和报告已同步。"
-    if payload["reportUrl"]:
-        hint += "这一期的结果给 reportUrl（在工作台里打开这一期的报告）；"
+    latest = gc.latest_run_date()
+    period = gc.period_stage(latest) if latest else {}
+    if period and period["stage"] in ("scoring", "reading", "judging", "wrapup"):
+        # 体检做到一半也会同步（让商家看到进度），但这时的报告还不完整，不能当成这一期的结果发出去
+        payload["unfinished"] = period
+        payload["warnings"] = payload.get("warnings", []) + [
+            "最近一期（%s）还没做完，报告上的内容不完整，先别把它当成这一期的结果发给商家。%s" % (period["date"], period["next"])]
+        hint += "这一期还没做完：%s。" % period["next"]
+    elif payload["reportUrl"]:
+        hint += "这一期的结果给 reportUrl（在工作台里打开这一期的报告），说到某一节时给 reportSections 里那一节的链接；"
     # synced：这次同步上去的变化，可以据此告诉商家哪里更新了
     payload.update(published=True, firstTime=first_time, synced=synced,
                    next=hint + "说到内容、监测设置时给 links 里对应页面的链接。商家要把报告单独转发给别人时，才给 reportFileUrl。链接逐字照抄")
@@ -1194,7 +1211,7 @@ def cmd_publish(args) -> None:
     tabs_file = gc.profile_dir() / "employee-tabs.json"
     gc.write_json(tabs_file, payload["tabConfiguration"])
     payload["tabConfigFile"] = str(tabs_file)
-    payload["tabSetup"] = "用 Bash 里的 claw-admin-request 按 geo-workbench/references/tabs.md固定工作台：先读，不对再写，写完读回核对。"
+    payload["tabSetup"] = "用 Bash 里的 claw-admin-request 按 geo-workbench/references/tabs.md 固定工作台：先读，不对再写，写完读回核对。"
     if urlparse(saved).netloc != EXPECTED_PAGE_HOST:
         payload["hostWarning"] = "链接的域名不是 %s" % EXPECTED_PAGE_HOST
     template = _template_payload()
@@ -1212,6 +1229,8 @@ def cmd_links(_args) -> None:
     payload = {"ok": True, "pageUrl": state["url"],
                # 在工作台里打开最新一期报告；reports 是每一期各自的这个地址。发给商家用这两样
                "reportUrl": report_link(state["url"], _linkable()),
+               # 这一期报告的各节，商家问“提到了谁”“读哪里”时给对应那一节
+               "reportSections": report_sections(state["url"], _linkable()),
                "links": links(state["url"], _linkable()),
                "reports": {day: report_link(state["url"], day) for day in sorted(files)},
                # 报告文件自己的链接，商家要单独转发给别人时才用

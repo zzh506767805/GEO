@@ -17,10 +17,10 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 
 ## 开始前
 
-- 先执行 `geo_state.py status`：没有建档先按 `geo-profile` 建档；`firstCheckPending` 为 true 说明商家还没同意体检，回到 `geo-profile` 的第 3 步。
+- 先执行 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" status`：没有建档先按 `geo-profile` 建档；`firstCheckPending` 为 true 说明商家还没同意体检，回到 `geo-profile` 的第 3 步；`period.done` 为 false 说明上次体检做到一半，照 `period.next` 接着做完那一期。
 - 每周体检之前，按 `geo-profile` 的“每期体检前”重新读一遍店铺资料。核对用的是它，旧了会对错。
 - 两个脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py"` 和 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py"`。下文表格里写的 `geo_run.py ...`、`geo_score.py ...` 都是全路径的简写，执行时写全。
-- 每个命令的输出里都有 `next`，写着下一步该做什么，照着做。
+- 命令输出里有 `next` 时，写着下一步该做什么，照着做。
 
 ## 第一步：提问和等待
 
@@ -41,12 +41,12 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_ru
 - 超过 15 分钟还没返回的查询，脚本会自动记为缺失，这一期该题该平台不计分，不用补救。
 - `start` 返回 `ok: false` 时按 `error` 处理。如果是“还没有开通问 AI 能力”，告诉商家暂时不能体检。
 
-只想重跑个别问题（例如商家改了某道题）：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --only q03,q07`。改过原文的题会重新问，没改的不会。
+只想重跑个别问题（例如商家改了某道题）：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --only q03,q07`。改过原文的题会重新问，没改的不会。带 `--only` 时，重问的题算进最近一期，不另开一期；带店名的题用 `--phase brand`。之后照常 `wait`、`score`，改的是带店名的题时还要重新核对（第四步）。
 
 **接着上一次，和重新测一次，是两回事：**
 
 - 不带 `--fresh` 的 `start` 是“接着上一次”：这一天已经有回答的题不会重新问。同一天再执行，输出里 `started` 是 0，`next` 会说明用的是已有的回答。
-- 商家说“重新体检”“重新测一下”，要的是重新问一遍：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --fresh`。上一次的回答、算分和核对会挪进这一天目录下的 `old-<时间>/` 留底，然后从头问；等不带店名的全部返回，再 `start --phase brand`，接着照常算分、核对。还有查询在运行时不能重新测，先等它们返回。
+- 商家说“重新体检”“重新测一下”，要的是重新问一遍：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --fresh`。上一次的回答、算分和核对会挪进这一天目录下的 `old-<时间>/` 留底，然后从头问；等不带店名的全部返回，再 `start --phase brand`，接着照常算分、读全文、核对。还有查询在运行时不能重新测，先等它们返回。
 - 商家删掉的题不用重跑：重新 `score`，最新一期就不再算它（输出的 `notes` 会列出来）。以前各期按当时问的题算，不变。
 
 ## 第二步：算分
@@ -68,7 +68,7 @@ AI 推荐了哪些店、有什么值得商家知道的，脚本算不出来，�
 
 ## 第三步：读全文
 
-派子 Agent 把这一期每个平台的回答全部读一遍，看 AI 推荐了哪些店、有什么值得商家知道的。怎么派、派几个、怎么交代，你自己定；子 Agent 交回文字就行，整理成下面的格式是你的事。
+把这一期每个平台的回答全部读一遍，看 AI 推荐了哪些店、有什么值得商家知道的。回答多，默认一个平台派一个子 Agent：交给它这个平台的 `answers` 输出和下面那张表的要求，让它交回文字（每个回答推荐了哪几家店，店名照抄回答里的写法；复核出的几样；值得说的发现和原话）。整理成下面的格式、写回，是你的事。当前环境派不了子 Agent 时，你自己按平台一个一个读，读完一个平台写回一个。
 
 取一个平台回答全文的命令（只重跑了几道题时，`score` 的 `next` 会写明是哪几道，加 `--only`）：
 
@@ -97,7 +97,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_sc
 | `refsNotUs`：标题里有店名、其实不是这家店的引用 | 引用的 `relation` 不为空的 | 只写不是的 |
 | `refsAboutUs`：标题里没店名、其实写的就是这家店的引用 | 引用的 `relation` 为空的 | 只写有把握的，例如地址、招牌都对得上 |
 
-后三样没有就不写。可以一次传，也可以按平台分几个文件传（`--file` 写多次）。脚本会核对：店名或原文写法必须出现在那个回答里，要写店名的回答不能漏，引用必须是这一期出现过的。对不上的整份退回，按 `error` 改；`stillMissing` 里是还没写店名的回答，漏了就让子 Agent 补。复核过的引用以后各期都算数。
+后三样没有就不写。可以一次传，也可以分几次传，每次写回的会和之前的合并。写错的会把这一次传的整份退回（店名或原文写法在那个回答里找不到、回答编号不存在、引用不是这一期出现过的），按 `error` 改；所以按平台分开时，一次只传一个平台，免得一个平台的错连累别的。漏写不会退回：没写到的回答列在 `stillMissing` 里，补齐之前“提到了谁”不出数。复核过的引用以后各期都算数。
 
 再写这一期的发现，**最多 5 条，宁缺毋滥**，没有值得说的就传空列表，不要凑：
 

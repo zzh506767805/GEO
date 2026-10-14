@@ -311,6 +311,8 @@ def status_payload() -> dict:
         "questionsVersion": (data["questions"] or {}).get("version", 0),
         "rivals": [r["name"] for r in (data["rivals"] or {}).get("items") or []],
         "lastRun": last_run,
+        # 最近一期做到哪了：stage 为 done 才算这一期做完。会话中途断掉，按这里的 next 回到没做完的那一步
+        "period": gc.period_stage(last_run) if last_run else {},
         "pageUrl": meta.get("pageUrl", ""),
         # 工作台是不是最新的。pending 不为空时，先同步再把链接发给商家。
         "workbench": workbench,
@@ -318,7 +320,11 @@ def status_payload() -> dict:
         "schedule": (meta.get("schedule") or {}).get("status", ""),
         "warnings": facts_warnings(facts),
     }
-    if hint:
+    period = payload["period"]
+    if period and not period["done"]:
+        # 体检做到一半：先把这一期做完。工作台待同步也不用急，这一期做完 publish 时一起同步
+        payload["next"] = "最近一期（%s）还没做完。%s" % (period["date"], period["next"]) + ("。另外，" + hint if hint else "")
+    elif hint:
         payload["next"] = hint
     elif last_run and not payload["schedule"]:
         payload["next"] = "第一份报告出来了，还没问过商家要不要开启每周体检；按 geo-weekly 的“开启每周体检”问他一次"

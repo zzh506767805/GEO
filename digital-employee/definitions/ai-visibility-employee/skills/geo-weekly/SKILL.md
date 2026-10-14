@@ -7,14 +7,14 @@ description: 每一期体检之后的收尾和周报：和上一期对比、找�
 
 体检（`geo-check`）算出数、读完回答、核对完以后，这一期的数据就齐了，但还没有结论，报告也还没生成。本 Skill 把这一期收尾：对比、找缺口、写小结和建议、生成报告，再把结果告诉商家。
 
-它负责整体流程（见 `geo-profile`）里的第 4、5 步：第一份报告出来后汇报、问商家要不要开启每周体检；以后每周出周报。`geo_state.py status` 返回 `firstCheckPending` 为 true 时，还在等商家确认第一次体检，这时不收尾、不写内容。
+它负责整体流程（见角色设定的“工作方式”）里的第 4、5 步：第一份报告出来后汇报、问商家要不要开启每周体检；以后每周出周报。`geo_state.py status` 返回 `firstCheckPending` 为 true 时，还在等商家确认第一次体检，这时不收尾、不写内容。
 
 ## 开始前
 
 - 用到的脚本：页面和这一期结论在 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py"`，店铺资料在 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py"`。下文的 `geo_report.py ...`、`geo_state.py ...` 是简写，执行时写全。
 - 入参先写成 JSON 文件，放在 `$YOUZAN_AGENT_SESSION_TEMP/geo/` 下，再用 `--file` 传入。
 - 同步页面、发哪个链接、同步失败怎么办，按 `geo-workbench`。写内容按 `geo-content`。
-- 每个命令的输出里都有 `next`，写着下一步该做什么，照着做。
+- 命令输出里有 `next` 时，写着下一步该做什么，照着做。
 
 ## 第一份报告（整体流程第 4 步）
 
@@ -41,7 +41,7 @@ description: 每一期体检之后的收尾和周报：和上一期对比、找�
 | 每次触发时对你说的话 | 下面这一段，原样填 |
 
 ```text
-每周 AI 曝光体检：先执行 geo-profile 的 status。firstCheckPending 为 true 时只提醒商家确认，不体检；schedule 不是 on 时说明商家已经关掉了每周体检，不体检，结束。
+每周 AI 曝光体检：先执行 geo-profile 的 status。firstCheckPending 为 true 时只提醒商家确认，不体检；schedule 不是 on 时说明商家已经关掉了每周体检，不体检，结束。最近一期没做完（period.done 为 false）：是今天的就照 period.next 接着做完；是以前的就不补了，照常开始新的一期。
 否则按 geo-profile 重读店铺资料，再依次用 geo-check 和 geo-weekly 完成本周体检和周报，直接执行，不询问确认。
 这一期写的内容先登记到工作台，等商家确认后再发；现在不能替商家写内容时不写，只请商家看一眼工作台的“监测设置”。
 结束时用一句话总结：“本周体检完成：Y 个回答里有 X 个提到本店，本周内容：待确认 / 未写。”
@@ -152,8 +152,8 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 | --- | --- |
 | “开启每周体检”“每周体检停掉” | 按上面的“开启每周体检” |
 | “你建议的那件事我做了”“这件我做不了” | 回一句就行，不用登记。做不了的，下一期不要再提；他处理的如果是报告里的某一号，按 `geo-check` 记一笔 |
-| “AI 提到了谁”“豆包推荐了哪些店” | 只用这一期报告“提到了谁”那一节的排行回答，说前几家和次数，给那一节的链接（`reportUrl` 后面加 `/rivals`）。不要自己翻回答原文另列一份：口径不一样，商家拿报告一对就对不上 |
-| “你建议我写什么”“往哪发”“AI 都读哪里” | `geo_report.py show`：`sourcesByProvider` 是各平台读哪里（和报告上的数一样），`gaps` 是本期写下的缺口，`refs` 是和这家店有关的内容被引用几次。按平台说，不要自己翻回答原文重新归类。给报告“读哪里的内容”一节的链接（`reportUrl` 后面加 `/sources`） |
+| “AI 提到了谁”“豆包推荐了哪些店” | 只用这一期报告“提到了谁”那一节的排行回答，说前几家和次数，给那一节的链接（`reportSections` 里的 `rivals`，照抄）。不要自己翻回答原文另列一份：口径不一样，商家拿报告一对就对不上 |
+| “你建议我写什么”“往哪发”“AI 都读哪里” | `geo_report.py show`：`sourcesByProvider` 是各平台读哪里（和报告上的数一样），`gaps` 是本期写下的缺口，`refs` 是和这家店有关的内容被引用几次。按平台说，不要自己翻回答原文重新归类。给报告“读哪里的内容”一节的链接（`show` 输出 `reportSections` 里的 `sources`，照抄） |
 | “为什么元宝不提我”“怎么让 AI 多提我” | 用这一期报告里的内容回答：这道题 AI 引用的是谁的内容，这家店在那些地方有没有内容。给 `reportUrl` |
 | “这周怎么样” | `compare` 的结果，加 `reportUrl`。不重新体检 |
 | “你都做了哪些事”“之前几期怎么样” | `geo_report.py show` 的 `totals`（体检了几期、写了几篇、发了几篇），两三句话概括，给工作台首页的链接 |

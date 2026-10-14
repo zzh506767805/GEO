@@ -27,10 +27,12 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 - `published: true`：同步成功。
   - `pageUrl`：工作台。
   - `reportUrl`：在工作台里打开这一期的报告。**说到这一期的结果时，发给商家的是它。**
+  - `reportSections`：直接打开这一期报告某一节的地址（`summary` 结论、`mentions` 有没有提到你、`rivals` 提到了谁、`sources` 读哪里的内容、`says` 怎么介绍你）。说到某一节时给那一节的。
   - `links`：可以直接发给商家的几个链接（工作台、内容、监测设置、这一期的报告）。
   - `reportFileUrl`：报告文件自己的链接。只有商家要把报告单独转发给别人时才给。
   - `synced`：这次同步上去的变化。
 - `firstTime: true`：第一次开通。接着按 `references/tabs.md` 把工作台固定到客户端页签，再把 `pageUrl` 发给商家，告诉他以后都在这里看。
+- `unfinished`：最近一期体检还没做完（会话断过，或者还在做）。这时的报告不完整，先别当成这一期的结果发给商家，照 `unfinished.next` 做完再同步。
 - `published: false`：没全部传上去，按下面的“同步失败时”处理。
 
 链接只用输出里的，逐字照抄，不改域名、不解码、不重新拼。页面上已经有的，对话里不重复贴。
@@ -96,7 +98,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 
 在工作台里看某一期的报告，链接末尾是 `#/report/<日期>`，例如 `#/report/2026-10-08`。`reportUrl` 和 `links` 里“这一期的报告”就是这个地址，不用自己拼。
 
-报告从上到下五节。在上面的地址后面再加 `/<小节>`，可以直接打开到那一节，例如 `#/report/2026-10-08/sources`：
+报告从上到下五节。每一节的地址在 `publish`、`links`、`show` 输出的 `reportSections` 里，照抄就行，也不用自己拼：
 
 | 报告里的小节 | 小节 | 内容 |
 | --- | --- | --- |

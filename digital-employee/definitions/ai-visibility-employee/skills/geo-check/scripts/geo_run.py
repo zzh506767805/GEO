@@ -5,7 +5,7 @@
 顺序不能反：取数账号万一带着记忆，先问带店名的会让后面的回答凭空提到这家店。豆包已经关掉了记忆，顺序仍然保留，当作保险。
 
 用法（脚本用绝对路径执行）：
-  geo_run.py start --phase open|brand [--date D] [--only q01,q03] [--retry]
+  geo_run.py start --phase open|brand [--date D] [--only q01,q03] [--retry]   带 --only 不带 --date 时算进最近一期
   geo_run.py start --phase open --fresh [--date D]   同一天重新测一次：上一次的结果挪走留底，全部重新问
   geo_run.py wait [--date D] [--max-seconds 90]
   geo_run.py status [--date D]
@@ -203,7 +203,9 @@ def cmd_start(args) -> None:
     meta = gc.read_json(gc.profile_dir() / "meta.json", {}) or {}
     if meta.get("firstCheckPending"):
         raise gc.GeoError("首次体检还没有得到商家确认。先说明店铺信息和监测方向，收到明确确认后执行 geo_state.py confirm-monitoring，再开始体检")
-    date = gc.check_date(args.date) if args.date else gc.today()
+    # 只重问几道题（商家改了题、加了题）时，算进最近一期，不另开一期；整轮提问才按今天开新的一期
+    latest = gc.latest_run_date()
+    date = gc.check_date(args.date) if args.date else (latest if args.only and latest else gc.today())
     phase = args.phase
     questions = _load_questions()
     state = _load_state(date)

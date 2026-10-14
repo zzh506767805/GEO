@@ -481,6 +481,75 @@ def test_synthetic():
         check("确认后状态变为已确认", confirmed["confirmed"] is True)
 
 
+def test_resume_mid_check():
+    """会话在体检中途断掉：status 把员工带回没做完的那一步，不会误判成“第一份报告出来了”；
+    中途同步的报告会被提醒“还没做完”；隔几天改了一道题，重问的题算进最近一期，不另开一期。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        stage = lambda: call(STATE, "status", env=env)  # noqa: E731
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
+        questions = [q for q in SYNTHETIC_QUESTIONS if q["id"] not in ("q04", "q05")]
+        call(STATE, "set-questions", "--file", write(tmp, "q.json", questions), env=env)
+        call(STATE, "set-rivals", "--file", write(tmp, "r.json", [{"name": "甲记面包"}, {"name": "乙家烘焙"}]), env=env)
+        call(REPORT, "publish", env=env)
+        call(STATE, "confirm-monitoring", env=env)
+        call(RUN, "start", "--phase", "open", "--date", DATE, env=env)
+        call(REPORT, "publish", env=env)  # 照 geo-check：第一次 start 之后同步一次
+        now = stage()
+        check("第一次体检刚发起就断：status 让员工接着等，不说“第一份报告出来了”",
+              now["period"]["stage"] == "asking" and "wait" in now["next"] and "每周体检" not in now["next"], now.get("next"))
+        wait_all(env, DATE)
+        now = stage()
+        check("不带店名的问完了、还没问带店名的：status 让员工问带店名的，并带上这一期的日期",
+              now["period"]["stage"] == "asking" and "start --phase brand --date " + DATE in now["next"], now.get("next"))
+        call(RUN, "start", "--phase", "brand", "--date", DATE, env=env)
+        wait_all(env, DATE)
+        check("问完还没算分：status 让员工算分", stage()["period"]["stage"] == "scoring")
+        call(SCORE, "score", "--date", DATE, env=env)
+        now = stage()
+        check("算完分还没读全文：status 让员工读全文", now["period"]["stage"] == "reading" and "读全文" in now["next"], now.get("next"))
+        half = call(REPORT, "publish", env=env)
+        check("没读全文就同步：会提醒这一期还没做完，不让员工把报告当成结果发出去",
+              half["unfinished"]["stage"] == "reading" and any("还没做完" in w for w in half.get("warnings", []))
+              and "这一期的结果给 reportUrl" not in half["next"], half.get("next"))
+        read_all(env, tmp, DATE)
+        call(SCORE, "score", "--date", DATE, env=env)
+        check("读完还没核对：status 让员工核对", stage()["period"]["stage"] == "judging")
+        call(SCORE, "set-judgement", "--date", DATE, "--file", write(tmp, "j.json", {"descriptions": {"hunyuan": "一家面包店"}, "issues": []}), env=env)
+        check("核对完还没写小结：status 让员工按 geo-weekly 收尾", "geo-weekly" in stage()["next"] and stage()["period"]["stage"] == "wrapup")
+        call(REPORT, "set-actions", "--date", DATE, "--file", write(tmp, "a.json", {"brief": "小结", "contentNote": "这一期先不写"}), env=env)
+        done = call(REPORT, "publish", env=env)
+        now = stage()
+        check("这一期做完了才问开不开每周体检；同步输出里有报告各节的链接，照抄就行",
+              now["period"]["done"] and "每周体检" in now["next"] and "unfinished" not in done
+              and done["reportSections"]["rivals"] == done["reportUrl"] + "/rivals"
+              and list(done["reportSections"]) == ["summary", "mentions", "rivals", "sources", "says"], (now.get("next"), done.get("reportSections")))
+        check("links 和 show 也给报告各节的链接",
+              call(REPORT, "links", env=env)["reportSections"] == done["reportSections"]
+              and call(REPORT, "show", env=env)["reportSections"] == done["reportSections"])
+
+        # 隔几天商家改了一道题：只重问这一道，算进最近一期
+        changed = [dict(q, text="测试市哪家的贝果好吃？") if q["id"] == "q06" else q for q in questions]
+        call(STATE, "set-questions", "--file", write(tmp, "changed.json", changed), env=env)
+        rerun = call(RUN, "start", "--phase", "open", "--only", "q06", env=env)
+        runs = sorted(p.name for p in (Path(env["GEO_DATA_ROOT"]) / "runs").iterdir() if p.is_dir())
+        check("改了题只重问这一道：算进最近一期，不另开一期", rerun["date"] == DATE and runs == [DATE], (rerun.get("date"), runs))
+        wait_all(env, DATE)
+        now = stage()
+        check("重问之后还没重新算分：status 让员工重新算分", now["period"]["stage"] == "scoring", now.get("period"))
+
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp, MOCK_RUN_ERROR="1")
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-questions", "--file", write(tmp, "q.json", SYNTHETIC_QUESTIONS), env=env)
+        call(STATE, "confirm-monitoring", env=env)
+        call(RUN, "start", "--phase", "open", "--date", DATE, env=env, expect=2)
+        now = call(STATE, "status", env=env)
+        check("一条都没问成功：status 让员工重新发起，不说“第一份报告出来了”",
+              now["period"]["stage"] == "asking" and "--retry" in now["next"] and "每周体检" not in now["next"], now.get("next"))
+
+
 def test_environment_error():
     with tempfile.TemporaryDirectory() as tmp:
         env = base_env(tmp, MOCK_RUN_ERROR="1")
@@ -1006,7 +1075,7 @@ def test_douyin_and_sources():
 
 if __name__ == "__main__":
     try:
-        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_facts_merge, test_new_agent_guards, test_pages, test_shop_template, test_data_reliability, test_trend_skips_incomplete, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render, test_douyin_and_sources):
+        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_facts_merge, test_new_agent_guards, test_resume_mid_check, test_pages, test_shop_template, test_data_reliability, test_trend_skips_incomplete, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render, test_douyin_and_sources):
             try:
                 test()
             except AssertionError as exc:

@@ -125,6 +125,58 @@ def resolve_date(value: str = "") -> str:
     return dates[-1]
 
 
+PERIOD_STAGES = ("asking", "scoring", "reading", "judging", "wrapup", "done")
+
+
+def period_stage(date: str) -> dict:
+    """这一期做到哪了。会话中途断掉、隔天再来时，status 和 publish 靠它把员工带回没做完的那一步。
+
+    asking 还在提问；scoring 还没算分；reading 还有回答没读全文；judging 还没核对；
+    wrapup 还没写本期小结和建议（或者写在重新核对之前，已经过时）；done 这一期做完了。
+    """
+    folder = run_dir(date)
+    items = list(((read_json(folder / "queries.json", {}) or {}).get("items") or {}).values())
+    flag = "" if date == today() else " --date " + date
+    stage, hint = "done", ""
+    phase_rows = {kind: [i for i in items if i.get("kind") == kind] for kind in ("open", "brand")}
+    asked = {kind: [i for i in rows if i.get("status") != "error"] for kind, rows in phase_rows.items()}
+    summary = read_json(folder / "summary.json") if (folder / "summary.json").is_file() else None
+    judgement = folder / "judgement.json"
+    actions = folder / "actions.json"
+    if any(i.get("status") == "running" for i in items):
+        stage, hint = "asking", "还有查询在运行：按 geo-check 执行 geo_run.py wait%s，等它们返回" % flag
+    elif not asked["open"] and summary is None:
+        stage, hint = "asking", "这一期还没有问成功：按 geo-check 执行 geo_run.py start --phase open --retry%s" % flag
+    elif not phase_rows["brand"] and summary is None:
+        stage, hint = "asking", "不带店名的问题已经返回，还没问带店名的：按 geo-check 执行 geo_run.py start --phase brand%s" % flag
+    elif summary is None or _asked_after(items, summary):
+        stage, hint = "scoring", "提问都返回了，还没算分（或者算分之后又重问过几道题）：按 geo-check 执行 geo_score.py score%s" % flag
+    elif summary.get("shopsPending"):
+        stage, hint = "reading", ("还有 %d 个回答没读全文：按 geo-check 的“第三步：读全文”读完、写回，再执行 geo_score.py score%s"
+                                  % (len(summary["shopsPending"]), flag))
+    elif not judgement.is_file():
+        stage, hint = "judging", "还没核对 AI 怎么介绍这家店：按 geo-check 的“第四步”执行 geo_score.py brand-digest%s，再 set-judgement" % flag
+    elif not actions.is_file() or actions.stat().st_mtime < judgement.stat().st_mtime:
+        stage, hint = "wrapup", "体检做完了，还没写本期小结和建议（或者写在重新核对之前）：按 geo-weekly 收尾，再 publish"
+    return {"date": date, "stage": stage, "done": stage == "done", "next": hint}
+
+
+def _stamp(value: str) -> float:
+    moment = parse_iso(value)
+    return (moment if moment.tzinfo else moment.replace(tzinfo=_BEIJING)).timestamp()
+
+
+def last_asked_at(items: list) -> str:
+    """这一期最近一次发起提问的时间。算分时记进 summary.json，之后又重问了题，就知道要重新算分。"""
+    started = [i["startedAt"] for i in items if i.get("startedAt")]
+    return max(started, key=_stamp) if started else ""
+
+
+def _asked_after(items: list, summary: dict) -> bool:
+    scored_upto, latest = summary.get("askedUpTo", ""), last_asked_at(items)
+    return bool(scored_upto and latest) and _stamp(latest) > _stamp(scored_upto)
+
+
 def drop_removed_questions(state: dict, bank_ids) -> list:
     """体检记录里那些已经从问题清单删掉的题：挪进 removed 留底，不再统计，也不出现在报告里。
 
