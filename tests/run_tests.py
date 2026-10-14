@@ -485,7 +485,7 @@ def test_resume_mid_check():
     """会话在体检中途断掉：status 把员工带回没做完的那一步，不会误判成“第一份报告出来了”；
     中途同步的报告会被提醒“还没做完”；隔几天改了一道题，重问的题算进最近一期，不另开一期。"""
     with tempfile.TemporaryDirectory() as tmp:
-        env = base_env(tmp)
+        env = base_env(tmp, GEO_FAKE_NOW="2026-10-09T10:00:00+08:00")  # 体检是前一天（DATE）发起的，隔天接着做
         stage = lambda: call(STATE, "status", env=env)  # noqa: E731
         call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
         call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
@@ -529,15 +529,44 @@ def test_resume_mid_check():
               call(REPORT, "links", env=env)["reportSections"] == done["reportSections"]
               and call(REPORT, "show", env=env)["reportSections"] == done["reportSections"])
 
+        # 换了同类店、重新算分，数变了：小结过时，要重写
+        call(STATE, "set-rivals", "--file", write(tmp, "r2.json", [{"name": "甲记面包"}]), env=env)
+        call(SCORE, "score", "--date", DATE, env=env)
+        now = stage()
+        check("写完小结后重新算分、数变了：status 让员工重写小结", now["period"]["stage"] == "wrapup" and "重写" in now["next"], now.get("next"))
+        call(REPORT, "set-actions", "--date", DATE, "--file", write(tmp, "a-gap.json", {"gaps": [{"where": "公众号", "note": "x"}]}), env=env)
+        check("只改缺口不算重写小结，还是提醒", stage()["period"]["stage"] == "wrapup")
+        call(REPORT, "set-actions", "--date", DATE, "--file", write(tmp, "a2.json", {"brief": "新的小结"}), env=env)
+        call(SCORE, "score", "--date", DATE, env=env)
+        check("重写了小结，再重跑一次算分、数没变，不算过时", stage()["period"]["done"])
+
         # 隔几天商家改了一道题：只重问这一道，算进最近一期
         changed = [dict(q, text="测试市哪家的贝果好吃？") if q["id"] == "q06" else q for q in questions]
         call(STATE, "set-questions", "--file", write(tmp, "changed.json", changed), env=env)
+        env["GEO_FAKE_NOW"] = "2026-10-11T10:00:00+08:00"
         rerun = call(RUN, "start", "--phase", "open", "--only", "q06", env=env)
-        runs = sorted(p.name for p in (Path(env["GEO_DATA_ROOT"]) / "runs").iterdir() if p.is_dir())
-        check("改了题只重问这一道：算进最近一期，不另开一期", rerun["date"] == DATE and runs == [DATE], (rerun.get("date"), runs))
+        runs = lambda: sorted(p.name for p in (Path(env["GEO_DATA_ROOT"]) / "runs").iterdir() if p.is_dir())  # noqa: E731
+        check("改了题只重问这一道：算进最近一期，不另开一期", rerun["date"] == DATE and runs() == [DATE], (rerun.get("date"), runs()))
         wait_all(env, DATE)
         now = stage()
         check("重问之后还没重新算分：status 让员工重新算分", now["period"]["stage"] == "scoring", now.get("period"))
+        call(SCORE, "score", "--date", DATE, env=env)
+        read_all(env, tmp, DATE, only="q06")
+        call(SCORE, "score", "--date", DATE, env=env)
+        call(REPORT, "set-actions", "--date", DATE, "--file", write(tmp, "a3.json", {"brief": "改题后的小结"}), env=env)
+
+        # 最近一期是好几周前的：改了题不往那一期里补
+        env["GEO_FAKE_NOW"] = "2026-10-30T10:00:00+08:00"
+        stale = call(RUN, "start", "--phase", "open", "--only", "q06", env=env, expect=2)
+        check("最近一期超过 7 天：只重问几道题会被拦下，让员工问商家要不要整轮重测",
+              "超过 7 天" in stale.get("error", "") and runs() == [DATE], stale)
+
+        # 新一期刚发起就同步：报告还是上一期的，不能当成这一期的结果
+        call(RUN, "start", "--phase", "open", env=env)
+        early = call(REPORT, "publish", env=env)
+        check("新一期还在提问时同步：提示报告是上一期的，先别发",
+              early["unfinished"]["stage"] == "asking" and "上一期（%s）" % DATE in early["next"]
+              and "这一期的结果给 reportUrl" not in early["next"], early.get("next"))
 
     with tempfile.TemporaryDirectory() as tmp:
         env = base_env(tmp, MOCK_RUN_ERROR="1")

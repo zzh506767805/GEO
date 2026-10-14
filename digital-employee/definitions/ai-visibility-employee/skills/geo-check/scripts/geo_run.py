@@ -32,6 +32,7 @@ import geo_common as gc  # noqa: E402
 
 ASK_AI_CAPABILITY_ID = "171"
 RUNNING, COMPLETED, FAILED = 0, 1, 2
+STALE_PERIOD_DAYS = 7  # 只重问几道题时，最近一期超过这么多天就不往里补
 TERMINAL = ("done", "failed", "expired")
 DEADLINE_SECONDS = int(os.environ.get("GEO_DEADLINE_SECONDS", str(15 * 60)))
 POLL_INTERVAL = float(os.environ.get("GEO_POLL_INTERVAL", "15"))
@@ -206,6 +207,10 @@ def cmd_start(args) -> None:
     # 只重问几道题（商家改了题、加了题）时，算进最近一期，不另开一期；整轮提问才按今天开新的一期
     latest = gc.latest_run_date()
     date = gc.check_date(args.date) if args.date else (latest if args.only and latest else gc.today())
+    if args.only and not args.date and latest and (gc.parse_iso(gc.today()) - gc.parse_iso(latest)).days > STALE_PERIOD_DAYS:
+        # 最近一期是好几周前的（比如商家关了每周体检）：今天的回答不往那一期里加，报告上的日期会误导人
+        raise gc.GeoError("最近一期是 %s，已经超过 %d 天，改过的题不往那一期里补。问商家要不要现在整轮重新体检一次"
+                          "（start --phase open，会开新的一期）；不要的话，下一次体检会按新问题问" % (latest, STALE_PERIOD_DAYS))
     phase = args.phase
     questions = _load_questions()
     state = _load_state(date)

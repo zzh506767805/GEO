@@ -356,6 +356,11 @@ def cmd_set_actions(args) -> None:
     previous = gc.read_json(gc.run_dir(date) / "actions.json") or {}
     # 只传要改的部分：没传的 brief、todos、gaps、contentNote 保持这一期原来的内容。
     actions = normalize_actions({key: raw[key] if key in raw else previous.get(key) for key in ACTION_KEYS})
+    # 小结和建议是按哪一份算分结果写的。之后重新算分数变了，status 和 publish 会提醒重写；只改 gaps、contentNote 不算重写
+    rewritten = "brief" in raw or "todos" in raw
+    based_on = gc.summary_fingerprint(_summary(date)) if rewritten or not previous else previous.get("basedOn")
+    if based_on:
+        actions["basedOn"] = based_on
     gc.write_json(gc.run_dir(date) / "actions.json", actions)
     gc.mark_changed("本期小结和建议")
     warnings = []
@@ -1197,6 +1202,11 @@ def cmd_publish(args) -> None:
         payload["warnings"] = payload.get("warnings", []) + [
             "最近一期（%s）还没做完，报告上的内容不完整，先别把它当成这一期的结果发给商家。%s" % (period["date"], period["next"])]
         hint += "这一期还没做完：%s。" % period["next"]
+    elif period and period["stage"] == "asking" and payload["reportUrl"]:
+        # 新一期还在提问：reportUrl 指的还是之前算过分的那一期，不能当成这一期的结果发出去
+        payload["unfinished"] = period
+        older = "上一期（%s）" % current if current != period["date"] else "重问之前"
+        hint += "体检进行中，现在的报告还是%s的，不是这一期的结果，先别发给商家。%s。" % (older, period["next"])
     elif payload["reportUrl"]:
         hint += "这一期的结果给 reportUrl（在工作台里打开这一期的报告），说到某一节时给 reportSections 里那一节的链接；"
     # synced：这次同步上去的变化，可以据此告诉商家哪里更新了

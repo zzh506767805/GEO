@@ -41,7 +41,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_ru
 - 超过 15 分钟还没返回的查询，脚本会自动记为缺失，这一期该题该平台不计分，不用补救。
 - `start` 返回 `ok: false` 时按 `error` 处理。如果是“还没有开通问 AI 能力”，告诉商家暂时不能体检。
 
-只想重跑个别问题（例如商家改了某道题）：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --only q03,q07`。改过原文的题会重新问，没改的不会。带 `--only` 时，重问的题算进最近一期，不另开一期；带店名的题用 `--phase brand`。之后照常 `wait`、`score`，改的是带店名的题时还要重新核对（第四步）。
+只想重跑个别问题（例如商家改了某道题）：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --only q03,q07`。改过原文的题会重新问，没改的不会。带 `--only` 时，重问的题算进最近一期，不另开一期；最近一期在 7 天以前时脚本会拦下，这时问商家要不要现在整轮重新体检（开新的一期），不要就等下一次体检按新问题问；带店名的题用 `--phase brand`。之后照常 `wait`、`score`，改的是带店名的题时还要重新核对（第四步）。
 
 **接着上一次，和重新测一次，是两回事：**
 

@@ -158,7 +158,21 @@ def period_stage(date: str) -> dict:
         stage, hint = "judging", "还没核对 AI 怎么介绍这家店：按 geo-check 的“第四步”执行 geo_score.py brand-digest%s，再 set-judgement" % flag
     elif not actions.is_file() or actions.stat().st_mtime < judgement.stat().st_mtime:
         stage, hint = "wrapup", "体检做完了，还没写本期小结和建议（或者写在重新核对之前）：按 geo-weekly 收尾，再 publish"
+    elif (read_json(actions, {}) or {}).get("basedOn", summary_fingerprint(summary)) != summary_fingerprint(summary):
+        stage, hint = "wrapup", ("写完小结以后又重新算过分，数变了（比如改了题、换了同类店）：按 geo-weekly 重写本期小结和建议"
+                                 "（set-actions 传 brief 和 todos），再 publish")
     return {"date": date, "stage": stage, "done": stage == "done", "next": hint}
+
+
+def summary_fingerprint(summary: dict) -> str:
+    """小结和建议会引用的那几个数。写小结时记下来，之后重新算分数变了，就知道小结过时了；只是重跑一次、数没变，不算。"""
+    picked = {key: summary.get(key) for key in ("mention", "complete", "notUs")}
+    picked["refs"] = {k: (summary.get("refs") or {}).get(k) for k in ("total", "own", "storePages", "aboutStore")}
+    picked["rivals"] = [[r.get("name"), r.get("count")] for r in summary.get("rivals") or []]
+    picked["shops"] = [[s.get("name"), s.get("count")] for s in summary.get("shops") or []]
+    picked["findings"] = [f.get("title") for f in summary.get("findings") or []]
+    raw = json.dumps(picked, ensure_ascii=False, sort_keys=True)
+    return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:12]
 
 
 def _stamp(value: str) -> float:

@@ -23,7 +23,7 @@
 | 不带店名的问题里不能有店名；问题数量 6–12 加 1–3 | `geo_state.py` 的 `normalize_questions`、`OPEN_RANGE`、`BRAND_RANGE` |
 | 资料不是后台读的、商家也没确认时，不能登记内容 | `geo_common.py` 的 `confirm_state` |
 | 每期主动写的内容最多 2 篇 | `geo_report.py` 的 `WEEKLY_CONTENT_CAP` |
-| 体检做到一半断掉时回到哪一步：status 和 publish 按这一期做到哪了给 next 和提醒 | `geo_common.py` 的 `period_stage` |
+| 体检做到一半断掉时回到哪一步；写完小结后重新算分、数变了要重写：status 和 publish 按这一期做到哪了给 next 和提醒 | `geo_common.py` 的 `period_stage`、`summary_fingerprint` |
 | 每种内容的标题、正文长度 | `geo_report.py` 的 `CONTENT_TYPES` |
 | 核对时出处链接必须来自回答自己的引用 | `geo_score.py` 的 `cmd_set_judgement` |
 | 读全文写回的店名必须出现在那个回答的原文里；没点名的回答一个都不能漏，漏了“提到了谁”不出数；复核的引用必须是这一期出现过的 | `geo_score.py` 的 `cmd_set_reading`、`count_shops` |
@@ -83,6 +83,7 @@
 | 每期主动写几篇 | `geo_report.py` 的 `WEEKLY_CONTENT_CAP`，同时改 `skills/geo-content/SKILL.md`、`prompt.md`、上面“脚本卡住的规矩”表里写的数，以及 `tests/run_tests.py` 里“第三篇被拒”那条检查 |
 | 一家店能单独加几个页面 | `geo_report.py` 的 `CUSTOM_PAGE_CAP` |
 | 问题的数量 | `geo_state.py` 的 `OPEN_RANGE`、`BRAND_RANGE`、`RECOMMENDED`，同时改 `skills/geo-profile/SKILL.md`（“出题”和“判断是本地门店还是电商”里写的 10 道、2 道）和 `references/segment-*.md` 的配比表 |
+| 改了题只重问几道时，最近一期多旧就不往里补 | `geo_run.py` 的 `STALE_PERIOD_DAYS` |
 | 一条查询等多久算缺失 | `geo_run.py` 的 `DEADLINE_SECONDS` |
 | 工作台保留几期 | `geo_report.py` 的 `PERIOD_LIMIT` |
 
