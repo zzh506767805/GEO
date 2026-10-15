@@ -645,6 +645,20 @@ def test_replay():
         print("      示例已更新：" + str(SAMPLE))
 
 
+def test_public_empty_accounts():
+    """公开信息整理的资料里，空着的公众号、抖音号不列进“等商家确认的”：列进去，员工会以为要去问商家要账号。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        created = call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        check("刚建档时：要商家确认的只有店名这些，不列空着的账号和购买入口",
+              created["pendingConfirm"] is True and set(created["toConfirm"]) == {"brand"}, created.get("toConfirm"))
+        empty = dict(SYNTHETIC_FACTS, channels={"wechatOfficial": "", "douyin": "", "ownHosts": [], "ownContentKeys": []})
+        saved = call(STATE, "set-facts", "--file", write(tmp, "f.json", empty), env=env)
+        check("资料来自公开信息、账号都空着：整份仍要商家确认，但要确认的不含账号",
+              saved["factsFrom"] == "public" and saved["pendingConfirm"] is True and saved["canWrite"] is False
+              and {"brand", "stores"} <= set(saved["toConfirm"]) and "channels" not in saved["toConfirm"], saved.get("toConfirm"))
+
+
 def test_backend_source():
     """店铺后台读来的资料不用商家确认；只有员工另外记下的那几样要确认。"""
     with tempfile.TemporaryDirectory() as tmp:
@@ -1104,7 +1118,7 @@ def test_douyin_and_sources():
 
 if __name__ == "__main__":
     try:
-        for test in (test_copies, test_template, test_synthetic, test_backend_source, test_facts_merge, test_new_agent_guards, test_resume_mid_check, test_pages, test_shop_template, test_data_reliability, test_trend_skips_incomplete, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render, test_douyin_and_sources):
+        for test in (test_copies, test_template, test_synthetic, test_public_empty_accounts, test_backend_source, test_facts_merge, test_new_agent_guards, test_resume_mid_check, test_pages, test_shop_template, test_data_reliability, test_trend_skips_incomplete, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render, test_douyin_and_sources):
             try:
                 test()
             except AssertionError as exc:

@@ -931,7 +931,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       gaps.forEach(function (gap) { gapBox.appendChild(add(el('div', 'gap-row'), el('span', 'tag', gap.where), el('span', '', gap.note))); });
       root.appendChild(gapBox);
     }
-    if (!DATA.settings.canWrite) { root.appendChild(sayBlock(['这些信息没问题，确认', '店铺信息有不对的：……', '我的公众号叫……'])); return; }
+    if (!DATA.settings.canWrite) { root.appendChild(sayBlock(['这些信息没问题，确认', '店铺信息有不对的：……'])); return; }
     var newest = live[0];
     var lines = !newest ? ['写一篇公众号文章：……', '写一条小红书笔记：……', '这周先不写']
       : (newest.status === 'preview' ? ['第 ' + newest.no + ' 篇可以发', '第 ' + newest.no + ' 篇标题改短一点', '第 ' + newest.no + ' 篇不发了', newest.type === 'xhs' ? '同一个主题再写一篇公众号文章' : '同一个主题再写一条小红书笔记']
@@ -1238,7 +1238,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       kv(rl, '每篇必带', (x.mustInclude || []).join('；'));
       root.appendChild(add(style, rl));
     }
-    root.appendChild(sayBlock(['把 Q3 换一个问法', '加一道题：……', '同类店换成……', '我的公众号叫……', st.pending ? '这些信息没问题，确认' : '写东西不要用“网红”这个词']));
+    root.appendChild(sayBlock(['把 Q3 换一个问法', '加一道题：……', '同类店换成……', st.pending ? '这些信息没问题，确认' : '写东西不要用“网红”这个词']));
   }
 
   var PAGES = { overview: pageOverview, content: pageContent, settings: pageSettings };

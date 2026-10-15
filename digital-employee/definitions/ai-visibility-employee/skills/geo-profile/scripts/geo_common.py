@@ -326,11 +326,21 @@ def sync_hint(state: dict = None) -> str:
 # ── 哪些信息要商家确认 ──
 # 店铺后台里有的资料（店名、门店、营业时间、商品、小程序）是商家自己维护的，以后台为准，不用他再确认一遍。
 # 要确认的只是后台里没有、员工自己找来或推断的那几样：别名、他的公众号和抖音号、后台里没有的门店。
+def _filled(value) -> bool:
+    """真的填了东西：空字符串、空列表、各项都空着的对象都算没填。"""
+    if isinstance(value, dict):
+        return any(_filled(v) for v in value.values())
+    if isinstance(value, (list, tuple)):
+        return any(_filled(v) for v in value)
+    return bool(value)
+
+
 def needs_confirm(facts: dict) -> dict:
     facts = facts or {}
     if facts.get("from") != "backend":
         # 资料不是从店铺后台读的（比如从公开信息整理的），整份都要商家看过才算数。
-        return {k: facts.get(k) for k in ("brand", "stores", "products", "buyEntry", "channels") if facts.get(k)}
+        # 只列真的填了的：空着的公众号、抖音号列进来，员工会以为要去问商家。
+        return {k: facts.get(k) for k in ("brand", "stores", "products", "buyEntry", "channels") if _filled(facts.get(k))}
     brand, channels = facts.get("brand") or {}, facts.get("channels") or {}
     extras = {
         "aliases": brand.get("aliases") or [],
