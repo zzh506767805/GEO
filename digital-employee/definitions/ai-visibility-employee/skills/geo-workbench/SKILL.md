@@ -89,6 +89,8 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 
 做了官网的，“内容”页最上面多一块官网：上线了给“打开官网”，有测试版等确认给“看测试版”，店铺资料改过会提示更新。
 
+页面上的链接在客户端里这样打开：公众号文章的“看排版预览”在工作台里弹出来看；官网、报告里 AI 引用的原文这些别的网站，交给客户端用浏览器打开；打不开时页面会弹出链接，让商家复制到浏览器里。
+
 ## 页面清单
 
 工作台固定有三个页面，由脚本按存档生成。另外还可以有员工负责的页面（见 `references/pages.md`），它们排在这三个页面之后，链接末尾是 `#/` 加页面的 id，`publish` 和 `links` 的输出里会给出来。
@@ -123,6 +125,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 | “工作台上加一个页面，放……”“把活动安排放到工作台上” | 先看是不是已经有合适的页面（`geo_report.py pages`）。没有、而且放的是跨期的、商家会反复来看的东西，就按 `references/pages.md` 的“员工负责的页面”单独加一页 → `publish`，给 `links` 里这一页的链接。某一期的分析不要做成页面，它在那一期的报告里 |
 | “页面换个颜色”“字大一点”“首页上加一块……”“把这块去掉”“改回原来的样子” | 按 `references/pages.md` 的“改这家店的页面”：改这家店的模板（还没有就先 `template-init`），改回原样用 `template-reset` → `publish`，给改了的那一页的链接 |
 | “活动页上的……改一下”“那个页面不要了” | 改：`set-page` 传整页的新内容块 → `publish`；不要了：`geo_report.py remove-page --id <页面>` → `publish` |
+| “工作台里的链接点不开”“预览打不开” | 先 `publish` 一次，让工作台用上最新的页面；还是打不开，页面会弹出链接让他复制到浏览器里打开。以前各期的报告不会重新生成，里面的链接在客户端里可能点不开，告诉他这是旧报告，需要时把那一期报告的单独链接（`links` 里的 `reportFiles`）发给他，在浏览器里看 |
 | “新增嵌入 tab”“客户端嵌入工作台”“固定页签”“页签里看不到” | 按 `references/tabs.md`。这是客户端的页签，不是给工作台加页面 |
 
 ## 加页面、改样子、客户端页签

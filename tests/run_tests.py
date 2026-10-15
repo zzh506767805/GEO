@@ -1044,6 +1044,10 @@ def test_template():
     check("工作台更新时间只展示一处", html.count("'更新于 ' + updatedAt()") == 1)
     check("模板里只有数据这一个占位符，龙虾图标已经内嵌", html.count("__GEO_DATA__") == 1 and "__MASCOT_B64__" not in html)
     check("模板不引用外部资源", not re.search(r'(?:src|href)\s*=\s*["\']https?://', html) and "@import" not in html and "url(http" not in html)
+    urls = sorted(set(re.findall(r"https?://[^\s'\"<>)]+", html)))
+    check("模板里唯一的外部文件是有赞官方的客户端接入脚本，只在嵌在网页版客户端里才加载",
+          urls == ["http://www.w3.org/2000/svg", "https://b.yzcdn.cn/yzclaw/claw-host/0.0.1/claw-host.js"]
+          and "script.src = HOST_SDK" in html and "if (!framed) { return; }" in html, urls)
     script = REPORT.read_text(encoding="utf-8")
     registry = json.loads((SKILLS / "geo-workbench" / "assets" / "pages.json").read_text(encoding="utf-8"))["pages"]
     builtin = [p["id"] for p in registry if p.get("builtin")]
@@ -1163,7 +1167,9 @@ def test_pages_render():
     except (json.JSONDecodeError, KeyError):
         check("工作台逐页渲染检查能跑起来", False, proc.stdout[:200] + proc.stderr[:300])
         return
+    clicks = {"workbench": 0, "report": 0}
     for (label, path), item in zip(PAGES, report):
+        clicks[item["kind"]] = clicks.get(item["kind"], 0) + int(item.get("linkClicks") or 0)
         if item["kind"] == "report":
             check("报告能渲染，单独打开带标题、嵌在工作台里不带：%s" % label, not item["errors"] and item.get("embedded") is True, item["errors"][:3])
             continue
@@ -1175,6 +1181,8 @@ def test_pages_render():
             and all("report/" + d in routes for d in dates[-6:]) and len(item.get("frames") or []) == sum(1 for r in routes if r.startswith("report/")) \
             and all("#embed" in src for src in item.get("frames") or [])
         check("工作台能渲染，每一期的报告都在工作台里打开：%s" % label, ok, item["errors"][:3] or (routes, item.get("frames")))
+    check("外链真的点到了：工作台 %d 个、报告 %d 个，在客户端里都交给客户端打开，被拦下时都弹出了可复制的链接" % (clicks["workbench"], clicks["report"]),
+          clicks["workbench"] > 0 and clicks["report"] > 0, clicks)
 
 
 def test_douyin_and_sources():

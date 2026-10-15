@@ -49,18 +49,35 @@ function check(file) {
   const code = /<script>\s*([\s\S]*?)<\/script>\s*<\/body>/.exec(html);
   if (!data || !code) { return { file, kind: '', pages: 0, errors: ['找不到数据块或页面脚本'] }; }
   const kind = JSON.parse(data[1]).kind === 'report' ? 'report' : 'workbench';
-  if (kind === 'workbench') { return render(file, kind, data[1], code[1], ''); }
+  if (kind === 'workbench') {
+    const result = render(file, kind, data[1], code[1], '');
+    // 在客户端里：点外链要交给客户端打开（external.open），一条都不能漏
+    const inHost = render(file, kind, data[1], code[1], '', { host: true });
+    if (inHost.linkClicks !== inHost.linkHostOpens) {
+      result.errors.push('在客户端里点了 ' + inHost.linkClicks + ' 个外链，只有 ' + inHost.linkHostOpens + ' 个交给了客户端');
+    }
+    // 不在客户端、新窗口又被拦下：每次都要弹出可复制的链接
+    const blocked = render(file, kind, data[1], code[1], '', { blockPopups: true });
+    if (blocked.linkClicks !== blocked.copySheets) {
+      result.errors.push('新窗口被拦下时点了 ' + blocked.linkClicks + ' 个外链，只有 ' + blocked.copySheets + ' 次弹出了可复制的链接');
+    }
+    result.linkClicks = inHost.linkClicks;
+    return result;
+  }
   // 报告：单独打开一遍，嵌在工作台里再来一遍（地址带 #embed，可以直接到某一节）
   const alone = render(file, kind, data[1], code[1], '');
   const inside = render(file, kind, data[1], code[1], '#embed/mentions');
   const errors = alone.errors.concat(inside.errors.map((e) => '嵌在工作台里时 ' + e));
   if (!/体检报告/.test(alone.head)) { errors.push('单独打开时没有标题'); }
   if (inside.head) { errors.push('嵌在工作台里时还带着自己的标题：' + inside.head.slice(0, 30)); }
-  if (inside.said !== 'report-ready') { errors.push('嵌在工作台里时没有跟外面打招呼'); }
-  return { file, kind, pages: 1, routes: [], embedded: !inside.head, errors };
+  if (inside.posted.indexOf('report-ready') < 0) { errors.push('嵌在工作台里时没有跟外面打招呼'); }
+  // 嵌在工作台里的报告拿不到客户端的接口：点外链要交给外面的工作台去开
+  const asked = inside.posted.filter((geo) => geo === 'open-link').length;
+  if (asked !== inside.linkClicks) { errors.push('嵌在工作台里点了 ' + inside.linkClicks + ' 个外链，只有 ' + asked + ' 个交给了工作台'); }
+  return { file, kind, pages: 1, routes: [], embedded: !inside.head, linkClicks: inside.linkClicks, errors };
 }
 
-function render(file, kind, dataText, codeText, startHash) {
+function render(file, kind, dataText, codeText, startHash, opts = {}) {
   const errors = [];
   const data = [null, dataText], code = [null, codeText];
   const elements = { 'geo-data': makeNode('script'), app: makeNode('div'), sheet: makeNode('div') };
@@ -79,11 +96,21 @@ function render(file, kind, dataText, codeText, startHash) {
     execCommand: () => true,
   };
   const location = { hash: startHash, protocol: 'https:' };
-  let said = '';
-  const outer = { postMessage: (message) => { said = message && message.geo; } };
+  const posted = [];
+  const outer = { postMessage: (message) => { posted.push(message && message.geo); } };
   outer.parent = outer;
   const window = { addEventListener: (type, fn) => { listeners[type] = fn; }, scrollTo() {}, innerWidth: 1280 };
-  if (startHash) { window.parent = outer; }  // 嵌在别的页面里
+  window.parent = startHash ? outer : window;  // 嵌在别的页面里；否则是普通浏览器里的顶层页面
+  // 同步兑现的 then：页面脚本里的回调当场执行，测试不用等
+  const settled = (value) => ({ then: (ok) => { ok(value); return settled(value); } });
+  const hostOpens = [];
+  if (opts.host) {
+    window.clawHost = {
+      initialize: () => settled({ capabilities: { methods: ['external.open'] } }),
+      call: (method, params) => { if (method === 'external.open') { hostOpens.push(params && params.url); } return settled(null); },
+    };
+  }
+  window.open = () => (opts.blockPopups || opts.host ? null : {});
   const sandbox = { document, window, location, navigator: {}, setTimeout: (fn) => { fn(); return 1; }, clearTimeout() {}, console };
   try {
     vm.runInNewContext(code[1], sandbox, { filename: file });
@@ -93,7 +120,7 @@ function render(file, kind, dataText, codeText, startHash) {
   const links = [];
   walk(elements.app, (node) => { if (node.tagName === 'A' && /^#\//.test(node.href || '')) { links.push(node.href); } });
   const routes = Array.from(new Set(links.map((href) => href.replace(/^#\//, '').split('?')[0])));
-  let pages = 0;
+  let pages = 0, linkClicks = 0, copySheets = 0, linkHostOpens = 0;
   const visit = (hash) => {
     try {
       if (kind === 'workbench') {
@@ -106,6 +133,20 @@ function render(file, kind, dataText, codeText, startHash) {
       walk(elements.app, (node) => { if (typeof node.onclick === 'function' && node.tagName === 'BUTTON' && !node.disabled) { clickable.push(node); } });
       clickable.slice(0, 400).forEach((node) => node.onclick({ target: node }));
       if (typeof elements.sheet.onclick === 'function') { elements.sheet.onclick({ target: elements.sheet }); }
+      // 外链（https 开头、页面上可以点的）一个个点：在客户端里要交给客户端，被拦下时要弹出可复制的链接
+      if (opts.host || opts.blockPopups || startHash) {
+        const anchors = [];
+        walk(elements.app, (node) => { if (node.tagName === 'A' && typeof node.onclick === 'function' && /^https:/.test(node.href || '')) { anchors.push(node); } });
+        anchors.slice(0, 50).forEach((node) => {
+          elements.sheet.hidden = true;
+          linkClicks += 1;
+          const before = hostOpens.length;
+          node.onclick({ target: node, preventDefault() {} });
+          if (hostOpens.length > before) { linkHostOpens += 1; }
+          if (!elements.sheet.hidden && /复制链接/.test(ownText(elements.sheet))) { copySheets += 1; }
+        });
+        elements.sheet.hidden = true;
+      }
       const text = ownText(elements.app) + ownText(elements.sheet);
       const bad = BAD_TEXT.exec(text);
       if (bad) { errors.push(hash + '：页面上出现了“' + text.slice(Math.max(0, bad.index - 20), bad.index + 20) + '”'); }
@@ -119,7 +160,7 @@ function render(file, kind, dataText, codeText, startHash) {
     visit(startHash);
     let head = '';
     walk(elements.app, (node) => { if (/\brpt-head\b/.test(node.className || '')) { head = node.textContent; } });
-    return { errors, head, said };
+    return { errors, head, posted, linkClicks };
   }
   if (!routes.length) { errors.push('侧边栏里没有任何页面链接'); }
   const frames = [];
@@ -139,7 +180,7 @@ function render(file, kind, dataText, codeText, startHash) {
     }
   });
   visit('#/not-a-page');
-  return { file, kind, pages, routes, frames, homeText, sparkBars: Math.max(sparkBars, 0), errors };
+  return { file, kind, pages, routes, frames, homeText, sparkBars: Math.max(sparkBars, 0), errors, linkClicks, copySheets, linkHostOpens };
 }
 
 const files = process.argv.slice(2);

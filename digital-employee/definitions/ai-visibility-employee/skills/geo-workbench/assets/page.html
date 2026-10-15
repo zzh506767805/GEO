@@ -406,6 +406,11 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .sheet-x { display: flex; flex: none; align-items: center; justify-content: center; width: 32px; height: 32px; margin-left: 12px; border: 0; border-radius: 50%; background: var(--hover); cursor: pointer; }
 .ans { padding: 16px 18px 18px; border-top: 8px solid var(--bg); }
 .sheet-head + .ans { border-top: 0; }
+.link-input { display: block; width: 100%; margin: 10px 0 12px; border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 10px; background: var(--canvas); color: var(--ink); font-size: 13px; }
+.sheet.preview .sheet-panel { display: flex; flex-direction: column; max-width: 460px; height: 88vh; overflow: hidden; }
+.sheet.preview .sheet-head { align-items: center; }
+.sheet.preview .sheet-head .btn { flex: none; margin: 0 0 0 12px; }
+.preview-frame { flex: 1; width: 100%; min-height: 0; border: 0; background: #fff; }
 .ans:last-child { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
 .ans-flags { display: flex; flex-wrap: wrap; align-items: center; }
 .ans-flags > * { margin: 0 8px 6px 0; }
@@ -496,6 +501,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (!/^https?:\/\//i.test(url || '')) { return el('span', cls || '', text); }
     var a = el('a', cls || '', text);
     a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.onclick = function (event) { if (event && event.preventDefault) { event.preventDefault(); } openOutside(url, text); };
     return a;
   }
   /* 内容：不发了的不算；等确认的要提醒 */
@@ -506,7 +512,113 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (!url) { return el('span', cls || '', text); }
     var a = el('a', cls || '', text);
     a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    /* 本机直接打开的文件名照常新开窗口；线上的链接和别的外链一样处理（在客户端里新开窗口会被拦下） */
+    if (httpsUrl(url)) { a.onclick = function (event) { if (event && event.preventDefault) { event.preventDefault(); } openOutside(url, text); }; }
     return a;
+  }
+
+  /* ── 打开链接 ──
+     工作台在龙虾客户端里是嵌在页签里显示的：客户端不让它新开窗口，也不让它跳到别的网站。
+     - 别的网站（AI 引用的原文、官网、店铺）：在客户端里时交给客户端打开（客户端留的 external.open，电脑版用系统浏览器打开）；
+       用普通浏览器打开工作台时照常新开窗口；两样都没成，弹出链接让商家复制。
+     - 和工作台同一个网站的页面（公众号排版预览）：直接在工作台里弹出来看，不用跳走。
+     - 嵌在工作台里的报告拿不到客户端的接口，链接交给外面的工作台去开（open-link 消息，工作台回 open-link-done）。
+     电脑版客户端会自动给页签里的页面挂上 window.clawHost；网页版要先加载有赞官方的接入脚本，
+     它只在页面加载完那一刻建立连接，所以要在页面一开始就加载。普通浏览器里打开时不加载。 */
+  var HOST_SDK = 'https://b.yzcdn.cn/yzclaw/claw-host/0.0.1/claw-host.js';
+  var host = null;     /* 连上了、并且能打开外部链接的客户端接口 */
+  var asking = {};     /* 报告：交给工作台去开、还没收到回音的链接 */
+  function httpsUrl(url) { return /^https:\/\//i.test(String(url || '')) ? String(url) : ''; }
+  function connectHost() {
+    if (EMBED || LOCAL) { return; }
+    function ready() {
+      var client = window.clawHost;
+      if (!client || typeof client.initialize !== 'function') { return; }
+      try {
+        client.initialize().then(function (result) {
+          var methods = (result && result.capabilities && result.capabilities.methods) || [];
+          if (methods.indexOf('external.open') >= 0) { host = client; }
+        }, function () { /* 连不上客户端，就照常新开窗口 */ });
+      } catch (error) { /* 同上 */ }
+    }
+    if (window.clawHost) { ready(); return; }
+    var framed = true;
+    try { framed = window.parent !== window; } catch (error) { framed = true; }
+    if (!framed) { return; }
+    var script = document.createElement('script');
+    script.src = HOST_SDK;
+    script.onload = ready;
+    (document.head || document.body).appendChild(script);
+  }
+  function openOutside(url, title) {
+    var safe = httpsUrl(url);
+    if (EMBED && safe) { askWorkbench(safe, title); return; }
+    if (host && safe) {
+      try {
+        host.call('external.open', { url: safe }).then(function () { toast('已在浏览器里打开'); }, function () { showLink(safe, title); });
+      } catch (error) { showLink(safe, title); }
+      return;
+    }
+    var win = null;
+    try { win = window.open(url, '_blank'); } catch (error) { win = null; }
+    if (win) { try { win.opener = null; } catch (error) { /* 不影响打开 */ } return; }
+    showLink(url, title);
+  }
+  function askWorkbench(url, title) {
+    var id = 'L' + (++askCount);
+    asking[id] = setTimeout(function () { if (asking[id]) { delete asking[id]; showLink(url, title); } }, 1500);
+    try { window.parent.postMessage({ geo: 'open-link', id: id, url: url }, '*'); } catch (error) { clearTimeout(asking[id]); delete asking[id]; showLink(url, title); }
+  }
+  var askCount = 0;
+  function onAskAnswered(event) {
+    var data = event && event.data;
+    if (!data || data.geo !== 'open-link-done' || !asking[data.id]) { return; }
+    clearTimeout(asking[data.id]);
+    delete asking[data.id];
+  }
+  /* 和工作台是不是同一个网站。本机直接打开的文件不算 */
+  function sameSite(url) {
+    var here = '';
+    try { here = location.origin || (location.protocol + '//' + location.host); } catch (error) { here = ''; }
+    var m = /^(https:\/\/[^\/?#]+)/i.exec(String(url || ''));
+    return !LOCAL && !!here && !!m && m[1].toLowerCase() === String(here).toLowerCase();
+  }
+  /* 没能直接打开：把链接给商家，复制到浏览器里打开 */
+  function showLink(url, title) {
+    lastFocus = document.activeElement;
+    sheet.className = 'sheet';
+    panel.textContent = '';
+    var close = button('sheet-x', null, closeSheet);
+    close.setAttribute('aria-label', '关闭');
+    close.appendChild(icon('x', 16));
+    add(panel, add(el('div', 'sheet-head'), add(el('h3'), el('span', 'who', '在浏览器里打开'), title || '这个链接'), close));
+    var input = el('input', 'link-input');
+    input.type = 'text';
+    input.readOnly = true;
+    input.value = url;
+    input.onfocus = function () { if (input.select) { input.select(); } };
+    panel.appendChild(add(el('div', 'ans'), el('div', 'small muted', '这里没能直接打开。复制下面的链接，粘贴到浏览器里打开。'), input,
+      button('btn primary', '复制链接', function () { copy(url, '已复制，粘贴到浏览器里打开'); })));
+    sheet.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  /* 公众号排版预览这类和工作台同一个网站的页面：在工作台里弹出来看。别的网站交给 openOutside */
+  function openPreview(url, title) {
+    if (!sameSite(url)) { openOutside(url, title); return; }
+    lastFocus = document.activeElement;
+    sheet.className = 'sheet preview';
+    panel.textContent = '';
+    var close = button('sheet-x', null, closeSheet);
+    close.setAttribute('aria-label', '关闭');
+    close.appendChild(icon('x', 16));
+    var outside = button('btn', '在浏览器里打开', function () { openOutside(url, title); });
+    add(panel, add(el('div', 'sheet-head'), add(el('h3'), el('span', 'who', '排版预览'), title || ''), outside, close));
+    var frame = el('iframe', 'preview-frame');
+    frame.title = title || '排版预览';
+    frame.src = url;
+    panel.appendChild(frame);
+    sheet.hidden = false;
+    document.body.style.overflow = 'hidden';
   }
   /* 去工作台的某个页面。在报告里要带上工作台的地址；拿不到地址时退成普通文字 */
   function nav(text, target, cls) {
@@ -658,6 +770,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   }
   function closeSheet() {
     sheet.hidden = true;
+    sheet.className = 'sheet';
+    panel.textContent = '';
     document.body.style.overflow = '';
     if (lastFocus && lastFocus.focus) { lastFocus.focus(); }
   }
@@ -856,10 +970,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (item.reason || item.whereToPost || item.tip) { box.appendChild(info); }
     var acts = el('div', 'art-foot');
     if (item.previewUrl) {
-      /* 成品是带排版的页面（公众号文章）：审稿看预览 */
-      var preview = link('看排版预览', item.previewUrl, 'btn primary');
-      preview.appendChild(icon('ext', 14));
-      acts.appendChild(preview);
+      /* 成品是带排版的页面（公众号文章）：审稿看预览，在工作台里弹出来看 */
+      acts.appendChild(button('btn primary', '看排版预览', function () { openPreview(item.previewUrl, item.title); }));
     }
     if (item.body) {
       var details = el('details', 'art-body');
@@ -995,7 +1107,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   var NAV = [{ items: NAV_ITEMS.map(function (p) { return [p.id, p.title, p.icon || 'doc']; }) }];
   var SUBTITLE = {};
   NAV_ITEMS.forEach(function (p) { SUBTITLE[p.id] = p.subtitle || ''; });
-  var frameTimer = null, frameHint = null;
+  var frameTimer = null, frameHint = null, reportFrame = null;
   function closeSide() { side.className = 'side'; scrim.className = 'scrim'; }
   function periodByDate(date) {
     for (var i = 0; i < PERIODS.length; i++) { if (PERIODS[i].date === date) { return PERIODS[i]; } }
@@ -1091,6 +1203,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     content.className = 'content host';
     actEl.appendChild(fileLink('单独打开', file));
     var frame = el('iframe', 'rpt-frame');
+    reportFrame = frame;
     frame.title = '第 ' + period.no + ' 期体检报告';
     frame.src = file + '#embed' + (section ? '/' + section : '');
     /* 报告显示出来以后会打个招呼。等了几秒还没动静，就在上面给一个单独打开的入口，免得商家对着空白发呆 */
@@ -1103,6 +1216,13 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   }
   function onFrameMessage(event) {
     var data = event && event.data;
+    if (data && data.geo === 'open-link') {
+      /* 嵌在工作台里的报告点了外链：只接这一期报告发来的、https 开头的链接 */
+      if (!reportFrame || event.source !== reportFrame.contentWindow || !httpsUrl(data.url)) { return; }
+      try { event.source.postMessage({ geo: 'open-link-done', id: data.id }, '*'); } catch (error) { /* 报告收不到回音，会自己把链接给商家 */ }
+      openOutside(data.url, '');
+      return;
+    }
     if (!data || data.geo !== 'report-ready') { return; }
     if (frameTimer) { clearTimeout(frameTimer); frameTimer = null; }
     if (frameHint) { frameHint.hidden = true; }
@@ -1581,7 +1701,9 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (EMBED) { tellAncestors({ geo: 'report-ready', date: P.date }); }
   }
 
+  try { connectHost(); } catch (error) { /* 连不上客户端不影响页面 */ }
   if (KIND === 'report') {
+    if (EMBED) { window.addEventListener('message', onAskAnswered); }
     renderReport();
   } else {
     renderShell();
