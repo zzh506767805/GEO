@@ -47,7 +47,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 
 /* ───────── 外框：左侧导航 + 顶栏 + 内容 ───────── */
 .app { display: flex; min-height: 100vh; }
-.side { position: sticky; top: 0; z-index: 20; display: flex; flex: none; flex-direction: column; width: 232px; height: 100vh; padding: 16px 12px 14px; overflow-y: auto; border-right: 1px solid var(--line); background: var(--side); }
+.side { position: sticky; top: 0; z-index: 20; display: flex; flex: none; flex-direction: column; width: 232px; height: 100vh; padding: 16px 12px 12px; overflow-y: auto; border-right: 1px solid var(--line); background: var(--side); }
 .side-brand { display: flex; align-items: center; padding: 0 6px 12px; }
 .mascot { flex: none; width: 36px; height: 36px; margin-right: 10px; border-radius: 10px; background: var(--canvas); box-shadow: 0 0 0 1px var(--line); }
 .side-brand .t1 { font-size: 12px; line-height: 1.3; color: var(--ink-3); }
@@ -55,7 +55,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .side-state { display: block; margin: 0 6px 6px; }
 .side-state .pill { width: 100%; justify-content: center; line-height: 26px; }
 .side-state:hover { text-decoration: none; opacity: .85; }
-.nav-label { padding: 14px 10px 6px; font-size: 12px; color: var(--ink-3); }
+.nav-label { padding: 14px 10px 6px; font-size: 12px; letter-spacing: .04em; color: var(--ink-3); }
 .sec-label { margin-top: 20px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
 .note-gap { margin-top: 12px; }
 /* 体检报告：每期一份独立的文件。单独打开时自带标题；嵌在工作台里时（地址带 #embed）不带标题，靠左对齐，和工作台的其他页面一致 */
@@ -88,7 +88,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .finding:first-of-type { border-top: 0; padding-top: 4px; }
 .finding-t { font-weight: 700; line-height: 1.5; }
 .finding-t .tag { margin-right: 8px; }
-.finding-d { margin-top: 6px; color: var(--ink-2); line-height: 1.7; }
+.finding-d { max-width: 68em; margin-top: 6px; color: var(--ink-2); line-height: 1.7; }
 .finding-a { margin-top: 6px; line-height: 1.7; }
 .finding-a .k { margin-right: 8px; color: var(--ink-3); font-size: 12px; }
 .finding-q { display: block; width: 100%; margin-top: 8px; padding: 8px 12px; border: 0; border-left: 3px solid var(--line); border-radius: 0 8px 8px 0; background: var(--hover); color: var(--ink-2); font: inherit; font-size: 13px; line-height: 1.6; text-align: left; cursor: pointer; }
@@ -100,15 +100,16 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .nav a { display: flex; align-items: center; height: 36px; margin-bottom: 2px; padding: 0 10px; border-radius: 8px; color: var(--ink-2); font-size: 14px; }
 .nav a:hover { background: var(--hover); text-decoration: none; }
 .nav a.on { background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+.nav a:focus-visible { outline-offset: -2px; }
 .nav a svg { flex: none; margin-right: 10px; }
 .nav .cnt { min-width: 20px; margin-left: auto; border-radius: 10px; padding: 0 6px; background: var(--hover); color: var(--ink-2); font-size: 12px; font-weight: 600; line-height: 20px; text-align: center; }
 .nav .cnt.bad { background: var(--bad-soft); color: var(--bad); }
 .nav .rpt-link { height: 34px; font-size: 13px; }
 .nav .rpt-link .cnt { background: var(--brand-soft); color: var(--brand); }
-.side-foot { margin-top: auto; padding: 16px 8px 0; font-size: 12px; line-height: 1.6; color: var(--ink-3); }
 .main { flex: 1; min-width: 0; }
 .topbar { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; min-height: 60px; padding: 10px 28px; border-bottom: 1px solid var(--line); background: var(--bg); }
 .topbar h1 { margin: 0; font-size: 18px; font-weight: 700; white-space: nowrap; }
+.card-h h3, .banner .verdict, .stack > .rpt-h2, .paper-title, .finding-t, .sheet-head h3 { text-wrap: balance; }
 .topbar .sub { margin-left: 12px; overflow: hidden; font-size: 13px; color: var(--ink-3); text-overflow: ellipsis; white-space: nowrap; }
 .topbar .upd { margin-left: 8px; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
 .topbar .sp { flex: 1; min-width: 8px; }
@@ -142,11 +143,11 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .stack > * + * { margin-top: 16px; }
 .row.c4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 901px) {
-  .row.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .row.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
   .row.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .row.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-.card { min-width: 0; border: 1px solid var(--line); border-radius: var(--r); background: var(--canvas); box-shadow: var(--shadow); padding: 16px; }
+.card { min-width: 0; border: 1px solid var(--line); border-radius: var(--r); background: var(--canvas); padding: 16px; }
 @media (min-width: 901px) { .card { padding: 18px 20px; } }
 .card-h { display: flex; align-items: center; margin-bottom: 12px; }
 .card-h h3 { margin: 0; font-size: 15px; font-weight: 700; }
@@ -155,7 +156,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .card.flush { padding: 0; overflow: hidden; }
 .card.flush .card-h { margin: 0; padding: 16px 20px 12px; }
 .card.flush .pad { padding: 0 20px 16px; }
-.lead { margin: 0 0 14px; font-size: 13px; color: var(--ink-2); }
+.lead { max-width: 68em; margin: 0 0 14px; font-size: 13px; color: var(--ink-2); }
 .pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 0 9px; font-size: 12px; font-weight: 600; line-height: 22px; white-space: nowrap; }
 .pill.ok { background: var(--ok-soft); color: var(--ok); }
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
@@ -183,12 +184,12 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .tbl tr:last-child td { border-bottom: 0; }
 .tbl th:first-child, .tbl td:first-child { padding-left: 20px; }
 .tbl th:last-child, .tbl td:last-child { padding-right: 20px; }
-.tbl .r { text-align: right; }
+.tbl .r { text-align: right; font-variant-numeric: tabular-nums; }
 .tbl .c { text-align: center; }
 .tbl .nw { white-space: nowrap; }
 .tbl tr.click { cursor: pointer; }
 .tbl tr.click:hover td { background: var(--subtle); }
-.tbl b { font-weight: 700; }
+.tbl b { font-weight: 700; font-variant-numeric: tabular-nums; }
 .pbar { display: block; height: 6px; min-width: 72px; border-radius: 3px; background: var(--hover); overflow: hidden; }
 .pbar i { display: block; height: 100%; min-width: 2px; border-radius: 3px; background: var(--brand); }
 .pbar.gray i { background: var(--ink-4); }
@@ -209,13 +210,13 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .say .hint { margin-top: 8px; font-size: 12px; color: var(--ink-3); }
 
 /* ───────── 工作台首页 ───────── */
-.banner { display: flex; align-items: flex-start; border: 1px solid var(--brand-line); border-radius: var(--r); padding: 16px 18px; background: linear-gradient(135deg, var(--brand-soft) 0%, var(--canvas) 70%); }
+.banner { display: flex; align-items: flex-start; border: 1px solid var(--brand-line); border-radius: var(--r); padding: 16px 18px; background: linear-gradient(135deg, var(--brand-soft) 0%, var(--canvas) 55%); }
 .banner .mascot { width: 40px; height: 40px; margin-right: 14px; }
 .banner .body { flex: 1; min-width: 0; }
 .banner .tt { font-size: 12px; font-weight: 700; color: var(--brand); }
 .banner .verdict { margin: 2px 0 0; font-size: 19px; font-weight: 700; line-height: 1.45; letter-spacing: -.01em; }
 .banner .verdict b { color: var(--brand); }
-.banner .brief { margin-top: 6px; font-size: 14px; color: var(--ink-2); }
+.banner .brief { max-width: 68em; margin-top: 6px; font-size: 14px; color: var(--ink-2); }
 .banner .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .banner .acts .btn { margin: 0; }
 .banner.plain { border-color: var(--line); background: var(--canvas); }
@@ -231,10 +232,11 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .steps li.doing .nm { font-weight: 700; }
 .steps .st { margin-left: 12px; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
 .steps li.doing .st { color: var(--brand); font-weight: 600; }
-.kpi { position: relative; display: block; color: var(--ink); cursor: pointer; }
-.kpi:hover { border-color: var(--brand-line); text-decoration: none; }
+.kpi { position: relative; display: block; color: var(--ink); cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+.kpi:hover { border-color: var(--brand-line); box-shadow: var(--shadow); transform: translateY(-1px); text-decoration: none; }
 .kpi.static { cursor: default; }
-.kpi.static:hover { border-color: var(--line); }
+.kpi.static:hover { border-color: var(--line); box-shadow: none; transform: none; }
+@media (prefers-reduced-motion: reduce) { .kpi { transition: none; } .kpi:hover { transform: none; } }
 .kpi-top { display: flex; align-items: center; font-size: 13px; color: var(--ink-2); }
 .kpi-ico { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 26px; height: 26px; margin-right: 8px; border-radius: 8px; background: var(--brand-soft); color: var(--brand); }
 .kpi-ico.bad { background: var(--bad-soft); color: var(--bad); }
@@ -245,6 +247,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .kpi-num small { font-size: 13px; font-weight: 400; color: var(--ink-3); letter-spacing: 0; }
 .kpi-hint { display: block; margin-top: 4px; font-size: 12px; line-height: 1.5; color: var(--ink-3); }
 .kpi .spark { position: absolute; right: 16px; top: 16px; width: 64px; height: 26px; }
+@media (max-width: 640px) { .kpi .spark { position: static; display: block; margin-top: 8px; } }  /* 窄屏卡片放不下，走势图挪到最下面，不压住标题 */
 .todos { margin: 0; padding: 0; list-style: none; counter-reset: todo; }
 .todos li { position: relative; padding: 11px 0 11px 36px; border-top: 1px solid var(--line); }
 .todos li:first-child { border-top: 0; padding-top: 2px; }
@@ -1027,7 +1030,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
         navBox.appendChild(a);
       });
     }
-    add(side, navBox, el('div', 'side-foot', '有赞龙虾 · AI 曝光专员'));
+    add(side, navBox);
     scrim = el('div', 'scrim');
     scrim.onclick = closeSide;
     mainEl = el('div', 'main');
