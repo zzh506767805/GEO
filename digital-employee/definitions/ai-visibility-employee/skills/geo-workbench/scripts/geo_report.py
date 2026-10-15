@@ -593,6 +593,23 @@ def _site_title(facts: dict) -> str:
     return "%s · %s" % (name, category)
 
 
+def _shop_cited(facts: dict) -> dict:
+    """最近一期里，AI 引用了几次商城自己的页面。引用得多，说明 AI 本来就读得到商城，官网多出来的主要是商城里没有的那几块。"""
+    host = urlparse(str((facts.get("buyEntry") or {}).get("shopUrl") or "")).netloc.lower()
+    dates = _scored_dates()
+    if not host or not dates:
+        return {}
+    folder = gc.run_dir(dates[-1])
+    count = 0
+    for key in (gc.read_json(folder / "queries.json", {}) or {}).get("items") or {}:
+        raw = gc.read_json(folder / "raw" / (key + ".json")) or {}
+        for answer in (raw.get("result") or {}).get("answers") or []:
+            for ref in (answer.get("references") or {}).get("list") or []:
+                if urlparse(str(ref.get("url") or "")).netloc.lower() == host:
+                    count += 1
+    return {"date": dates[-1], "count": count}
+
+
 def cmd_site_brief(_args) -> None:
     """做官网要用的东西。员工只用这一份写官网，不用自己去翻存档：没确认的信息已经去掉了。"""
     facts = _facts()
@@ -623,6 +640,8 @@ def cmd_site_brief(_args) -> None:
         "writingRules": facts.get("writingRules") or {},
         "pageTitle": _site_title(facts),
         "today": gc.today(),
+        # 最近一期 AI 引用了几次商城自己的页面；还没体检过时为空
+        "shopCited": _shop_cited(facts),
         "site": gc.site_state(facts, meta),
     }
     if not state["canWrite"]:
@@ -643,11 +662,14 @@ def cmd_set_site(args) -> None:
     if args.status in ("test", "published") and not gc.confirm_state(facts)["canWrite"]:
         raise gc.GeoError("店铺资料还没经过商家确认，不能把它放上官网。先请商家确认店铺信息（按 geo-profile）")
     if args.status == "test":
+        if site.get("status") == "dropped":
+            # 不要了以后重做，是一个新的官网：旧的正式链接、域名、页面标识都不算数了
+            site = {"createdAt": now}
         site.update(status="test", testUrl=_https(args.test_url, "测试版链接"), testAt=now, testBasis=gc.site_facts(facts))
     elif args.status == "published":
-        if not site.get("testBasis"):
-            # 官网要先出测试版给商家看，他确认以后才能正式上线
-            raise gc.GeoError("还没有登记过测试版。先出测试版、用 --status test 登记、等商家确认，再正式发布")
+        if site.get("status") != "test" or not site.get("testBasis"):
+            # 官网要先出这一版的测试版给商家看，他确认以后才能正式上线
+            raise gc.GeoError("现在没有等商家确认的测试版。先出测试版、用 --status test 登记、等商家确认，再正式发布")
         site.update(status="published", url=_https(args.url, "官网的正式链接"), publishedAt=now, basis=site["testBasis"])
     elif args.status == "dropped":
         if not site.get("status"):
@@ -674,10 +696,14 @@ def cmd_set_site(args) -> None:
     state = gc.site_state(facts)
     steps = {
         "test": "执行 publish 同步工作台，再按“应用”能力的格式把测试版链接原样发给商家，停下来等他确认发布",
-        "published": "执行 publish 同步工作台，再把官网链接发给商家，并建议他把链接放到公众号简介、抖音主页、地图门店页这些他自己能改的地方",
+        "published": "执行 publish 同步工作台，再把官网链接发给商家，并建议他把链接放到自己能填网址的地方（比如地图上的门店页、抖音主页、公众号菜单）",
         "dropped": "执行 publish 同步工作台",
     }
-    gc.emit({"ok": True, "site": state, "next": steps.get(args.status) or gc.sync_hint()})
+    next_step = steps.get(args.status) or gc.sync_hint()
+    if args.status == "published" and state.get("outdated"):
+        next_step = ("这一版测试版做好以后，店铺资料里的%s又改了，刚上线的官网已经跟不上。" % "、".join(state["changed"])
+                     + "执行 publish 同步工作台，把链接发给商家时说明这一点，问他要不要更新")
+    gc.emit({"ok": True, "site": state, "next": next_step})
 
 
 def _answers(date: str, summary: dict) -> dict:

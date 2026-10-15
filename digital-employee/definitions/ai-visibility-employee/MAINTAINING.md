@@ -29,7 +29,7 @@
 | 读全文写回的店名必须出现在那个回答的原文里；没点名的回答一个都不能漏，漏了“提到了谁”不出数；复核的引用必须是这一期出现过的 | `geo_score.py` 的 `cmd_set_reading`、`count_shops` |
 | 发现最多 5 条，每条至少一句能在原文里逐字找到的原话 | `geo_score.py` 的 `cmd_set_findings`、`FINDINGS_CAP` |
 | 存草稿、记发布之前必须先确认 | `geo_report.py` 的 `cmd_mark_content` |
-| 资料还不能写内容时不能登记官网；没登记过测试版，不能登记正式上线 | `geo_report.py` 的 `cmd_set_site` |
+| 资料还不能写内容时不能登记官网；没有等商家确认的测试版，不能登记正式上线；不要了以后重做，旧的链接和域名清掉 | `geo_report.py` 的 `cmd_set_site` |
 | 一家店单独加的页面最多 5 个；内容块的格式 | `geo_report.py` 的 `CUSTOM_PAGE_CAP`、`normalize_blocks` |
 
 ## 想改什么 → 改哪里
@@ -74,8 +74,9 @@
 官网由员工调用平台的“应用”能力做，流程在 `skills/geo-site/SKILL.md`。脚本只记官网在哪、到了哪一步：
 
 - 记录在 `<数据目录>/profile/site.json`，`geo_report.py set-site` 写，`site-brief` 把做官网要用的资料一次给全。
-- “官网过时了”看 `geo_common.py` 的 `SITE_PARTS`（店名和品类、门店、招牌商品、怎么买）：做测试版那一刻的这几样和现在的店铺资料不一样，就算过时。想多比一样，在 `site_facts` 和 `SITE_PARTS` 里加，三份 `geo_common.py` 一起改。
-- AI 引用了已上线的官网算本店自己的内容：`geo_score.py` 的 `_with_site` 和 `classify_ref`，按正式链接的前缀认，绑了独立域名的按域名认。
+- “官网过时了”看 `geo_common.py` 的 `SITE_PARTS`（店名和品类、这家店的特点、门店、招牌商品、怎么买）：做测试版那一刻的这几样和现在的店铺资料不一样，就算过时。想多比一样，在 `site_facts` 和 `SITE_PARTS` 里加，三份 `geo_common.py` 一起改；以前登记的官网没记新加的那一样，不算过时。
+- AI 引用了已上线的官网算本店自己的内容：`geo_score.py` 的 `_with_site` 和 `classify_ref`，正式链接本身和它下面的页面都算，绑了独立域名的按域名认。
+- `site-brief` 的 `shopCited` 是最近一期 AI 引用商城自己页面的次数，员工提官网前用它判断官网能多给 AI 什么。
 - 工作台上是“内容”页最上面一块：`page.html` 的 `siteCard`，数据是 `workbench_data` 里的 `site`。
 
 ### 加报告的小节
