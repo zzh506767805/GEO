@@ -25,6 +25,9 @@
   geo_report.py add-content --file <json>              登记一条内容（公众号文章、小红书笔记、长文、抖音视频文案）；带 no 是改稿
   geo_report.py contents [--no N]                      内容清单；带 --no 时给出那一条的全文
   geo_report.py mark-content [--no N] [--status S] [--channel 放到了哪] [--ref 交付凭据]
+  geo_report.py site-brief                             做官网要用的东西：能放上去的店铺资料、顾客常问的问题、现在官网到了哪一步
+  geo_report.py set-site [--status test|published|dropped] [--test-url U] [--url U] [--page-name N] [--domain D]
+                                                       登记官网：测试版好了、正式上线了、绑了独立域名、不要了
   geo_report.py build [--date D]           只在本地生成，不上传
   geo_report.py pages                                  工作台有哪些页面、哪几页要员工填、每一页放什么
   geo_report.py set-page --id <页面> --file <json>      填写一个由内容块组成的页面（assets/pages.json 里登记的，或这家店单独加的）
@@ -387,6 +390,8 @@ def cmd_show(_args) -> None:
                                      for p, v in ((summary.get("sources") or {}).get("byProvider") or {}).items()},
                "refs": {k: (summary.get("refs") or {}).get(k, 0) for k in ("total", "own", "storePages", "aboutStore")},
                "contents": [_content_view(item) for item in items[:5]],
+               # 官网到了哪一步、有没有跟上店铺资料（outdated、changed）
+               "site": gc.site_state(),
                # 商家问“你都做了哪些事”时用这几个数回答
                "totals": {"periods": len(dates), "contents": len(live),
                           "contentsWaiting": sum(1 for a in live if a["status"] == "preview"),
@@ -563,6 +568,118 @@ def cmd_mark_content(args) -> None:
     gc.emit(dict(_content_view(item), ok=True, next=gc.sync_hint()))
 
 
+# ── 官网 ──
+# 官网由“应用”能力（youzan-application）做：先出测试版给商家看，他确认了才正式上线。
+# 这里只做两件事：把能放上官网的店铺资料一次给全（site-brief），登记官网在哪、到了哪一步（set-site）。
+SITE_PAGE_NAME = re.compile(r"^[a-z][a-z0-9-]{5,40}$")
+
+
+def _https(value: str, label: str) -> str:
+    url = gc.clean_text(value)
+    if not re.match(r"^https://[^\s]+$", url) or len(url) > 400:
+        raise gc.GeoError("%s要是 https 开头的完整链接，照“应用”能力输出里的原样复制" % label)
+    return url
+
+
+def _site_title(facts: dict) -> str:
+    """页面标题的建议：本地门店是“店名 · 城市 + 品类店”，电商是“店名 · 品类”。"""
+    brand = facts.get("brand") or {}
+    name, city, category = brand.get("name", ""), brand.get("city", ""), brand.get("category", "")
+    if not category:
+        return name
+    if facts.get("segment") == "local":
+        tail = category if category.endswith(("店", "馆", "铺", "坊", "厅", "房", "社")) else category + "店"
+        return "%s · %s%s" % (name, city, tail)
+    return "%s · %s" % (name, category)
+
+
+def cmd_site_brief(_args) -> None:
+    """做官网要用的东西。员工只用这一份写官网，不用自己去翻存档：没确认的信息已经去掉了。"""
+    facts = _facts()
+    root = gc.profile_dir()
+    meta = gc.read_json(root / "meta.json", {}) or {}
+    state = gc.confirm_state(facts, meta)
+    usable = gc.site_facts(facts, meta)
+    questions = (gc.read_json(root / "questions.json", {}) or {}).get("items") or []
+    stores = usable["stores"]
+    payload = {
+        "ok": True,
+        "canWrite": state["canWrite"],
+        "segment": facts.get("segment", ""),
+        "segmentName": gc.SEGMENT_NAMES.get(facts.get("segment", ""), ""),
+        "brand": usable["brand"],
+        # 别的叫法：商家确认过才放（顾客可能用这个名字搜）
+        "aliases": [] if state["pending"] else ((facts.get("brand") or {}).get("aliases") or []),
+        "edges": facts.get("edges") or [],
+        "stores": [s for s in stores if s.get("status") == "在营"],
+        # 搬走或关掉的门店：只在 AI 还常说旧地址时，写一句“原 XX 店已搬到……”
+        "oldStores": [s for s in stores if s.get("status") != "在营"],
+        "products": usable["products"],
+        "buyEntry": usable["buyEntry"],
+        # 顾客常问：带店名的直接答；不带店名的，改成这家店能用事实回答的问法
+        "faq": [{k: q.get(k, "") for k in ("id", "kind", "text", "tag", "audience", "worry")} for q in questions],
+        # AI 说错过的事：官网上把对的说法写清楚
+        "issues": [{k: i.get(k, "") for k in ("no", "fact", "aiSays", "truth")} for i in _issues() if i.get("status") == "open"],
+        "writingRules": facts.get("writingRules") or {},
+        "pageTitle": _site_title(facts),
+        "today": gc.today(),
+        "site": gc.site_state(facts, meta),
+    }
+    if not state["canWrite"]:
+        payload["next"] = "店铺资料还没经过商家确认，现在不能做官网。先请他看一眼工作台的“监测设置”，确认了再做"
+    elif payload["site"].get("exists") and payload["site"]["status"] != "dropped":
+        payload["next"] = "已经有官网了：改的是同一个应用，不要新建。出了新的测试版用 set-site --status test 登记"
+    gc.emit(payload)
+
+
+def cmd_set_site(args) -> None:
+    """登记官网到了哪一步。官网本身由“应用”能力做，这里只记它在哪、做的时候用的是哪一版店铺资料。"""
+    facts = _facts()
+    path = gc.site_path()
+    site = gc.read_json(path, {}) or {}
+    now = gc.now_iso()
+    if not (args.status or args.domain is not None or args.page_name):
+        raise gc.GeoError("要登记什么？测试版好了用 --status test --test-url，正式上线用 --status published --url，绑了域名用 --domain")
+    if args.status in ("test", "published") and not gc.confirm_state(facts)["canWrite"]:
+        raise gc.GeoError("店铺资料还没经过商家确认，不能把它放上官网。先请商家确认店铺信息（按 geo-profile）")
+    if args.status == "test":
+        site.update(status="test", testUrl=_https(args.test_url, "测试版链接"), testAt=now, testBasis=gc.site_facts(facts))
+    elif args.status == "published":
+        if not site.get("testBasis"):
+            # 官网要先出测试版给商家看，他确认以后才能正式上线
+            raise gc.GeoError("还没有登记过测试版。先出测试版、用 --status test 登记、等商家确认，再正式发布")
+        site.update(status="published", url=_https(args.url, "官网的正式链接"), publishedAt=now, basis=site["testBasis"])
+    elif args.status == "dropped":
+        if not site.get("status"):
+            raise gc.GeoError("还没有登记过官网")
+        site.update(status="dropped", droppedAt=now)
+    if args.page_name:
+        name = gc.clean_text(args.page_name)
+        if not SITE_PAGE_NAME.match(name):
+            raise gc.GeoError("页面标识照“应用”能力里的原样填：小写英文开头，只有小写英文、数字和短横线，至少 6 个字符")
+        site["pageName"] = name
+    if args.domain is not None:
+        if not site.get("status"):
+            raise gc.GeoError("还没有登记过官网")
+        domain = re.sub(r"^[a-z]+://", "", gc.clean_text(args.domain).lower()).split("/")[0]
+        if domain and not re.match(r"^[a-z0-9.-]+\.[a-z]{2,}$", domain):
+            raise gc.GeoError("域名的格式不对，例如 www.example.com；不要了就传空的 --domain \"\"")
+        site["domain"] = domain
+    if not site.get("status"):
+        raise gc.GeoError("还没有登记过官网。测试版好了先用 --status test --test-url 登记")
+    site.setdefault("createdAt", now)
+    site["updatedAt"] = now
+    gc.write_json(path, site)
+    gc.mark_changed("官网")
+    state = gc.site_state(facts)
+    steps = {
+        "test": "执行 publish 同步工作台，再按“应用”能力的格式把测试版链接原样发给商家，停下来等他确认发布",
+        "published": "执行 publish 同步工作台，再把官网链接发给商家，并建议他把链接放到公众号简介、抖音主页、地图门店页这些他自己能改的地方",
+        "dropped": "执行 publish 同步工作台",
+    }
+    gc.emit({"ok": True, "site": state, "next": steps.get(args.status) or gc.sync_hint()})
+
+
 def _answers(date: str, summary: dict) -> dict:
     """最新一期每个回答的原文和引用，供工作台里点开查看。"""
     state = gc.read_json(gc.run_dir(date) / "queries.json", {}) or {}
@@ -669,6 +786,8 @@ def workbench_data(date: str = "") -> dict:
         "periods": periods,
         "contents": contents,
         "contentTypes": {key: spec["name"] for key, spec in CONTENT_TYPES.items()},
+        # 官网：没做过时只有 exists: false。“内容”页按它显示官网那一块
+        "site": gc.site_state(facts, meta),
         "questions": questions,
         "settings": _settings(facts, meta, questions, rivals),
         "totals": {
@@ -1315,6 +1434,14 @@ def main() -> None:
     p.add_argument("--channel", default="")
     p.add_argument("--ref", default="")
     p.set_defaults(func=cmd_mark_content)
+    sub.add_parser("site-brief").set_defaults(func=cmd_site_brief)
+    p = sub.add_parser("set-site")
+    p.add_argument("--status", default="", choices=("",) + gc.SITE_STATUS)
+    p.add_argument("--test-url", default="")
+    p.add_argument("--url", default="")
+    p.add_argument("--page-name", default="")
+    p.add_argument("--domain", default=None)
+    p.set_defaults(func=cmd_set_site)
     sub.add_parser("pages").set_defaults(func=cmd_pages)
     p = sub.add_parser("set-page")
     p.add_argument("--id", required=True)

@@ -659,6 +659,81 @@ def test_public_empty_accounts():
               and {"brand", "stores"} <= set(saved["toConfirm"]) and "channels" not in saved["toConfirm"], saved.get("toConfirm"))
 
 
+def _relations(env, urls):
+    """用体检算分的那套规则，看这几个链接被认成什么：own 是本店自己的内容，空串是和本店无关。"""
+    code = ("import json, sys; sys.path.insert(0, %r); import geo_score as s; p = s.load_profile(); "
+            "names = s.gc.brand_aliases(p['facts']); "
+            "print(json.dumps([s.classify_ref({'url': u, 'title': '一篇文章'}, p['facts'], names)['relation'] for u in sys.argv[1:]]))"
+            % str(SKILLS / "geo-check" / "scripts"))
+    proc = subprocess.run([sys.executable, "-c", code, *urls], capture_output=True, text=True,
+                          env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", **env))
+    return json.loads(proc.stdout) if proc.returncode == 0 else proc.stderr[-300:]
+
+
+def test_site():
+    """官网：资料不能用时不让登记；先有测试版才能登记上线；店铺资料改了提示过时；AI 引用了已上线的官网算本店自己的内容。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "public.json", SYNTHETIC_FACTS), env=env)
+        brief = call(REPORT, "site-brief", env=env)
+        check("资料是公开信息整理的、商家还没确认：site-brief 说现在不能做官网", brief["canWrite"] is False and "不能做官网" in brief.get("next", ""), brief.get("next"))
+        error = call(REPORT, "set-site", "--status", "test", "--test-url", "https://pages.example.com/t/official-site", env=env, expect=2)
+        check("资料还没确认时，不能登记官网", "不能把它放上官网" in error.get("error", ""), error)
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        old_store = {"name": "老街店", "address": "测试市老街 9 号", "status": "已关闭", "source": "有赞后台"}
+        facts = dict(SYNTHETIC_FACTS, **{"from": "backend", "channels": {},
+                                         "stores": SYNTHETIC_FACTS["stores"] + [old_store],
+                                         "products": [{"name": "全麦吐司", "spec": "450 克", "priceRange": "18-25 元"}],
+                                         "buyEntry": {"miniProgram": "示例小店", "shopUrl": "https://shop1.youzan.com/v2/showcase/homepage"}})
+        call(STATE, "set-facts", "--file", write(tmp, "f1.json", facts), env=env)
+        call(STATE, "set-questions", "--file", write(tmp, "q.json", SYNTHETIC_QUESTIONS), env=env)
+        brief = call(REPORT, "site-brief", env=env)
+        check("site-brief：在营门店和已关的门店分开给，商品不带价格，没确认的别名不放，顾客常问用全部监测问题，给出页面标题",
+              brief["canWrite"] is True and [x["name"] for x in brief["stores"]] == ["测试路店"] and [x["name"] for x in brief["oldStores"]] == ["老街店"]
+              and "priceRange" not in brief["products"][0] and brief["aliases"] == [] and len(brief["faq"]) == len(SYNTHETIC_QUESTIONS)
+              and brief["pageTitle"] == "示例小店 · 测试市面包店" and brief["site"] == {"exists": False}, brief)
+        error = call(REPORT, "set-site", "--status", "published", "--url", "https://pages.example.com/s/official-site", env=env, expect=2)
+        check("没出过测试版，不能登记正式上线", "还没有登记过测试版" in error.get("error", ""), error)
+        error = call(REPORT, "set-site", "--status", "test", "--test-url", "http://pages.example.com/t", env=env, expect=2)
+        check("测试版链接不是 https 的完整链接，退回", "https" in error.get("error", ""), error)
+        error = call(REPORT, "set-site", "--status", "test", "--test-url", "https://pages.example.com/t", "--page-name", "Site", env=env, expect=2)
+        check("页面标识不合规，退回", "页面标识" in error.get("error", ""), error)
+        tested = call(REPORT, "set-site", "--status", "test", "--test-url", "https://pages.example.com/t/official-site?v=1", "--page-name", "official-site", env=env)
+        check("登记测试版：等商家确认，还没上线，提醒先同步再把链接发给商家",
+              (tested["site"]["status"], tested["site"]["live"], tested["site"]["outdated"]) == ("test", False, False) and "publish" in tested["next"], tested)
+        published = call(REPORT, "publish", env=env)
+        _, _, data = page_json(published["file"])
+        check("工作台数据里带着官网的测试版", data["site"]["status"] == "test" and data["site"]["testUrl"].endswith("v=1"), data.get("site"))
+        keep_page("工作台（官网测试版等确认）", published["file"])
+        check("官网还没上线时，链接不算本店自己的内容", _relations(env, ["https://pages.example.com/s/official-site"]) == [""])
+        live = call(REPORT, "set-site", "--status", "published", "--url", "https://pages.example.com/s/official-site", env=env)
+        check("登记正式上线", (live["site"]["status"], live["site"]["live"], live["site"]["url"]) == ("published", True, "https://pages.example.com/s/official-site"), live)
+        check("AI 引用了已上线的官网（带参数也认），算本店自己的内容；同一个网站的别的页面不算",
+              _relations(env, ["https://pages.example.com/s/official-site?from=ai", "https://pages.example.com/s/official-site/", "https://pages.example.com/s/other-site"]) == ["own", "own", ""])
+        call(REPORT, "set-site", "--domain", "www.sample-shop.com", env=env)
+        check("绑了独立域名：这个域名下的页面都算本店自己的内容，名字相近的别的域名不算",
+              _relations(env, ["https://www.sample-shop.com/about", "https://notsample-shop.com/x"]) == ["own", ""])
+        hours = dict(facts, stores=[dict(SYNTHETIC_FACTS["stores"][0], hours="09:00-21:00"), old_store])
+        call(STATE, "set-facts", "--file", write(tmp, "f2.json", hours), env=env)
+        status = call(STATE, "status", env=env)
+        check("官网上线后门店的营业时间改了：status 说官网过时了，改的是门店",
+              status["site"]["outdated"] is True and status["site"]["changed"] == ["门店"], status.get("site"))
+        check("show 里也看得到官网过时了", call(REPORT, "show", env=env)["site"]["outdated"] is True)
+        published = call(REPORT, "publish", env=env)
+        keep_page("工作台（官网已上线、店铺资料改过）", published["file"])
+        again = call(REPORT, "set-site", "--status", "test", "--test-url", "https://pages.example.com/t/official-site?v=2", env=env)
+        check("改过的一版出了测试版：官网还在线，新的一版跟上了店铺资料",
+              (again["site"]["status"], again["site"]["live"], again["site"]["outdated"]) == ("test", True, False), again)
+        published = call(REPORT, "publish", env=env)
+        keep_page("工作台（官网在线、改过的一版等确认）", published["file"])
+        dropped = call(REPORT, "set-site", "--status", "dropped", env=env)
+        check("官网不要了：不再算在线，它的链接也不再算本店自己的内容",
+              dropped["site"]["live"] is False and _relations(env, ["https://pages.example.com/s/official-site"]) == [""], dropped)
+
+
 def test_backend_source():
     """店铺后台读来的资料不用商家确认；只有员工另外记下的那几样要确认。"""
     with tempfile.TemporaryDirectory() as tmp:
@@ -1118,7 +1193,7 @@ def test_douyin_and_sources():
 
 if __name__ == "__main__":
     try:
-        for test in (test_copies, test_template, test_synthetic, test_public_empty_accounts, test_backend_source, test_facts_merge, test_new_agent_guards, test_resume_mid_check, test_pages, test_shop_template, test_data_reliability, test_trend_skips_incomplete, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render, test_douyin_and_sources):
+        for test in (test_copies, test_template, test_synthetic, test_public_empty_accounts, test_backend_source, test_site, test_facts_merge, test_new_agent_guards, test_resume_mid_check, test_pages, test_shop_template, test_data_reliability, test_trend_skips_incomplete, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render, test_douyin_and_sources):
             try:
                 test()
             except AssertionError as exc:

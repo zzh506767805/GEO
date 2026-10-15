@@ -375,6 +375,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .note-tags span { display: inline-block; margin: 0 8px 4px 0; color: var(--brand); font-size: 14px; }
 .art { padding: 0; overflow: hidden; }
 .art-title { padding: 6px 16px 0; font-size: 16px; font-weight: 700; line-height: 1.5; }
+.art-note { padding: 6px 16px 0; }
 .art-info { margin: 8px 16px 0; font-size: 13px; }
 .art-body { margin: 12px 16px 0; border-top: 1px solid var(--line); }
 .art-body > summary { padding: 10px 0 2px; font-size: 13px; font-weight: 600; color: var(--brand); cursor: pointer; }
@@ -383,6 +384,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .art-foot .btn { margin-right: 12px; }
 @media (min-width: 901px) {
   .art-title { padding: 6px 20px 0; }
+  .art-note { padding: 6px 20px 0; }
   .art-info { margin: 8px 20px 0; }
   .art-body { margin: 12px 20px 0; }
   .art-foot { padding: 12px 20px 18px; }
@@ -615,7 +617,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   }
 
   /* ── 点开一格：AI 的原话 ── */
-  var REF_LABEL = { own: ['ok', '你的账号'], store: ['plain', '你的门店页'], about: ['plain', '提到你'] };
+  var REF_LABEL = { own: ['ok', '你的账号或网站'], store: ['plain', '你的门店页'], about: ['plain', '提到你'] };
   var aliasPattern = null;
   if (DATA.aliases && DATA.aliases.length) {
     aliasPattern = new RegExp('(' + DATA.aliases.map(function (text) { return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')', 'gi');
@@ -743,7 +745,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   }
   var CONTENT_LABEL = { preview: ['warn', '等你确认'], confirmed: ['ok', '你已确认'], published: ['ok', '已发布'], dropped: ['plain', '不发了'] };
   var FACT_LABEL = { address: '地址', hours: '营业时间', phone: '电话', status: '是否在营', product: '商品', price: '价格', other: '其他' };
-  var SOURCE_LABEL = { map: '地图或点评上的门店页', note: '别人写的内容', own: '你自己的账号', other: '其他页面', unknown: '没有找到明确的出处' };
+  var SOURCE_LABEL = { map: '地图或点评上的门店页', note: '别人写的内容', own: '你自己的账号或网站', other: '其他页面', unknown: '没有找到明确的出处' };
   function issueCard(issue) {
     var box = el('div', 'card issue');
     /* 这是一条发现，不是派给商家的任务：平时不挂状态，只有商家动过它（说改了、说不算错）或者改了以后 AI 还在说，才标出来 */
@@ -885,10 +887,45 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (hint) { acts.appendChild(el('span', 'small muted', hint)); }
     return add(box, acts);
   }
+  /* 官网：员工用“应用”能力替他做的。把店铺资料里的事实放在一页上，给 AI 和顾客一个他自己的出处；
+     店铺资料里官网用到的几样改了，这里提示更新。没做过官网时这一块不出现 */
+  function siteCard(site) {
+    var box = el('div', 'card art');
+    var top = el('div', 'issue-top art-top');
+    top.appendChild(el('span', 'ino', '官网'));
+    if (site.live) { top.appendChild(pill('ok', '已上线')); }
+    if (site.status === 'test') { top.appendChild(pill('warn', site.live ? '改过的一版等你确认' : '测试版等你确认')); }
+    else if (site.outdated) { top.appendChild(pill('warn', '店铺资料有变化')); }
+    var when = site.live ? cnDate(String(site.publishedAt || '').slice(0, 10)) + '上线' : cnDate(String(site.testAt || '').slice(0, 10)) + '出的测试版';
+    add(box, add(top, el('span', 'meta', when)));
+    box.appendChild(el('div', 'art-note small muted', '店铺资料里的事实放在一页上：这家店是谁、门店、招牌商品、怎么买、顾客常问的问题，给 AI 和顾客一个你自己的出处。AI 引用了它，会算进“你的内容被引用”。'));
+    var info = el('dl', 'kv art-info');
+    kv(info, '网址', site.domain || '');
+    if (site.outdated && site.status !== 'test') { kv(info, '要更新的', '上线以后店铺资料里改过：' + (site.changed || []).join('、')); }
+    if (info.children.length) { box.appendChild(info); }
+    var acts = el('div', 'art-foot');
+    if (site.live) {
+      var open = link('打开官网', site.url, 'btn primary');
+      open.appendChild(icon('ext', 14));
+      acts.appendChild(open);
+    }
+    if (site.status === 'test' && site.testUrl) {
+      var test = link('看测试版', site.testUrl, site.live ? 'btn' : 'btn primary');
+      test.appendChild(icon('ext', 14));
+      acts.appendChild(test);
+    }
+    var hint = site.status === 'test' ? '看过没问题，回到龙虾跟员工说“官网可以发布了”；要改哪里直接告诉它。'
+      : (site.outdated ? '要更新的话，跟员工说“更新官网”。' : '');
+    if (hint) { acts.appendChild(el('span', 'small muted', hint)); }
+    return add(box, acts);
+  }
   function pageContent(root) {
     var all = DATA.contents || [];
     var live = liveContents();
     var waiting = waitingContents();
+    var site = DATA.site || {};
+    var hasSite = site.exists && site.status !== 'dropped';
+    if (hasSite) { root.appendChild(siteCard(site)); }
     if (!all.length) {
       /* 还不能写的时候，把“为什么”和“去哪确认”放在一起，商家在这一页就能把这件事解开 */
       var ready = DATA.settings.canWrite;
@@ -937,6 +974,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       : (newest.status === 'preview' ? ['第 ' + newest.no + ' 篇可以发', '第 ' + newest.no + ' 篇标题改短一点', '第 ' + newest.no + ' 篇不发了', newest.type === 'xhs' ? '同一个主题再写一篇公众号文章' : '同一个主题再写一条小红书笔记']
         : (newest.status === 'confirmed' ? ['第 ' + newest.no + ' 篇我已经发了', (newest.type === 'wechat' ? '把第 ' + newest.no + ' 篇存进公众号草稿箱' : '第 ' + newest.no + ' 篇再改一下：……'), '再写一篇：……']
           : ['再写一篇：……', '这周先不写']));
+    lines = lines.concat(hasSite ? [site.status === 'test' ? '官网可以发布了' : (site.outdated ? '更新官网' : '官网上……改一下')] : ['帮我做一个官网']);
     root.appendChild(sayBlock(lines));
   }
 
@@ -1432,8 +1470,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       grid.appendChild(add(box, bar, items));
     });
     root.appendChild(grid);
-    var related = card('被 AI 引用的、和你有关的内容', '你的账号 ' + S.refs.own + ' 次 · 门店页 ' + S.refs.storePages + ' 次 · 别人写你 ' + S.refs.aboutStore + ' 次');
-    var groups = [['own', '你的账号', '这一期 AI 没有引用你自己账号发的内容。'], ['store', '你的门店页', '这一期 AI 没有引用地图或点评上的门店页。'], ['about', '别人写你的', '这一期 AI 没有引用别人写你的内容。']];
+    var related = card('被 AI 引用的、和你有关的内容', '你的账号和网站 ' + S.refs.own + ' 次 · 门店页 ' + S.refs.storePages + ' 次 · 别人写你 ' + S.refs.aboutStore + ' 次');
+    var groups = [['own', '你的账号和网站', '这一期 AI 没有引用你自己的账号和网站上的内容。'], ['store', '你的门店页', '这一期 AI 没有引用地图或点评上的门店页。'], ['about', '别人写你的', '这一期 AI 没有引用别人写你的内容。']];
     var seg = el('div', 'seg');
     var holder = el('div');
     var segButtons = [];

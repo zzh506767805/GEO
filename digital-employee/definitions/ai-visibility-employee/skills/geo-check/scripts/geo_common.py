@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AI 曝光专员三个技能共用的小工具：定位数据目录、读写 JSON、统一输出。
+"""AI 曝光专员几个技能共用的小工具：定位数据目录、读写 JSON、统一输出。
 
 三个技能目录各放一份内容完全相同的副本。技能目录是互相独立安装的只读目录，
 不能跨目录 import，所以用复制而不是共享；tests/run_tests.py 会校验三份一致。
@@ -360,6 +360,56 @@ def confirm_state(facts: dict = None, meta: dict = None) -> dict:
             "pending": bool(needs_confirm(facts)) and not confirmed,
             # 后台来的资料可以直接用来写内容；每一篇内容发之前本来就要商家确认，不用再卡一道“先确认资料”。
             "canWrite": confirmed or from_backend}
+
+
+# ── 官网 ──
+# 员工用有赞的“应用”能力替商家做的官网。这里只记它在哪、到了哪一步，和做的时候用的是哪一版店铺资料：
+# 官网上放的那几样（店名和品类、门店、招牌商品、怎么买）后来在店铺资料里改了，官网就过时了，要提醒商家更新。
+SITE_STATUS = ("test", "published", "dropped")  # 有测试版等商家看 / 已上线 / 不要了
+SITE_PARTS = (("brand", "店名和品类"), ("stores", "门店"), ("products", "招牌商品"), ("buyEntry", "怎么买"))
+
+
+def site_path() -> Path:
+    return profile_dir() / "site.json"
+
+
+def site_facts(facts: dict, meta: dict = None) -> dict:
+    """能放上官网的店铺资料。和写内容一样：员工另外记下、商家还没确认的（别名、后台里没有的门店）不放。"""
+    facts = facts or {}
+    unconfirmed = confirm_state(facts, meta)["pending"]
+    brand = facts.get("brand") or {}
+    stores = [s for s in facts.get("stores") or []
+              if not unconfirmed or "有赞后台" in str(s.get("source") or "")]
+    return {
+        "brand": {k: brand.get(k, "") for k in ("name", "category", "city")},
+        "stores": [{k: s.get(k, "") for k in ("name", "address", "hours", "phone", "status")} for s in stores],
+        # 不带价格：价格常变，写在官网上很快就过时
+        "products": [{k: p.get(k, "") for k in ("name", "spec", "origin")} for p in facts.get("products") or []],
+        "buyEntry": {k: (facts.get("buyEntry") or {}).get(k, "") for k in ("miniProgram", "shopUrl")},
+    }
+
+
+def site_state(facts: dict = None, meta: dict = None) -> dict:
+    """官网在哪、到了哪一步、有没有跟上店铺资料。没做过官网时 exists 为 false。
+
+    status 为 test 时，可能是第一次出的测试版，也可能是已上线的官网又改了一版、在等商家确认：
+    url（正式链接）有值就说明官网已经在线。changed 是和最新那一版比，店铺资料里改了哪几样。
+    """
+    site = read_json(site_path(), {}) or {}
+    status = site.get("status")
+    if status not in SITE_STATUS:
+        return {"exists": False}
+    if facts is None:
+        facts = read_json(profile_dir() / "facts.json", {}) or {}
+    basis = site.get("testBasis") if status == "test" else site.get("basis")
+    changed = []
+    if status != "dropped" and isinstance(basis, dict):
+        now_basis = site_facts(facts, meta)
+        changed = [name for key, name in SITE_PARTS if basis.get(key) != now_basis.get(key)]
+    return {"exists": True, "status": status, "live": bool(site.get("url")) and status != "dropped",
+            "url": site.get("url", ""), "testUrl": site.get("testUrl", ""), "domain": site.get("domain", ""),
+            "pageName": site.get("pageName", ""), "testAt": site.get("testAt", ""), "publishedAt": site.get("publishedAt", ""),
+            "outdated": bool(changed), "changed": changed}
 
 
 def emit(payload: dict) -> None:

@@ -318,6 +318,8 @@ def status_payload() -> dict:
         "workbench": workbench,
         # 每周定时体检：on 已开启，declined 商家说先不开，off 商家让关掉，unavailable 当前环境开不了，空的是还没问过
         "schedule": (meta.get("schedule") or {}).get("status", ""),
+        # 官网（商家要了才有）：到了哪一步、有没有跟上店铺资料。outdated 为 true 时按 geo-site 提醒商家更新
+        "site": gc.site_state(facts, meta),
         "warnings": facts_warnings(facts),
     }
     period = payload["period"]

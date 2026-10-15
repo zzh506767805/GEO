@@ -115,6 +115,8 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 
 另外看一眼 `geo_report.py show` 输出里有没有 `pagesToFill`：那是工作台上登记了、还没填的页面。有的话执行 `geo_report.py pages` 看每一页放什么，按 `geo-workbench` 的 `references/pages.md` 填好。以前填过的页面，内容过时了也在这一步更新。
 
+也看一眼 `show` 输出里的 `site`：做了官网、`site.outdated` 为 true 时，官网上的信息已经跟不上店铺资料了（`site.changed` 写着哪几样变了）。在 `todos` 里提一次要不要更新，商家同意了按 `geo-site` 更新；提过一次没理会，就不再提。
+
 ### 5. 生成这一期的报告
 
 ```bash
@@ -146,7 +148,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 
 ## 商家问这一期、这几期怎么样
 
-问题（Q3）、同类店、账号按 `geo-profile`；体检和“3 号”按 `geo-check`；“第 4 篇”、写内容按 `geo-content`；要链接、加页面、改样子按 `geo-workbench`。下面是本 Skill 接的：
+问题（Q3）、同类店、账号按 `geo-profile`；体检和“3 号”按 `geo-check`；“第 4 篇”、写内容按 `geo-content`；要链接、加页面、改样子按 `geo-workbench`；官网按 `geo-site`。下面是本 Skill 接的：
 
 | 商家说 | 做法 |
 | --- | --- |

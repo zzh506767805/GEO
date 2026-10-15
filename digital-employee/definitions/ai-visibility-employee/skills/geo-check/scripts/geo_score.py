@@ -166,13 +166,28 @@ def load_findings(date: str, run: dict):
     return kept, dropped
 
 
+def _bare_url(value) -> str:
+    """比对链接用：去掉 http(s)://、问号和井号后面的部分、末尾的斜杠，统一小写。"""
+    text = re.sub(r"^[a-z]+://", "", str(value or "").strip().lower())
+    return re.split(r"[?#]", text)[0].rstrip("/")
+
+
+def _with_site(facts: dict) -> dict:
+    """已上线的官网也是本店自己的内容：把它的链接和独立域名带进 channels，classify_ref 据此认。"""
+    site = gc.site_state(facts)
+    if not site.get("live"):
+        return facts
+    channels = dict(facts.get("channels") or {}, siteUrl=site["url"], siteDomain=site.get("domain", ""))
+    return dict(facts, channels=channels)
+
+
 def load_profile() -> dict:
     root = gc.profile_dir()
     facts = gc.read_json(root / "facts.json")
     if not facts:
         raise gc.GeoError("还没有建档，请先按 geo-profile 建档")
     return {
-        "facts": facts,
+        "facts": _with_site(facts),
         "questions": (gc.read_json(root / "questions.json", {}) or {}).get("items") or [],
         "rivals": (gc.read_json(root / "rivals.json", {}) or {}).get("items") or [],
     }
@@ -213,10 +228,15 @@ def classify_ref(ref: dict, facts: dict, aliases: list, related: dict = None) ->
     url = str(ref.get("url") or "")
     # 抖音等平台的引用不带作者，只能靠建档时记下的“本店内容编号”来认。
     own_keys = [k for k in channels.get("ownContentKeys") or [] if k]
+    # 员工替商家做的官网：按正式链接的前缀认；绑了独立域名的，这个域名下的页面都算
+    site_url = _bare_url(channels.get("siteUrl"))
+    site_domain = str(channels.get("siteDomain") or "").lower()
     relation = ""
     if ((kind == "微信公众号" and official and source == official)
             or any(h and h in host for h in own_hosts)
-            or any(key in url for key in own_keys)):
+            or any(key in url for key in own_keys)
+            or (site_url and _bare_url(url).startswith(site_url))
+            or (site_domain and (host == site_domain or host.endswith("." + site_domain)))):
         relation = "own"
     elif gc.contains_any(title, aliases):
         relation = "store" if kind in STORE_PAGE_TYPES else "about"

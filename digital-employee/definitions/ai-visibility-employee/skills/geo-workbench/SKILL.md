@@ -12,7 +12,7 @@ description: 商家的“AI 曝光工作台”和体检报告这些页面：同�
 
 页面都是只读的：商家在上面看，回到对话里跟你说；你改数据，再同步。页面是“模板 + 数据”每次同步重新生成的，**不要直接改生成出来的网页文件**，下次同步会被盖掉。
 
-本 Skill 只管页面本身。页面上的东西从哪来：监测设置是 `geo-profile` 写的，体检结果是 `geo-check` 算的，小结和建议是 `geo-weekly` 写的，内容是 `geo-content` 登记的。
+本 Skill 只管页面本身。页面上的东西从哪来：监测设置是 `geo-profile` 写的，体检结果是 `geo-check` 算的，小结和建议是 `geo-weekly` 写的，内容是 `geo-content` 登记的，官网是 `geo-site` 登记的。
 
 脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py"`，下文的 `geo_report.py ...` 是它的简写，执行时写全。别的 Skill 的脚本同理：`geo_state.py` 在 `geo-profile` 下，`geo_run.py` 和 `geo_score.py` 在 `geo-check` 下。
 
@@ -78,6 +78,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 | 找内容缺口 | `set-actions` 的 `gaps` | 这一期的报告 · 读哪里的内容；工作台 · 内容 |
 | 写内容（公众号文章、小红书笔记、长文、抖音视频文案） | `geo_report.py add-content`，要写明类型 | 工作台 · 内容；有等他确认的，首页会多出一块“等你确认的内容” |
 | 内容确认了、放进草稿箱了、发出去了 | `geo_report.py mark-content --no N …` | 工作台 · 内容 |
+| 官网出了测试版、正式上线、绑了域名、不要了 | `geo_report.py set-site`（按 `geo-site`） | 工作台 · 内容，最上面一块；AI 引用了已上线的官网，算进“你的内容被引用” |
 | 填员工负责的页面（登记好的，或这家店单独加的） | `geo_report.py set-page --id <页面> --file …` | 工作台 · 那一页，排在三个固定页面之后 |
 
 工作台首页只有这几样：最新一期的结论和你写的小结、四个数、等他确认的内容（有才出现）、每一期的报告。不要指望在首页上放别的东西；某一期的分析都在那一期的报告里。
@@ -86,6 +87,8 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 
 内容按 `geo-content` 写和登记，工作台“内容”页按类型展示：公众号文章给“看排版预览”的入口；小红书笔记、抖音视频文案显示标题、正文和话题，可以一起复制；长文显示全文，可以复制。每条有固定的序号，显示成“第 4 篇”。
 
+做了官网的，“内容”页最上面多一块官网：上线了给“打开官网”，有测试版等确认给“看测试版”，店铺资料改过会提示更新。
+
 ## 页面清单
 
 工作台固定有三个页面，由脚本按存档生成。另外还可以有员工负责的页面（见 `references/pages.md`），它们排在这三个页面之后，链接末尾是 `#/` 加页面的 id，`publish` 和 `links` 的输出里会给出来。
@@ -93,7 +96,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 | 工作台的页面 | 链接末尾 | 商家在这里做什么 |
 | --- | --- | --- |
 | 工作台 | `#/overview` | 看最新一期的结论和小结、几个数和走势、等他确认的内容、每一期报告的入口 |
-| 内容 | `#/content` | 确认、复制去发：你替他写的每一条内容，按类型展示 |
+| 内容 | `#/content` | 确认、复制去发：你替他写的每一条内容，按类型展示；做了官网的，最上面是官网 |
 | 监测设置 | `#/settings` | 看和改：这家店的特点、每周问 AI 的问题、和谁比，以及你另外记下的信息 |
 
 在工作台里看某一期的报告，链接末尾是 `#/report/<日期>`，例如 `#/report/2026-10-08`。`reportUrl` 和 `links` 里“这一期的报告”就是这个地址，不用自己拼。

@@ -11,6 +11,7 @@ inclusions:
     - geo-weekly
     - geo-workbench
     - geo-content
+    - geo-site
 
 exclusions:
   skills:
