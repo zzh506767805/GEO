@@ -47,7 +47,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 
 /* ───────── 外框：左侧导航 + 顶栏 + 内容 ───────── */
 .app { display: flex; min-height: 100vh; }
-.side { position: sticky; top: 0; z-index: 20; display: flex; flex: none; flex-direction: column; width: 232px; height: 100vh; padding: 16px 12px 14px; overflow-y: auto; border-right: 1px solid var(--line); background: var(--side); }
+.side { position: sticky; top: 0; z-index: 20; display: flex; flex: none; flex-direction: column; width: 232px; height: 100vh; padding: 16px 12px 12px; overflow-y: auto; border-right: 1px solid var(--line); background: var(--side); }
 .side-brand { display: flex; align-items: center; padding: 0 6px 12px; }
 .mascot { flex: none; width: 36px; height: 36px; margin-right: 10px; border-radius: 10px; background: var(--canvas); box-shadow: 0 0 0 1px var(--line); }
 .side-brand .t1 { font-size: 12px; line-height: 1.3; color: var(--ink-3); }
@@ -55,7 +55,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .side-state { display: block; margin: 0 6px 6px; }
 .side-state .pill { width: 100%; justify-content: center; line-height: 26px; }
 .side-state:hover { text-decoration: none; opacity: .85; }
-.nav-label { padding: 14px 10px 6px; font-size: 12px; color: var(--ink-3); }
+.nav-label { padding: 14px 10px 6px; font-size: 12px; letter-spacing: .04em; color: var(--ink-3); }
 .sec-label { margin-top: 20px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
 .note-gap { margin-top: 12px; }
 /* 体检报告：每期一份独立的文件。单独打开时自带标题；嵌在工作台里时（地址带 #embed）不带标题，靠左对齐，和工作台的其他页面一致 */
@@ -84,18 +84,32 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
   .rpt-h2 small { display: block; margin: 2px 0 0; }
 }
 .demo-strip { border: 1px dashed var(--warn); border-radius: 10px; padding: 8px 14px; background: var(--warn-soft); color: var(--warn); font-size: 13px; font-weight: 600; }
+.finding { padding: 14px 0; border-top: 1px solid var(--line); }
+.finding:first-of-type { border-top: 0; padding-top: 4px; }
+.finding-t { font-weight: 700; line-height: 1.5; }
+.finding-t .tag { margin-right: 8px; }
+.finding-d { max-width: 68em; margin-top: 6px; color: var(--ink-2); line-height: 1.7; }
+.finding-a { margin-top: 6px; line-height: 1.7; }
+.finding-a .k { margin-right: 8px; color: var(--ink-3); font-size: 12px; }
+.finding-q { display: block; width: 100%; margin-top: 8px; padding: 8px 12px; border: 0; border-left: 3px solid var(--line); border-radius: 0 8px 8px 0; background: var(--hover); color: var(--ink-2); font: inherit; font-size: 13px; line-height: 1.6; text-align: left; cursor: pointer; }
+.finding-q:hover { border-left-color: var(--brand); }
+.finding-q .who { display: block; font-size: 12px; color: var(--ink-3); }
+.edge-list { margin: 4px 0 0; padding-left: 20px; }
+.edge-list li { margin: 6px 0; line-height: 1.6; }
+.edge-list .tag { margin-left: 8px; }
 .nav a { display: flex; align-items: center; height: 36px; margin-bottom: 2px; padding: 0 10px; border-radius: 8px; color: var(--ink-2); font-size: 14px; }
 .nav a:hover { background: var(--hover); text-decoration: none; }
 .nav a.on { background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+.nav a:focus-visible { outline-offset: -2px; }
 .nav a svg { flex: none; margin-right: 10px; }
 .nav .cnt { min-width: 20px; margin-left: auto; border-radius: 10px; padding: 0 6px; background: var(--hover); color: var(--ink-2); font-size: 12px; font-weight: 600; line-height: 20px; text-align: center; }
 .nav .cnt.bad { background: var(--bad-soft); color: var(--bad); }
 .nav .rpt-link { height: 34px; font-size: 13px; }
 .nav .rpt-link .cnt { background: var(--brand-soft); color: var(--brand); }
-.side-foot { margin-top: auto; padding: 16px 8px 0; font-size: 12px; line-height: 1.6; color: var(--ink-3); }
 .main { flex: 1; min-width: 0; }
 .topbar { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; min-height: 60px; padding: 10px 28px; border-bottom: 1px solid var(--line); background: var(--bg); }
 .topbar h1 { margin: 0; font-size: 18px; font-weight: 700; white-space: nowrap; }
+.card-h h3, .banner .verdict, .stack > .rpt-h2, .paper-title, .finding-t, .sheet-head h3 { text-wrap: balance; }
 .topbar .sub { margin-left: 12px; overflow: hidden; font-size: 13px; color: var(--ink-3); text-overflow: ellipsis; white-space: nowrap; }
 .topbar .upd { margin-left: 8px; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
 .topbar .sp { flex: 1; min-width: 8px; }
@@ -129,11 +143,11 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .stack > * + * { margin-top: 16px; }
 .row.c4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 901px) {
-  .row.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .row.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
   .row.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .row.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-.card { min-width: 0; border: 1px solid var(--line); border-radius: var(--r); background: var(--canvas); box-shadow: var(--shadow); padding: 16px; }
+.card { min-width: 0; border: 1px solid var(--line); border-radius: var(--r); background: var(--canvas); padding: 16px; }
 @media (min-width: 901px) { .card { padding: 18px 20px; } }
 .card-h { display: flex; align-items: center; margin-bottom: 12px; }
 .card-h h3 { margin: 0; font-size: 15px; font-weight: 700; }
@@ -142,7 +156,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .card.flush { padding: 0; overflow: hidden; }
 .card.flush .card-h { margin: 0; padding: 16px 20px 12px; }
 .card.flush .pad { padding: 0 20px 16px; }
-.lead { margin: 0 0 14px; font-size: 13px; color: var(--ink-2); }
+.lead { max-width: 68em; margin: 0 0 14px; font-size: 13px; color: var(--ink-2); }
 .pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 0 9px; font-size: 12px; font-weight: 600; line-height: 22px; white-space: nowrap; }
 .pill.ok { background: var(--ok-soft); color: var(--ok); }
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
@@ -170,12 +184,12 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .tbl tr:last-child td { border-bottom: 0; }
 .tbl th:first-child, .tbl td:first-child { padding-left: 20px; }
 .tbl th:last-child, .tbl td:last-child { padding-right: 20px; }
-.tbl .r { text-align: right; }
+.tbl .r { text-align: right; font-variant-numeric: tabular-nums; }
 .tbl .c { text-align: center; }
 .tbl .nw { white-space: nowrap; }
 .tbl tr.click { cursor: pointer; }
 .tbl tr.click:hover td { background: var(--subtle); }
-.tbl b { font-weight: 700; }
+.tbl b { font-weight: 700; font-variant-numeric: tabular-nums; }
 .pbar { display: block; height: 6px; min-width: 72px; border-radius: 3px; background: var(--hover); overflow: hidden; }
 .pbar i { display: block; height: 100%; min-width: 2px; border-radius: 3px; background: var(--brand); }
 .pbar.gray i { background: var(--ink-4); }
@@ -184,7 +198,6 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .kv dd { margin: 0; word-break: break-word; }
 .d { display: inline-block; width: 12px; height: 12px; margin: 0 2.5px; border-radius: 50%; background: var(--line-2); opacity: .7; vertical-align: middle; }
 .d.h { background: var(--brand); opacity: 1; }
-.d.m { background: none; opacity: 1; box-shadow: inset 0 0 0 2px var(--warn); }
 .d.x { height: 2px; border-radius: 1px; }
 .legend { display: flex; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--ink-2); }
 .legend span { display: inline-flex; align-items: center; margin: 0 14px 4px 0; }
@@ -197,13 +210,13 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .say .hint { margin-top: 8px; font-size: 12px; color: var(--ink-3); }
 
 /* ───────── 工作台首页 ───────── */
-.banner { display: flex; align-items: flex-start; border: 1px solid var(--brand-line); border-radius: var(--r); padding: 16px 18px; background: linear-gradient(135deg, var(--brand-soft) 0%, var(--canvas) 70%); }
+.banner { display: flex; align-items: flex-start; border: 1px solid var(--brand-line); border-radius: var(--r); padding: 16px 18px; background: linear-gradient(135deg, var(--brand-soft) 0%, var(--canvas) 55%); }
 .banner .mascot { width: 40px; height: 40px; margin-right: 14px; }
 .banner .body { flex: 1; min-width: 0; }
 .banner .tt { font-size: 12px; font-weight: 700; color: var(--brand); }
 .banner .verdict { margin: 2px 0 0; font-size: 19px; font-weight: 700; line-height: 1.45; letter-spacing: -.01em; }
 .banner .verdict b { color: var(--brand); }
-.banner .brief { margin-top: 6px; font-size: 14px; color: var(--ink-2); }
+.banner .brief { max-width: 68em; margin-top: 6px; font-size: 14px; color: var(--ink-2); }
 .banner .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .banner .acts .btn { margin: 0; }
 .banner.plain { border-color: var(--line); background: var(--canvas); }
@@ -219,10 +232,11 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .steps li.doing .nm { font-weight: 700; }
 .steps .st { margin-left: 12px; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
 .steps li.doing .st { color: var(--brand); font-weight: 600; }
-.kpi { position: relative; display: block; color: var(--ink); cursor: pointer; }
-.kpi:hover { border-color: var(--brand-line); text-decoration: none; }
+.kpi { position: relative; display: block; color: var(--ink); cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+.kpi:hover { border-color: var(--brand-line); box-shadow: var(--shadow); transform: translateY(-1px); text-decoration: none; }
 .kpi.static { cursor: default; }
-.kpi.static:hover { border-color: var(--line); }
+.kpi.static:hover { border-color: var(--line); box-shadow: none; transform: none; }
+@media (prefers-reduced-motion: reduce) { .kpi { transition: none; } .kpi:hover { transform: none; } }
 .kpi-top { display: flex; align-items: center; font-size: 13px; color: var(--ink-2); }
 .kpi-ico { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 26px; height: 26px; margin-right: 8px; border-radius: 8px; background: var(--brand-soft); color: var(--brand); }
 .kpi-ico.bad { background: var(--bad-soft); color: var(--bad); }
@@ -233,6 +247,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .kpi-num small { font-size: 13px; font-weight: 400; color: var(--ink-3); letter-spacing: 0; }
 .kpi-hint { display: block; margin-top: 4px; font-size: 12px; line-height: 1.5; color: var(--ink-3); }
 .kpi .spark { position: absolute; right: 16px; top: 16px; width: 64px; height: 26px; }
+@media (max-width: 640px) { .kpi .spark { position: static; display: block; margin-top: 8px; } }  /* 窄屏卡片放不下，走势图挪到最下面，不压住标题 */
 .todos { margin: 0; padding: 0; list-style: none; counter-reset: todo; }
 .todos li { position: relative; padding: 11px 0 11px 36px; border-top: 1px solid var(--line); }
 .todos li:first-child { border-top: 0; padding-top: 2px; }
@@ -348,16 +363,13 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .gap-row .tag { flex: none; margin-top: 2px; }
 
 /* ───────── 监测设置 ───────── */
-.persona .nm { display: flex; flex-wrap: wrap; align-items: center; font-weight: 700; }
-.persona .nm .tag { margin: 0 0 0 8px; }
-.persona dl { margin: 6px 0 0; font-size: 13px; }
-.persona dt { margin-top: 6px; font-size: 12px; color: var(--ink-3); }
-.persona dd { margin: 0; }
 .rowlist { margin: 0; padding: 0; list-style: none; }
 .rowlist li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .rowlist li:first-child { border-top: 0; padding-top: 0; }
 .rowlist li:last-child { padding-bottom: 0; }
 .rowlist .mt { margin-top: 2px; font-size: 12px; color: var(--ink-3); }
+.blk-text .p { white-space: pre-wrap; word-break: break-word; }
+.blk-text .gap { height: 8px; }
 .paper { margin: 14px 0 12px; border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; background: var(--subtle); max-width: 720px; }
 .paper-title { margin-bottom: 8px; font-size: 17px; font-weight: 700; line-height: 1.45; }
 .t-strong { margin-top: 4px; font-weight: 700; }
@@ -366,6 +378,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .note-tags span { display: inline-block; margin: 0 8px 4px 0; color: var(--brand); font-size: 14px; }
 .art { padding: 0; overflow: hidden; }
 .art-title { padding: 6px 16px 0; font-size: 16px; font-weight: 700; line-height: 1.5; }
+.art-note { padding: 6px 16px 0; }
 .art-info { margin: 8px 16px 0; font-size: 13px; }
 .art-body { margin: 12px 16px 0; border-top: 1px solid var(--line); }
 .art-body > summary { padding: 10px 0 2px; font-size: 13px; font-weight: 600; color: var(--brand); cursor: pointer; }
@@ -374,6 +387,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .art-foot .btn { margin-right: 12px; }
 @media (min-width: 901px) {
   .art-title { padding: 6px 20px 0; }
+  .art-note { padding: 6px 20px 0; }
   .art-info { margin: 8px 20px 0; }
   .art-body { margin: 12px 20px 0; }
   .art-foot { padding: 12px 20px 18px; }
@@ -536,8 +550,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (!code) { var miss = el('span', 'd x'); miss.title = '没有拿到结果'; wrap.appendChild(miss); return wrap; }
     for (var i = 0; i < code.length; i++) {
       var ch = code.charAt(i);
-      var dot = el('span', 'd' + (ch === 'h' ? ' h' : ch === 'm' ? ' m' : ''));
-      dot.title = ch === 'h' ? '提到了你' : ch === 'm' ? '带着之前对话的痕迹，没有计入' : '没提到你';
+      var dot = el('span', 'd' + (ch === 'h' ? ' h' : ''));
+      dot.title = ch === 'h' ? '提到了你' : '没提到你';
       wrap.appendChild(dot);
     }
     return wrap;
@@ -545,8 +559,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   function legend() {
     return add(el('div', 'legend'),
       add(el('span'), el('span', 'd h'), '提到了你'),
-      add(el('span'), el('span', 'd'), '没提到'),
-      add(el('span'), el('span', 'd m'), '带着之前对话的痕迹，没有计入'));
+      add(el('span'), el('span', 'd'), '没提到'));
   }
   function questionMeta(id, text) {
     for (var i = 0; i < DATA.questions.length; i++) { if (DATA.questions[i].id === id && DATA.questions[i].text === text) { return DATA.questions[i]; } }
@@ -607,7 +620,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   }
 
   /* ── 点开一格：AI 的原话 ── */
-  var REF_LABEL = { own: ['ok', '你的账号'], store: ['plain', '你的门店页'], about: ['plain', '提到你'] };
+  var REF_LABEL = { own: ['ok', '你的账号或网站'], store: ['plain', '你的门店页'], about: ['plain', '提到你'] };
   var aliasPattern = null;
   if (DATA.aliases && DATA.aliases.length) {
     aliasPattern = new RegExp('(' + DATA.aliases.map(function (text) { return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')', 'gi');
@@ -659,8 +672,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     rows.forEach(function (item, index) {
       var block = el('div', 'ans');
       add(block, add(el('div', 'ans-flags'), el('span', 'ans-no', '第 ' + (index + 1) + ' 个回答'),
-        pill(item.mentioned ? 'brand' : 'plain', item.mentioned ? '提到了你' : '没提到你'),
-        item.memory ? pill('warn', '带着之前对话的痕迹，没有计入') : null));
+        pill(item.mentioned ? 'brand' : 'plain', item.mentioned ? '提到了你' : '没提到你')));
       var text = el('div', 'ans-text');
       renderText(text, item.text);
       block.appendChild(text);
@@ -736,7 +748,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   }
   var CONTENT_LABEL = { preview: ['warn', '等你确认'], confirmed: ['ok', '你已确认'], published: ['ok', '已发布'], dropped: ['plain', '不发了'] };
   var FACT_LABEL = { address: '地址', hours: '营业时间', phone: '电话', status: '是否在营', product: '商品', price: '价格', other: '其他' };
-  var SOURCE_LABEL = { map: '地图或点评上的门店页', note: '别人写的内容', own: '你自己的账号', other: '其他页面', unknown: '没有找到明确的出处' };
+  var SOURCE_LABEL = { map: '地图或点评上的门店页', note: '别人写的内容', own: '你自己的账号或网站', other: '其他页面', unknown: '没有找到明确的出处' };
   function issueCard(issue) {
     var box = el('div', 'card issue');
     /* 这是一条发现，不是派给商家的任务：平时不挂状态，只有商家动过它（说改了、说不算错）或者改了以后 AI 还在说，才标出来 */
@@ -754,26 +766,26 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     return add(box, source, add(el('div', 'issue-fix'), el('span', 'k', '可以怎么办'), issue.fix));
   }
   function rankRows(box, period, limit) {
-    var rows = (period.rivals || []).map(function (r) { return { name: r.name, count: r.count, self: false }; });
+    var rows = (period.shops || []).map(function (r) { return { name: r.name, count: r.count, rival: r.rival, self: false }; });
     rows.push({ name: DATA.store.name || '本店', count: period.mention.hits, self: true });
     rows.sort(function (a, b) { return b.count - a.count || (a.self ? 1 : -1); });
     var max = Math.max.apply(null, rows.map(function (r) { return r.count; }).concat([1]));
-    if (rows.length === 1) { box.appendChild(el('div', 'empty', '还没有选定同类店。')); return; }
+    if (rows.length === 1) { box.appendChild(el('div', 'empty', 'AI 的回答里没有点名别的店。')); return; }
     (limit ? rows.slice(0, limit) : rows).forEach(function (r, index) {
       var fill = el('i');
       fill.style.width = Math.round(r.count * 100 / max) + '%';
       var name = el('span', 'n', r.name);
       if (r.self) { add(name, ' ', pill('brand', '你')); }
+      else if (r.rival) { add(name, ' ', el('span', 'tag', '同类店')); }
       add(box, add(el('div', 'rank' + (r.self ? ' self' : '')), el('span', 'i', index + 1), name, add(el('span', 'track'), fill), el('span', 'v', r.count + ' 次')));
     });
   }
-  /* 没提到你的时候提到了谁：排行加分平台的表，放在提及分析的最下面 */
+  /* 顾客没点名时 AI 提到了哪些店：排行加分平台的表。同类店只是在里面标出来，不决定列哪些店 */
   function rivalsSection(root, period) {
-    if (!(period.rivals || []).length) { return; }
-    var box = card('被 AI 提到的次数', '顾客没点名的 ' + period.mention.valid + ' 个有效回答里');
+    var box = card('被 AI 提到的店', '顾客没点名的 ' + period.mention.valid + ' 个有效回答里，各出现在几个回答里');
     rankRows(box, period, 0);
     var t = table([['店名']].concat(DATA.providers.map(function (p) { return [p.name, 'r']; })).concat([['合计', 'r']]));
-    var list = period.rivals.map(function (r) { return { name: r.name, by: r.byProvider || {}, count: r.count, self: false }; });
+    var list = (period.shops || []).map(function (r) { return { name: r.name, by: r.byProvider || {}, count: r.count, rival: r.rival, self: false }; });
     var mine = {};
     DATA.providers.forEach(function (p) { mine[p.id] = (period.mention.byProvider[p.id] || {}).hits || 0; });
     list.push({ name: DATA.store.name || '本店', by: mine, count: period.mention.hits, self: true });
@@ -781,14 +793,14 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     list.forEach(function (item) {
       var tr = el('tr');
       var name = document.createDocumentFragment();
-      add(name, item.self ? el('b', '', item.name) : item.name, item.self ? ' ' : '', item.self ? pill('brand', '你') : null);
+      add(name, item.self ? el('b', '', item.name) : item.name, ' ', item.self ? pill('brand', '你') : (item.rival ? el('span', 'tag', '同类店') : null));
       var args = [tr, { node: name }];
       DATA.providers.forEach(function (p) { args.push({ node: item.by[p.id] || 0, cls: 'r tnum' }); });
       args.push({ node: el('b', 'tnum', item.count), cls: 'r' });
       t.body.appendChild(cells.apply(null, args));
     });
     var wrap = add(el('div', 'tbl-wrap rank-table'), t);
-    root.appendChild(add(box, wrap));
+    root.appendChild(add(box, wrap, el('div', 'small muted note-gap', '员工读完每个回答，记下 AI 推荐了哪几家店，同一家店的不同写法算一家。最多列 15 家。标着“同类店”的是你选定要比的几家，想换直接告诉员工。')));
   }
 
   /* 员工建议商家做的事。只在报告里列出来，不是一张要打勾的清单 */
@@ -808,8 +820,12 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     });
     return box;
   }
-  /* 复制出去的文字：小红书笔记是“标题 + 正文 + 话题”，其他类型去掉小标题和加粗的记号 */
+  /* 复制出去的文字：小红书笔记是“标题 + 正文 + 话题”；抖音视频文案只复制发布时要填的“标题 + 话题”，口播稿是拍的时候照着念的；
+     其他类型去掉小标题和加粗的记号 */
   function contentPlain(item) {
+    if (item.type === 'douyin') {
+      return item.title + ((item.tags || []).length ? ' ' + item.tags.map(function (tag) { return '#' + tag; }).join(' ') : '');
+    }
     if (item.type === 'xhs') {
       var tags = (item.tags || []).map(function (tag) { return '#' + tag; }).join(' ');
       return item.title + '\n\n' + item.body + (tags ? '\n\n' + tags : '');
@@ -848,9 +864,10 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (item.body) {
       var details = el('details', 'art-body');
       if (open) { details.open = true; }
-      var paper = el('div', 'paper ans-text' + (item.type === 'xhs' ? ' note' : ''));
+      var plain = item.type === 'xhs' || item.type === 'douyin';
+      var paper = el('div', 'paper ans-text' + (plain ? ' note' : ''));
       paper.appendChild(el('div', 'paper-title', item.title));
-      if (item.type === 'xhs') {
+      if (plain) {
         renderPlain(paper, item.body);
         if ((item.tags || []).length) {
           var tags = el('div', 'note-tags');
@@ -862,9 +879,9 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
         if (body.split('\n')[0].replace(/^\s*#+\s*/, '').trim() === item.title) { body = body.slice(body.indexOf('\n') + 1); }
         renderText(paper, body, true);
       }
-      add(details, el('summary', '', (item.previewUrl ? '看文字版' : '看稿子') + ' · ' + item.bodyChars + ' 字'), paper);
+      add(details, el('summary', '', (item.previewUrl ? '看文字版' : (item.type === 'douyin' ? '看口播稿' : '看稿子')) + ' · ' + item.bodyChars + ' 字'), paper);
       box.appendChild(details);
-      acts.appendChild(button('btn', item.type === 'xhs' ? '复制标题、正文和话题' : '复制全文', function () { copy(contentPlain(item), '已复制，可以直接粘贴去发'); }));
+      acts.appendChild(button('btn', item.type === 'xhs' ? '复制标题、正文和话题' : (item.type === 'douyin' ? '复制标题和话题' : '复制全文'), function () { copy(contentPlain(item), '已复制，可以直接粘贴去发'); }));
     }
     var hint = item.status === 'dropped' ? '这一篇不发了。'
       : (!item.body && !item.previewUrl ? '更早的内容这里只保留标题和状态。要看稿子，回到龙虾跟员工说“把第 ' + item.no + ' 篇发我”。'
@@ -873,10 +890,46 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (hint) { acts.appendChild(el('span', 'small muted', hint)); }
     return add(box, acts);
   }
+  /* 官网：员工用“应用”能力替他做的。把店铺资料里的事实放在一页上，给 AI 和顾客一个他自己的出处；
+     店铺资料里官网用到的几样改了，这里提示更新。没做过官网时这一块不出现 */
+  function siteCard(site) {
+    var box = el('div', 'card art');
+    var top = el('div', 'issue-top art-top');
+    top.appendChild(el('span', 'ino', '官网'));
+    if (site.live) { top.appendChild(pill('ok', '已上线')); }
+    if (site.status === 'test') { top.appendChild(pill('warn', site.live ? '改过的一版等你确认' : '测试版等你确认')); }
+    else if (site.outdated) { top.appendChild(pill('warn', '店铺资料有变化')); }
+    var when = site.live ? cnDate(String(site.publishedAt || '').slice(0, 10)) + '上线' : cnDate(String(site.testAt || '').slice(0, 10)) + '出的测试版';
+    add(box, add(top, el('span', 'meta', when)));
+    box.appendChild(el('div', 'art-note small muted', '店铺资料里的事实放在一页上：这家店是谁、门店、招牌商品、怎么买、顾客常问的问题，给 AI 和顾客一个你自己的出处。AI 引用了它，会算进“你的内容被引用”。'));
+    var info = el('dl', 'kv art-info');
+    kv(info, '网址', site.domain || '');
+    if (site.outdated) { kv(info, '要更新的', (site.status === 'test' ? '测试版做好以后' : '上线以后') + '店铺资料里改过：' + (site.changed || []).join('、')); }
+    if (info.children.length) { box.appendChild(info); }
+    var acts = el('div', 'art-foot');
+    if (site.live) {
+      var open = link('打开官网', site.url, 'btn primary');
+      open.appendChild(icon('ext', 14));
+      acts.appendChild(open);
+    }
+    if (site.status === 'test' && site.testUrl) {
+      var test = link('看测试版', site.testUrl, site.live ? 'btn' : 'btn primary');
+      test.appendChild(icon('ext', 14));
+      acts.appendChild(test);
+    }
+    var hint = site.status === 'test' ? (site.outdated ? '这一版用的是改之前的资料，跟员工说“更新官网”，重出一版再看。'
+      : '看过没问题，回到龙虾跟员工说“官网可以发布了”；要改哪里直接告诉它。')
+      : (site.outdated ? '要更新的话，跟员工说“更新官网”。' : '');
+    if (hint) { acts.appendChild(el('span', 'small muted', hint)); }
+    return add(box, acts);
+  }
   function pageContent(root) {
     var all = DATA.contents || [];
     var live = liveContents();
     var waiting = waitingContents();
+    var site = DATA.site || {};
+    var hasSite = site.exists && site.status !== 'dropped';
+    if (hasSite) { root.appendChild(siteCard(site)); }
     if (!all.length) {
       /* 还不能写的时候，把“为什么”和“去哪确认”放在一起，商家在这一页就能把这件事解开 */
       var ready = DATA.settings.canWrite;
@@ -919,12 +972,13 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       gaps.forEach(function (gap) { gapBox.appendChild(add(el('div', 'gap-row'), el('span', 'tag', gap.where), el('span', '', gap.note))); });
       root.appendChild(gapBox);
     }
-    if (!DATA.settings.canWrite) { root.appendChild(sayBlock(['这些信息没问题，确认', '店铺信息有不对的：……', '我的公众号叫……'])); return; }
+    if (!DATA.settings.canWrite) { root.appendChild(sayBlock(['这些信息没问题，确认', '店铺信息有不对的：……'])); return; }
     var newest = live[0];
     var lines = !newest ? ['写一篇公众号文章：……', '写一条小红书笔记：……', '这周先不写']
       : (newest.status === 'preview' ? ['第 ' + newest.no + ' 篇可以发', '第 ' + newest.no + ' 篇标题改短一点', '第 ' + newest.no + ' 篇不发了', newest.type === 'xhs' ? '同一个主题再写一篇公众号文章' : '同一个主题再写一条小红书笔记']
         : (newest.status === 'confirmed' ? ['第 ' + newest.no + ' 篇我已经发了', (newest.type === 'wechat' ? '把第 ' + newest.no + ' 篇存进公众号草稿箱' : '第 ' + newest.no + ' 篇再改一下：……'), '再写一篇：……']
           : ['再写一篇：……', '这周先不写']));
+    lines = lines.concat(hasSite ? [site.status === 'test' ? '官网可以发布了' : (site.outdated ? '更新官网' : '官网上……改一下')] : ['帮我做一个官网']);
     root.appendChild(sayBlock(lines));
   }
 
@@ -932,14 +986,15 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
      最新结论、几个数的走势、每一期报告的入口、替商家写的内容、监测设置。
      某一期分析出来的东西（提没提到、提到了谁、读了哪里、怎么介绍）都在那一期的报告里。
      报告是每期一份独立的文件；在工作台里看它时，内容区直接把那个文件嵌进来，不用跳到别的页面。 */
-  var NAV = [
-    { items: [['overview', '工作台', 'home'], ['content', '内容', 'doc'], ['settings', '监测设置', 'list']] }
-  ];
-  var SUBTITLE = {
-    overview: '最新的结论，和每一期的体检报告',
-    content: '员工替你写的内容：公众号文章、小红书笔记、长文',
-    settings: '员工每周替你问什么、和谁比'
-  };
+  /* 导航来自数据里的 nav（脚本按 assets/pages.json 和员工填过的页面生成）。旧数据没有 nav 时用这三个页面 */
+  var NAV_ITEMS = (DATA.nav && DATA.nav.length ? DATA.nav : [
+    { id: 'overview', title: '工作台', icon: 'home', subtitle: '最新的结论，和每一期的体检报告' },
+    { id: 'content', title: '内容', icon: 'doc', subtitle: '员工替你写的内容：公众号文章、小红书笔记、长文、抖音视频文案' },
+    { id: 'settings', title: '监测设置', icon: 'list', subtitle: '员工每周替你问什么、和谁比' }
+  ]);
+  var NAV = [{ items: NAV_ITEMS.map(function (p) { return [p.id, p.title, p.icon || 'doc']; }) }];
+  var SUBTITLE = {};
+  NAV_ITEMS.forEach(function (p) { SUBTITLE[p.id] = p.subtitle || ''; });
   var frameTimer = null, frameHint = null;
   function closeSide() { side.className = 'side'; scrim.className = 'scrim'; }
   function periodByDate(date) {
@@ -949,7 +1004,6 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   function renderShell() {
     side = el('aside', 'side');
     add(side, add(el('div', 'side-brand'), mascot(), add(el('div'), el('div', 't1', 'AI 曝光专员'), el('div', 't2', DATA.store.name || '本店'))));
-    if (DATA.settings.pending) { side.appendChild(add(nav(null, 'settings', 'side-state'), pill('warn', '有信息等你确认'))); }
     var navBox = el('nav', 'nav');
     NAV.forEach(function (group) {
       if (group.label) { navBox.appendChild(el('div', 'nav-label', group.label)); }
@@ -976,7 +1030,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
         navBox.appendChild(a);
       });
     }
-    add(side, navBox, add(el('div', 'side-foot'), '有赞龙虾 · AI 曝光专员', el('br'), '更新于 ' + updatedAt()));
+    add(side, navBox);
     scrim = el('div', 'scrim');
     scrim.onclick = closeSide;
     mainEl = el('div', 'main');
@@ -999,7 +1053,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   function route() {
     var parts = String(location.hash || '').replace(/^#\/?/, '').split('?')[0].split('/');
     var period = parts[0] === 'report' ? (periodByDate(parts[1]) || (parts[1] ? null : PERIODS[PERIODS.length - 1] || null)) : null;
-    page = period ? 'report' : (PAGES[parts[0]] ? parts[0] : 'overview');
+    page = period ? 'report' : (hasPage(parts[0]) ? parts[0] : 'overview');
     var current = period ? 'report/' + period.date : page;
     for (var id in navLinks) {
       if (navLinks.hasOwnProperty(id)) { navLinks[id].className = (id.indexOf('report/') === 0 ? 'rpt-link' : '') + (id === current ? ' on' : ''); }
@@ -1019,7 +1073,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       titleEl.textContent = navTitle(page);
       subEl.textContent = SUBTITLE[page] || '';
       add(content, demoStrip());
-      PAGES[page](content);
+      if (PAGES[page]) { PAGES[page](content); } else { pageCustom(content, page); }
       document.title = navTitle(page) + ' · ' + (DATA.store.name || '本店') + ' · AI 曝光工作台';
     }
     window.scrollTo(0, 0);
@@ -1081,8 +1135,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       ['出第一份报告', '', 'todo']
     ];
     root.appendChild(add(el('div', 'banner'), mascot(), add(el('div', 'body'), el('div', 'tt', 'AI 曝光专员'),
-      el('div', 'verdict', asked ? '第一次体检正在进行，报告出来后会显示在这里' : '店铺资料读好了，接下来做第一次体检'),
-      el('div', 'brief', '员工会拿 ' + DATA.questions.length + ' 个问题去问' + names + '，看它们有没有提到你、怎么介绍你。一轮大约要 5 到 10 分钟。趁这会儿先看看要问的问题对不对。'),
+      el('div', 'verdict', asked ? '第一次体检正在进行，报告出来后会显示在这里' : '店铺资料和问题已整理好，确认方向后再开始体检'),
+      el('div', 'brief', asked ? '员工正在查询，完成后会在这里展示报告。' : '先看看店铺信息、顾客类型和要问的问题。回到对话确认或告诉员工哪里需要调整，现在还没有开始查询。'),
       add(el('div', 'acts'), nav('看要问的问题', 'settings', 'btn primary')))));
     var progress = card('现在到哪一步了');
     var list = el('ol', 'steps');
@@ -1116,8 +1170,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     root.appendChild(summaryBanner(reportRoute(LATEST)));
     var third = LATEST.buyEntry
       ? kpi('cart', LATEST.buyEntry.count ? 'ok' : 'plain', '给出购买入口', LATEST.buyEntry.count, '/ ' + LATEST.buyEntry.valid, '回答里出现了你的小程序名或店铺链接', reportRoute(LATEST, 'mentions'))
-      : ((LATEST.rivals || []).length
-        ? kpi('users', 'plain', '最常被提到的店', LATEST.rivals[0].name, '', LATEST.rivals[0].count + ' 次，你 ' + mention.hits + ' 次', reportRoute(LATEST, 'rivals'), null, null, true)
+      : ((LATEST.shops || []).length
+        ? kpi('users', 'plain', '最常被提到的店', LATEST.shops[0].name, '', LATEST.shops[0].count + ' 次，你 ' + mention.hits + ' 次', reportRoute(LATEST, 'rivals'), null, null, true)
         : kpi('list', 'plain', '这一期拿到的回答', LATEST.returned, '/ ' + LATEST.expected, LATEST.complete ? '数据完整' : '这一期数据不全', reportRoute(LATEST, 'mentions')));
     root.appendChild(row('c4',
       kpi('eye', 'brand', '没点名时提到你', mention.hits, '/ ' + mention.valid, mentionHint, reportRoute(LATEST, 'mentions'),
@@ -1190,18 +1244,14 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
         question.text, { node: question.audience || el('span', 'muted', '—'), cls: 'nw' }, question.worry || el('span', 'muted', '—')));
     });
     root.appendChild(add(bank, add(el('div', 'tbl-wrap'), t), el('div', 'pad small muted', '每期体检都问这些问题。改了问题原文，之前的数就不能和之后的比了。')));
-    var people = st.audience || [];
-    if (people.length) {
-      root.appendChild(el('div', 'sec-label', '这些问题是替这几类顾客问的'));
-      var grid = el('div', 'row c2');
-      people.forEach(function (person) {
-        var dl = el('dl');
-        if (person.who) { add(dl, el('dt', '', '是谁'), el('dd', '', person.who)); }
-        if (person.scene) { add(dl, el('dt', '', '什么时候会问 AI'), el('dd', '', person.scene)); }
-        if (person.worry) { add(dl, el('dt', '', '最在意'), el('dd', '', person.worry)); }
-        grid.appendChild(add(el('div', 'card persona'), add(el('div', 'nm'), person.name, person.basis ? el('span', 'tag', '依据：' + person.basis) : null), dl));
+    var edges = st.edges || [];
+    if (edges.length) {
+      var edgeBox = card('问题围绕你家的这几个特点出', '');
+      var list = el('ul', 'edge-list');
+      edges.forEach(function (edge) {
+        list.appendChild(add(el('li'), edge.text, edge.basis ? el('span', 'tag', '依据：' + edge.basis) : null));
       });
-      root.appendChild(grid);
+      root.appendChild(add(edgeBox, list, el('div', 'small muted note-gap', '小店被 AI 提到，靠的是和别家不一样的地方。说得不对，或者你家还有别的特点，直接告诉员工，问题会跟着改。')));
     }
     var rivals = st.rivals || [];
     var rivalBox = card('和谁比', rivals.length ? rivals.length + ' 家同类店' : '');
@@ -1230,10 +1280,54 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       kv(rl, '每篇必带', (x.mustInclude || []).join('；'));
       root.appendChild(add(style, rl));
     }
-    root.appendChild(sayBlock(['把 Q3 换一个问法', '加一道题：……', '同类店换成……', '我的公众号叫……', st.pending ? '这些信息没问题，确认' : '写东西不要用“网红”这个词']));
+    root.appendChild(sayBlock(['把 Q3 换一个问法', '加一道题：……', '同类店换成……', st.pending ? '这些信息没问题，确认' : '写东西不要用“网红”这个词']));
   }
 
   var PAGES = { overview: pageOverview, content: pageContent, settings: pageSettings };
+  function hasPage(id) { return !!id && !!navTitle(id) && (!!PAGES[id] || !!(DATA.customPages || {})[id]); }
+
+  /* ── 员工填的页面：由几种固定的内容块拼成，不用为每个新页面写代码 ──
+     块的类型和 geo_report.py 的 BLOCK_TYPES 一致：text、list、table、stats、links、say。 */
+  function pageCustom(root, id) {
+    var info = (DATA.customPages || {})[id] || {};
+    var blocks = info.blocks || [];
+    if (!blocks.length) { root.appendChild(add(card(), el('div', 'empty', '员工还没有填写这一页。'))); return; }
+    blocks.forEach(function (block) { var node = customBlock(block); if (node) { root.appendChild(node); } });
+    if (info.updatedAt) { root.appendChild(el('div', 'small muted', '这一页更新于 ' + cnDate(String(info.updatedAt).slice(0, 10)))); }
+  }
+  function customBlock(block) {
+    var items = block.items || [];
+    if (block.type === 'say') { return items.length ? sayBlock(items) : null; }
+    if (block.type === 'stats') {
+      var grid = el('div', 'row ' + (items.length >= 4 ? 'c4' : (items.length === 3 ? 'c3' : 'c2')));
+      items.forEach(function (item) {
+        grid.appendChild(add(el('div', 'card kpi static'), el('span', 'kpi-top', item.label), el('span', 'kpi-num text', item.value), item.note ? el('span', 'kpi-hint', item.note) : null));
+      });
+      return block.title ? add(el('div', 'stack'), el('div', 'sec-label', block.title), grid) : grid;
+    }
+    var box = card(block.title || '');
+    if (block.type === 'text') {
+      var text = el('div', 'blk-text');
+      renderPlain(text, block.text);
+      box.appendChild(text);
+    } else if (block.type === 'list') {
+      var ul = el('ul', 'rowlist');
+      items.forEach(function (item) { ul.appendChild(el('li', '', item)); });
+      box.appendChild(ul);
+    } else if (block.type === 'table') {
+      box.className = 'card flush';
+      var t = table((block.columns || []).map(function (c) { return [c]; }));
+      (block.rows || []).forEach(function (r) { var tr = el('tr'); r.forEach(function (c) { tr.appendChild(el('td', '', c)); }); t.body.appendChild(tr); });
+      box.appendChild(add(el('div', 'tbl-wrap'), t));
+    } else if (block.type === 'links') {
+      var list = el('ul', 'rowlist');
+      items.forEach(function (item) { list.appendChild(add(el('li'), link(item.text, item.url))); });
+      box.appendChild(list);
+    } else {
+      return null;
+    }
+    return box;
+  }
 
   /* ══════════ 体检报告：一期一份，单独的页面 ══════════
      记的是这一期当时的情况：问了什么、AI 提没提到、提到了谁、读了哪里的内容、怎么介绍这家店。
@@ -1245,6 +1339,27 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (sub) { node.appendChild(el('small', '', sub)); }
     return node;
   }
+  /* 这一期的发现：员工读完全部回答后写的，最多 5 条，每条带 AI 的原话，点了看整段回答 */
+  function findingsCard(root) {
+    var items = DATA.findings || [];
+    if (!items.length) { return; }
+    var box = card('这一期的发现', items.length + ' 条');
+    var questions = {};
+    (DATA.questions || []).forEach(function (q) { questions[q.id] = q; });
+    items.forEach(function (item) {
+      var block = add(el('div', 'finding'), add(el('div', 'finding-t'), el('span', 'tag', item.kindName), item.title), el('div', 'finding-d', item.detail));
+      if (item.action) { block.appendChild(add(el('div', 'finding-a'), el('span', 'k', '可以怎么做'), item.action)); }
+      (item.evidence || []).forEach(function (e) {
+        var q = questions[e.qid];
+        var quote = add(el('button', 'finding-q'), el('span', 'who', providerName(e.provider) + (q ? ' · ' + qno(q.id) : '')), '“' + e.quote + '”');
+        quote.type = 'button';
+        if (q) { quote.onclick = function () { openSheet(q, e.provider); }; } else { quote.disabled = true; }
+        block.appendChild(quote);
+      });
+      box.appendChild(block);
+    });
+    root.appendChild(box);
+  }
   function reportSummary(root, S) {
     root.appendChild(h2('summary', '结论'));
     var before = DATA.compare && DATA.compare.previous ? DATA.compare : null;
@@ -1252,7 +1367,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       el('div', 'tt', '第 ' + P.no + ' 期 · ' + cnDate(P.date) + '体检 · 员工小结'), verdict(S.mention),
       DATA.actions.brief ? el('div', 'brief', DATA.actions.brief) : null)));
     var byProvider = DATA.providers.map(function (p) { return p.name + ' ' + ratio(S.mention.byProvider[p.id]); }).join(' · ');
-    var rivals = DATA.rivals || [];
+    var rivals = DATA.shops || [];
     var third = S.buyEntry
       ? kpi('cart', S.buyEntry.count ? 'ok' : 'plain', '给出购买入口', S.buyEntry.count, '/ ' + S.buyEntry.valid, '回答里出现了你的小程序名或店铺链接')
       : (rivals.length ? kpi('users', 'plain', '最常被提到的店', rivals[0].name, '', rivals[0].count + ' 次，你 ' + S.mention.hits + ' 次', null, null, null, true) : null);
@@ -1261,6 +1376,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       kpi('ext', S.refs.own ? 'ok' : 'plain', '你的内容被引用', S.refs.own, '次', before && before.ownRefs.before !== null ? '上一期 ' + before.ownRefs.before + ' 次' : '门店页 ' + S.refs.storePages + ' 次 · 别人写你 ' + S.refs.aboutStore + ' 次'),
       third,
       kpi('list', 'plain', '这一期拿到的回答', S.returned, '/ ' + S.expected, S.complete ? '数据完整' : '这一期数据不全')));
+    findingsCard(root);
     if ((DATA.actions.todos || []).length) {
       var todos = card('这一期建议你做的', DATA.actions.todos.length + ' 件');
       todoList(todos);
@@ -1321,14 +1437,14 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       filter.appendChild(btn);
     });
     add(box, add(el('div', 'qbar'), filter), add(t, body), legend(),
-      el('div', 'small muted', '点任何一格，可以看 AI 的原话和它引用的内容。'),
-      S.memoryFlagged ? el('div', 'small muted', '这一期有 ' + S.memoryFlagged + ' 个回答带着之前对话的痕迹，没有计入。') : null);
+      el('div', 'small muted', '点任何一格，可以看 AI 的原话和它引用的内容。'));
     root.appendChild(box);
   }
   function reportRivals(root, S) {
-    root.appendChild(h2('rivals', '没提到你的时候，AI 提到了谁'));
-    var period = { rivals: DATA.rivals || [], mention: S.mention };
-    if (!period.rivals.length) { root.appendChild(add(card(), el('div', 'empty', '还没有选定要比的同类店。'))); return; }
+    root.appendChild(h2('rivals', '顾客没点名时，AI 提到了哪些店'));
+    var period = { shops: DATA.shops || [], mention: S.mention };
+    if (DATA.shopsPending) { root.appendChild(add(card(), el('div', 'empty', '员工还有 ' + DATA.shopsPending + ' 个回答没读完，读完这里才会列出来。'))); return; }
+    if (!period.shops.length) { root.appendChild(add(card(), el('div', 'empty', '这一期 AI 的回答里没有推荐别的店。'))); return; }
     rivalsSection(root, period);
   }
   function reportSources(root, S) {
@@ -1358,8 +1474,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       grid.appendChild(add(box, bar, items));
     });
     root.appendChild(grid);
-    var related = card('被 AI 引用的、和你有关的内容', '你的账号 ' + S.refs.own + ' 次 · 门店页 ' + S.refs.storePages + ' 次 · 别人写你 ' + S.refs.aboutStore + ' 次');
-    var groups = [['own', '你的账号', '这一期 AI 没有引用你自己账号发的内容。'], ['store', '你的门店页', '这一期 AI 没有引用地图或点评上的门店页。'], ['about', '别人写你的', '这一期 AI 没有引用别人写你的内容。']];
+    var related = card('被 AI 引用的、和你有关的内容', '你的账号和网站 ' + S.refs.own + ' 次 · 门店页 ' + S.refs.storePages + ' 次 · 别人写你 ' + S.refs.aboutStore + ' 次');
+    var groups = [['own', '你的账号和网站', '这一期 AI 没有引用你自己的账号和网站上的内容。'], ['store', '你的门店页', '这一期 AI 没有引用地图或点评上的门店页。'], ['about', '别人写你的', '这一期 AI 没有引用别人写你的内容。']];
     var seg = el('div', 'seg');
     var holder = el('div');
     var segButtons = [];
