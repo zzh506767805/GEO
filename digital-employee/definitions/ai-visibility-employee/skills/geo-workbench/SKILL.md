@@ -75,7 +75,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 | 核对 AI 怎么介绍这家店 | `set-judgement` | 这一期的报告 · 怎么介绍你。有和店铺资料对不上的才列出来 |
 | 写本期小结 | `set-actions` 的 `brief` | 工作台首页最上面；这一期的报告 · 结论 |
 | 建议商家做的事 | `set-actions` 的 `todos` | 这一期的报告 · 结论（“这一期建议你做的”） |
-| 找内容缺口 | `set-actions` 的 `gaps` | 这一期的报告 · 读哪里的内容；工作台 · 内容 |
+| 找内容缺口 | `set-actions` 的 `gaps` | 这一期的报告 · 读哪里的内容（工作台上不放，它是那一期的分析） |
 | 写内容（公众号文章、小红书笔记、长文、抖音视频文案） | `geo_report.py add-content`，要写明类型 | 工作台 · 内容；有等他确认的，首页会多出一块“等你确认的内容” |
 | 内容确认了、放进草稿箱了、发出去了 | `geo_report.py mark-content --no N …` | 工作台 · 内容 |
 | 官网出了测试版、正式上线、绑了域名、不要了 | `geo_report.py set-site`（按 `geo-site`） | 工作台 · 内容，最上面一块；AI 引用了已上线的官网，算进“你的内容被引用” |

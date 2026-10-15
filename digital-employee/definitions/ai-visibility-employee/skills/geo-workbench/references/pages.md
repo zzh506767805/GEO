@@ -38,7 +38,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 | `table` | 有几列的清单，最多 6 列、50 行 |
 | `stats` | 两到四个数，`value` 写成“2 场”“18 人”这样带单位的话 |
 | `links` | 链接，只收 `https`。链接只能来自查询结果或商家提供的，不能凭记忆填 |
-| `say` | 页面最下面“可以这样跟员工说”的话，商家点一下就能复制。写上他在这一页最可能想让你做的两三件事 |
+| `say` | 顶栏右上角“跟员工说”里的话，商家点开、点一句就能复制。写上他在这一页最可能想让你做的两三件事 |
 
 规矩：
 

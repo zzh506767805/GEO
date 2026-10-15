@@ -1136,9 +1136,10 @@ def test_many_periods():
         first = call(REPORT, "render", "--data", write(tmp, "c.json", fresh), "--out", str(Path(tmp) / "c.html"), env=env)
         a, b, c = _smoke([plain["file"], reset["file"], first["file"]])
     latest, before = data["periods"][-1]["mention"], data["periods"][-2]["mention"]
-    check("多期时首页显示的是最新一期的数，带上一期的数和走势，并说明不是累计",
+    # 页面不再写“上面的数不是累计”这类说明：首页标着第几期，数旁边是上一期的数，已经说清了
+    check("多期时首页显示的是最新一期的数，带上一期的数和走势",
           not a["errors"] and "上一期 %d/%d，连续上升" % (before["hits"], before["valid"]) in a["homeText"]
-          and "不是累计" in a["homeText"] and a["sparkBars"] == len(data["periods"]), (a["errors"], a["sparkBars"]))
+          and "第 %d 期" % data["periods"][-1]["no"] in a["homeText"] and a["sparkBars"] == len(data["periods"]), (a["errors"], a["sparkBars"]))
     check("问题改过以后：小柱子只画新问题的那几期，旧的几期在表里标出来",
           not b["errors"] and b["sparkBars"] == len(data["periods"]) - 2 and b["homeText"].count("旧问题") >= 2 and "旧问题" not in a["homeText"],
           (b["errors"], b["sparkBars"]))
