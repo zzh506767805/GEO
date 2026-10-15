@@ -849,6 +849,56 @@ def test_facts_merge():
         check("同类店超过 5 家会退回，不只留前 5 家", "最多 5 家" in error.get("error", ""), error)
 
 
+def test_edited_page():
+    """员工直接改了工作台网页：同步只换数据块，员工加的、改的都保留。"""
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
+        first = call(REPORT, "publish", env=env)
+        page = Path(first["file"])
+        _, _, data = page_json(str(page))
+        data["nav"].append({"id": "keywords", "title": "关键词监控", "icon": "doc", "subtitle": ""})
+        data["customPages"] = {"keywords": {"blocks": [{"type": "text", "text": "员工加的"}]}}
+        edited = page.read_text(encoding="utf-8").replace("<style>", "<style>/* 商家要的橙色 */", 1)
+        edited = re.sub(r'(<script type="application/json" id="geo-data">).*?(</script>)',
+                        lambda m: m.group(1) + json.dumps(data, ensure_ascii=False) + m.group(2), edited, flags=re.S)
+        page.write_text(edited, encoding="utf-8")
+        call(STATE, "set-rivals", "--file", write(tmp, "r2.json", [{"name": "甲记面包"}]), env=env)
+        again = call(REPORT, "publish", env=env)
+        html, _, data = page_json(again["file"])
+        check("员工改过的页面：同步后改动都在，数据换成了新的，员工加的页面和数据也在",
+              "/* 商家要的橙色 */" in html and [r["name"] for r in data["settings"]["rivals"]] == ["甲记面包"]
+              and [p["id"] for p in data["nav"]][-1] == "keywords" and "keywords" in data["customPages"],
+              (data["settings"]["rivals"], [p["id"] for p in data["nav"]]))
+        page.write_text(html.replace('id="geo-data"', 'id="geo-data-gone"'), encoding="utf-8")
+        broken = page.read_text(encoding="utf-8")
+        error = call(REPORT, "publish", env=env, expect=2)
+        check("改过的页面把数据块弄丢了：不同步也不覆盖，告诉员工怎么办",
+              "找不到放数据的地方" in error.get("error", "") and page.read_text(encoding="utf-8") == broken, error)
+        page.unlink()
+        call(REPORT, "publish", env=env)
+        check("删掉页面再同步，恢复标准样子", "/* 商家要的橙色 */" not in page.read_text(encoding="utf-8"))
+        plain = page.read_text(encoding="utf-8")
+        call(STATE, "set-rivals", "--file", write(tmp, "r3.json", [{"name": "乙家烘焙"}]), env=env)
+        call(REPORT, "publish", env=env)
+        check("没改过的页面照标准模板整页重写", page.read_text(encoding="utf-8") != plain
+              and [r["name"] for r in page_json(str(page))[2]["settings"]["rivals"]] == ["乙家烘焙"])
+
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
+        page = Path(call(REPORT, "publish", env=env)["file"])
+        root = Path(env["GEO_DATA_ROOT"])
+        (root / "pages" / ".generated.json").unlink()
+        (root / "template").mkdir()
+        (root / "template" / "page.html").write_text("旧版这家店自己的模板", encoding="utf-8")
+        page.write_text(page.read_text(encoding="utf-8").replace("<style>", "<style>/* 旧模板的样子 */", 1), encoding="utf-8")
+        call(REPORT, "publish", env=env)
+        check("以前用这家店自己模板生成的页面，升级后第一次同步也只换数据", "/* 旧模板的样子 */" in page.read_text(encoding="utf-8"))
+
+
 def test_no_silent_caps():
     """几百篇内容、一年以上的期次：工作台上每一篇都带全文，每一期都有入口。"""
     with tempfile.TemporaryDirectory() as tmp:
@@ -1170,7 +1220,7 @@ def test_douyin_and_sources():
 
 if __name__ == "__main__":
     try:
-        for test in (test_copies, test_template, test_synthetic, test_public_empty_accounts, test_backend_source, test_site, test_facts_merge, test_no_silent_caps, test_new_agent_guards, test_resume_mid_check, test_data_reliability, test_trend_skips_incomplete, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render, test_douyin_and_sources):
+        for test in (test_copies, test_template, test_synthetic, test_public_empty_accounts, test_backend_source, test_site, test_facts_merge, test_no_silent_caps, test_edited_page, test_new_agent_guards, test_resume_mid_check, test_data_reliability, test_trend_skips_incomplete, test_environment_error, test_replay, test_demo_fixture, test_many_periods, test_reader_voice, test_pages_render, test_douyin_and_sources):
             try:
                 test()
             except AssertionError as exc:

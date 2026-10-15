@@ -36,6 +36,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -929,10 +930,60 @@ def _linkable(dates: list = None) -> str:
     return dates[-1] if dates and _report_urls().get(dates[-1]) else ""
 
 
+DATA_BLOCK = re.compile(r'(<script type="application/json" id="geo-data">)(.*?)(</script>)', re.S)
+GENERATED_FILE = ".generated.json"  # 每个网页上次由脚本写出时的指纹，用来认出员工改过的页面
+
+
+def _fingerprint(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+
+def _edited(name: str, current: str, record: dict) -> bool:
+    """员工改过这个页面没有。还没有记录的老页面：以前用过这家店自己的模板（template/page.html）的算改过，其余按标准模板重写。"""
+    if name in record:
+        return _fingerprint(current) != record[name]
+    return (gc.data_root() / "template" / "page.html").is_file()
+
+
+def _merge_data(old_block: str, data: dict) -> dict:
+    """换进员工改过的页面的数据：脚本算的以新的为准；员工自己往数据里加的（脚本不写的字段、导航里多出来的页面）保留。"""
+    try:
+        old = json.loads(old_block)
+    except json.JSONDecodeError:
+        return data
+    if not isinstance(old, dict):
+        return data
+    merged = dict({k: v for k, v in old.items() if k not in data}, **data)
+    ids = {p.get("id") for p in data.get("nav") or []}
+    extra = [p for p in old.get("nav") or [] if isinstance(p, dict) and p.get("id") not in ids]
+    if "nav" in data and extra:
+        merged["nav"] = list(data["nav"]) + extra
+    return merged
+
+
 def _write_page(name: str, data: dict) -> Path:
+    """写一个网页。员工改过的页面（和脚本上次写出的不一样）只换数据块，员工加的、改的都保留；
+    没改过的按标准模板整页重写，标准模板升级了也能跟上。"""
     target = gc.pages_dir() / name
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(render_html(data), encoding="utf-8")
+    record_path = gc.pages_dir() / GENERATED_FILE
+    record = gc.read_json(record_path, {}) or {}
+    try:
+        current = target.read_text(encoding="utf-8") if target.is_file() else ""
+    except (OSError, UnicodeDecodeError) as exc:
+        raise gc.GeoError("读不出页面文件 %s，没有同步" % name) from exc
+    if current and _edited(name, current, record):
+        blocks = DATA_BLOCK.findall(current)
+        if len(blocks) != 1:
+            raise gc.GeoError("页面 %s 被改过，但找不到放数据的地方（要有且只有一处 <script type=\"application/json\" id=\"geo-data\">…</script>），"
+                              "没有同步，也没有覆盖。把这一处加回去再同步；要恢复标准样子，删掉这个文件再同步" % name)
+        merged = _merge_data(blocks[0][1], data)
+        text = DATA_BLOCK.sub(lambda m: m.group(1) + embed_json(merged) + m.group(3), current)
+    else:
+        text = render_html(data)
+    target.write_text(text, encoding="utf-8")
+    record[name] = _fingerprint(text)
+    gc.write_json(record_path, record)
     return target
 
 
