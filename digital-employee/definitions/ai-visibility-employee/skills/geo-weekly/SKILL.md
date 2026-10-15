@@ -113,8 +113,6 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 
 以后只改其中一样时，只传那一样，其余保持不变。写完小结以后又重新算了分、数变了（改了题、换了同类店），`status` 和 `publish` 会提醒你重写小结和建议。真正要商家点头的只有两件事，页面上都有固定的入口，不用靠建议去催：确认一篇内容（工作台 · 内容）、确认你另外记下的信息（工作台 · 监测设置）。
 
-另外看一眼 `geo_report.py show` 输出里有没有 `pagesToFill`：那是工作台上登记了、还没填的页面。有的话执行 `geo_report.py pages` 看每一页放什么，按 `geo-workbench` 的 `references/pages.md` 填好。以前填过的页面，内容过时了也在这一步更新。
-
 也看一眼 `show` 输出里的 `site`：做了官网、`site.outdated` 为 true 时，官网上的信息已经跟不上店铺资料了（`site.changed` 写着哪几样变了）。在 `todos` 里提一次要不要更新，商家同意了按 `geo-site` 更新；提过一次没理会，就不再提。
 
 ### 5. 生成这一期的报告
@@ -148,7 +146,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 
 ## 商家问这一期、这几期怎么样
 
-问题（Q3）、同类店、账号按 `geo-profile`；体检和“3 号”按 `geo-check`；“第 4 篇”、写内容按 `geo-content`；要链接、加页面、改样子按 `geo-workbench`；官网按 `geo-site`。下面是本 Skill 接的：
+问题（Q3）、同类店、账号按 `geo-profile`；体检和“3 号”按 `geo-check`；“第 4 篇”、写内容按 `geo-content`；要链接按 `geo-workbench`；官网按 `geo-site`。下面是本 Skill 接的：
 
 | 商家说 | 做法 |
 | --- | --- |

@@ -63,19 +63,6 @@ def pages_dir() -> Path:
     return data_root() / "pages"
 
 
-def shop_template_path() -> Path:
-    """这家店自己的页面模板。有它就用它生成工作台和报告，没有就用 geo-workbench 自带的标准模板。"""
-    return data_root() / "template" / "page.html"
-
-
-def shop_template_hash() -> str:
-    """这家店自己的模板现在的指纹；没有自己的模板时是空串。员工直接改了文件，也能靠它发现页面要重新同步。"""
-    try:
-        return hashlib.sha256(shop_template_path().read_bytes()).hexdigest()[:16]
-    except OSError:
-        return ""
-
-
 def now() -> dt.datetime:
     """容器时区不确定，日期一律按北京时间算。GEO_FAKE_NOW 只给测试和演示数据用。"""
     fake = os.environ.get("GEO_FAKE_NOW", "").strip()
@@ -288,11 +275,7 @@ def mark_published() -> list:
     built = int(state.get("builtRev", state.get("rev", 0)))
     changes = state.get("changes") or []
     synced = [c["what"] for c in changes if before < int(c.get("rev", 0)) <= built]
-    template = shop_template_hash()
-    if template != state.get("templateHash", ""):
-        synced.append("页面模板")
-    state.update(publishedRev=built, publishedAt=now_iso(), changes=[c for c in changes if int(c.get("rev", 0)) > built],
-                 templateHash=template)
+    state.update(publishedRev=built, publishedAt=now_iso(), changes=[c for c in changes if int(c.get("rev", 0)) > built])
     write_json(_sync_path(), state)
     return synced
 
@@ -303,14 +286,8 @@ def workbench_state() -> dict:
     state = read_json(_sync_path(), {}) or {}
     published = int(state.get("publishedRev", 0))
     pending = [c["what"] for c in state.get("changes") or [] if int(c.get("rev", 0)) > published]
-    if url_published(meta) and shop_template_hash() != state.get("templateHash", ""):
-        pending.append("页面模板")  # 员工改了这家店的模板文件，还没同步上去
     url = meta.get("pageUrl", "")
     return {"url": url, "publishedAt": state.get("publishedAt", ""), "upToDate": bool(url) and not pending, "pending": pending}
-
-
-def url_published(meta: dict) -> bool:
-    return bool((meta or {}).get("pageUrl"))
 
 
 def sync_hint(state: dict = None) -> str:

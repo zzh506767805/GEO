@@ -29,6 +29,16 @@ STORE_STATUS = ("在营", "已搬迁", "已关闭")
 OPEN_RANGE = (6, 12)
 BRAND_RANGE = (1, 3)
 RECOMMENDED = (10, 2)
+# 店铺资料里几样列表最多记多少条。超出的不记，并在输出里告诉员工，不悄悄丢掉
+FACTS_CAPS = {"stores": 200, "products": 50, "edges": 3}
+RIVALS_CAP = 5
+
+
+def _capped(raw: dict, key: str, dropped: list) -> list:
+    items = raw.get(key) or []
+    if len(items) > FACTS_CAPS[key]:
+        dropped.append("%s 传了 %d 条，只记了前 %d 条" % (key, len(items), FACTS_CAPS[key]))
+    return items[:FACTS_CAPS[key]]
 
 
 def _text(value, limit: int) -> str:
@@ -53,7 +63,9 @@ def _host(value) -> str:
     return host if re.match(r"^[a-z0-9.-]+\.[a-z]{2,}$", host) else ""
 
 
-def normalize_facts(raw: dict) -> dict:
+def normalize_facts(raw: dict, dropped: list | None = None) -> dict:
+    """dropped：传一个列表进来，超出上限没记的部分写在里面。"""
+    dropped = [] if dropped is None else dropped
     if not isinstance(raw, dict):
         raise gc.GeoError("店铺资料应为一个对象")
     segment = raw.get("segment")
@@ -64,7 +76,7 @@ def normalize_facts(raw: dict) -> dict:
     if len(name) < 2:
         raise gc.GeoError("店铺资料缺少店名")
     stores = []
-    for item in (raw.get("stores") or [])[:20]:
+    for item in _capped(raw, "stores", dropped):
         if not isinstance(item, dict):
             continue
         status = item.get("status") if item.get("status") in STORE_STATUS else "在营"
@@ -79,7 +91,7 @@ def normalize_facts(raw: dict) -> dict:
         if store["name"] or store["address"]:
             stores.append(store)
     products = []
-    for item in (raw.get("products") or [])[:10]:
+    for item in _capped(raw, "products", dropped):
         if not isinstance(item, dict):
             continue
         product = {
@@ -91,7 +103,7 @@ def normalize_facts(raw: dict) -> dict:
         if product["name"]:
             products.append(product)
     edges = []
-    for item in (raw.get("edges") or [])[:3]:
+    for item in _capped(raw, "edges", dropped):
         if not isinstance(item, dict):
             continue
         edge = {"text": _text(item.get("text"), 30), "basis": _text(item.get("basis"), 40)}
@@ -240,9 +252,11 @@ def normalize_rivals(raw, facts: dict) -> list:
     items = raw.get("items") if isinstance(raw, dict) else raw
     if not isinstance(items, list):
         raise gc.GeoError("竞品应为一个列表")
+    if len(items) > RIVALS_CAP:
+        raise gc.GeoError("同类店最多 %d 家，现在传了 %d 家。挑和这家店最像、商家最在意的 %d 家" % (RIVALS_CAP, len(items), RIVALS_CAP))
     own = gc.brand_aliases(facts)
     out = []
-    for item in items[:5]:
+    for item in items:
         if not isinstance(item, dict):
             continue
         name = _text(item.get("name"), 40)
@@ -367,13 +381,14 @@ def cmd_show(args) -> None:
 def cmd_set_facts(args) -> None:
     current = _require_facts()
     raw = gc.load_input(args.file)
+    dropped = []
     if args.replace:
         if isinstance(raw, dict):
             raw.setdefault("segment", current.get("segment"))
-        facts, kept = normalize_facts(raw), []
+        facts, kept = normalize_facts(raw, dropped), []
     else:
         merged, kept = merge_facts(current, raw)
-        facts = normalize_facts(merged)
+        facts = normalize_facts(merged, dropped)
     changed = facts != current
     gc.write_json(_paths()["facts"], facts)
     if changed:
@@ -394,6 +409,8 @@ def cmd_set_facts(args) -> None:
     if "from" not in raw and not args.replace and current.get("from") != "backend" and facts["from"] != "backend":
         payload["warnings"].append("资料里没有写 from：从店铺后台读到的资料要写 \"from\": \"backend\"，"
                                    "否则会当成从公开信息整理的，商家确认之前不能替他写内容")
+    for text in dropped:
+        payload["warnings"].append("超出上限没有记：%s。挑最重要的传，或者告诉维护的人调 FACTS_CAPS" % text)
     gc.emit(payload)
 
 

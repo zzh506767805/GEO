@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="only light">
 <title>AI 曝光工作台</title>
 <style>
-/* ───────── 颜色和字体：和有赞龙虾客户端用同一套 ───────── */
+/* ───────── 颜色和字体：和有赞龙虾客户端用同一套 ─────────
+   页面是白底：工作台嵌在客户端的内容区里，客户端的内容区本身就是白的。分区靠细线和留白，不靠灰底 */
 :root {
-  --bg: #f6f7f8; --side: #f1f2f3; --canvas: #ffffff; --subtle: #f7f8f8; --hover: #eceeef;
-  --line: #e6e8ea; --line-2: #d5d8db;
+  --bg: #ffffff; --side: #fafbfb; --canvas: #ffffff; --subtle: #f7f8f9; --hover: #f1f3f4;
+  --line: #eceef0; --line-2: #d9dcdf;
   --ink: #1f2328; --ink-2: #5f656b; --ink-3: #8b9197; --ink-4: #b6babe;
   --brand: #155bd4; --brand-2: #114bb8; --brand-soft: #eaf2ff; --brand-line: #b8d0f5;
   --ok: #238a57; --ok-soft: #eaf7f0; --warn: #b7791f; --warn-soft: #fff7e6; --bad: #d83b32; --bad-soft: #fff0ef;
@@ -18,19 +19,6 @@
   --shadow: 0 1px 2px rgba(31, 35, 40, .04);
   --shadow-lg: 0 16px 48px rgba(31, 35, 40, .18);
   --r: 12px;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #171819; --side: #1d1f20; --canvas: #222426; --subtle: #292b2d; --hover: #303336;
-    --line: #34373a; --line-2: #4b4f53;
-    --ink: #f2f3f4; --ink-2: #b9bdc1; --ink-3: #858b91; --ink-4: #5c6166;
-    --brand: #4d8dff; --brand-2: #6ba0ff; --brand-soft: #172a4a; --brand-line: #2e4b7a;
-    --ok: #3da46e; --ok-soft: rgba(61, 164, 110, .16); --warn: #d6a33a; --warn-soft: rgba(214, 163, 58, .16);
-    --bad: #f26b62; --bad-soft: rgba(242, 107, 98, .16);
-    --c1: #4d8dff; --c2: #35b0c2; --c3: #a78bfa; --c4: #f08a4b; --c5: #3da46e; --c6: #e06db2; --c7: #d6a33a; --c0: #4b4f53;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .3);
-    --shadow-lg: 0 16px 48px rgba(0, 0, 0, .5);
-  }
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -107,14 +95,28 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .nav .rpt-link { height: 34px; font-size: 13px; }
 .nav .rpt-link .cnt { background: var(--brand-soft); color: var(--brand); }
 .main { flex: 1; min-width: 0; }
-.topbar { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; min-height: 60px; padding: 10px 28px; border-bottom: 1px solid var(--line); background: var(--bg); }
+.topbar { position: sticky; top: 0; z-index: 8; display: flex; align-items: center; min-height: 60px; padding: 10px 32px; border-bottom: 1px solid var(--line); background: rgba(255, 255, 255, .9); -webkit-backdrop-filter: saturate(1.4) blur(10px); backdrop-filter: saturate(1.4) blur(10px); }
 .topbar h1 { margin: 0; font-size: 18px; font-weight: 700; white-space: nowrap; }
 .card-h h3, .banner .verdict, .stack > .rpt-h2, .paper-title, .finding-t, .sheet-head h3 { text-wrap: balance; }
 .topbar .sub { margin-left: 12px; overflow: hidden; font-size: 13px; color: var(--ink-3); text-overflow: ellipsis; white-space: nowrap; }
-.topbar .upd { margin-left: 8px; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+.topbar .sub:empty { display: none; }
+.topbar .upd { margin-left: 14px; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
 .topbar .sp { flex: 1; min-width: 8px; }
 .topbar .pill { margin-left: 8px; }
 .topbar .act { margin-left: 14px; font-size: 13px; white-space: nowrap; }
+/* 跟员工说：页面是只读的，能说的话收在顶栏这一个按钮里，点开才出现 */
+.saybtn { display: inline-flex; flex: none; align-items: center; margin-left: 12px; border: 1px solid var(--line-2); border-radius: 999px; padding: 4px 12px 4px 10px; background: var(--canvas); color: var(--ink-2); font-size: 13px; white-space: nowrap; cursor: pointer; }
+.saybtn[hidden] { display: none; }
+.saybtn svg { margin-right: 6px; }
+.saybtn:hover, .saybtn.on { border-color: var(--brand-line); color: var(--brand); }
+.saypop { position: absolute; right: 24px; top: calc(100% - 4px); z-index: 25; width: 300px; max-width: calc(100vw - 24px); border: 1px solid var(--line); border-radius: 12px; padding: 6px; background: var(--canvas); box-shadow: var(--shadow-lg); animation: pop-in .16s ease-out; }
+@keyframes pop-in { from { transform: translateY(-4px); opacity: 0; } to { transform: none; opacity: 1; } }
+.saypop button { display: flex; align-items: center; width: 100%; border: 0; border-radius: 8px; padding: 9px 10px; background: none; font-size: 14px; text-align: left; cursor: pointer; }
+.saypop button:hover { background: var(--hover); }
+.saypop button span { flex: 1; min-width: 0; }
+.saypop button svg { flex: none; margin-left: 10px; color: var(--ink-4); }
+.saypop button:hover svg { color: var(--brand); }
+.saypop .foot { padding: 6px 10px 4px; border-top: 1px solid var(--line); margin-top: 4px; font-size: 12px; color: var(--ink-3); }
 /* 在工作台里看报告：顶栏和侧栏不动，内容区整个交给报告（一个内嵌的页面），只有它自己滚动 */
 .main.host { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 .content.host { display: flex; flex: 1; flex-direction: column; min-height: 0; max-width: none; padding: 0; }
@@ -124,23 +126,24 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .menu-btn { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; margin: 0 8px 0 -6px; border: 0; border-radius: 8px; background: none; cursor: pointer; }
 .menu-btn:hover { background: var(--hover); }
 .scrim { display: none; }
-.content { max-width: 1200px; padding: 20px 28px 56px; }
+.content { max-width: 1200px; padding: 28px 32px 64px; }
 @media (max-width: 900px) {
-  .side { position: fixed; left: 0; top: 0; transform: translateX(-102%); transition: transform .22s ease; box-shadow: var(--shadow-lg); }
-  .side.open { transform: none; }
+  .side { position: fixed; left: 0; top: 0; transform: translateX(-102%); transition: transform .22s ease; }
+  .side.open { transform: none; box-shadow: var(--shadow-lg); }  /* 收起时不带阴影，免得白底上左边缘露出一道灰 */
   .scrim.open { display: block; position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 19; background: rgba(15, 18, 21, .45); }
   .menu-btn { display: inline-flex; }
   .topbar { padding: 8px 16px; }
   .topbar .sub, .topbar .upd, .topbar .pill { display: none; }
+  .saypop { right: 12px; }
   .frame-hint { padding: 8px 16px; }
   .psel { max-width: 172px; }
   .content { padding: 16px 16px 48px; }
 }
-@media (prefers-reduced-motion: reduce) { .side { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .side { transition: none; } .saypop { animation: none; } }
 
 /* ───────── 通用组件 ───────── */
 .row { display: grid; gap: 16px; }
-.stack > * + * { margin-top: 16px; }
+.stack > * + * { margin-top: 24px; }
 .row.c4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 901px) {
   .row.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
@@ -148,14 +151,23 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
   .row.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 .card { min-width: 0; border: 1px solid var(--line); border-radius: var(--r); background: var(--canvas); padding: 16px; }
-@media (min-width: 901px) { .card { padding: 18px 20px; } }
-.card-h { display: flex; align-items: center; margin-bottom: 12px; }
-.card-h h3 { margin: 0; font-size: 15px; font-weight: 700; }
+@media (min-width: 901px) { .card { padding: 20px 24px; } }
+.card-h { display: flex; align-items: center; margin-bottom: 14px; }
+.card-h h3 { margin: 0; font-size: 15px; font-weight: 600; }
 .card-h .count { margin-left: 8px; font-size: 12px; color: var(--ink-3); }
 .card-h .more { margin-left: auto; padding-left: 12px; font-size: 13px; white-space: nowrap; }
 .card.flush { padding: 0; overflow: hidden; }
-.card.flush .card-h { margin: 0; padding: 16px 20px 12px; }
-.card.flush .pad { padding: 0 20px 16px; }
+.card.flush .card-h { margin: 0; padding: 16px 16px 10px; }
+.card.flush .pad { padding: 0 16px 16px; }
+@media (min-width: 901px) { .card.flush .card-h { padding: 20px 24px 12px; } .card.flush .pad { padding: 0 24px 18px; } }
+/* 状态：一个小圆点加两三个字，不用整块的彩色底 */
+.st { display: inline-flex; flex: none; align-items: center; font-size: 12px; font-weight: 500; color: var(--ink-3); white-space: nowrap; }
+.st::before { content: ''; flex: none; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: currentColor; }
+.st.warn { color: var(--warn); }
+.st.ok { color: var(--ok); }
+.st.bad { color: var(--bad); }
+.st.brand { color: var(--brand); }
+.notice { border-radius: 10px; padding: 10px 14px; background: var(--warn-soft); color: var(--warn); font-size: 13px; font-weight: 500; }
 .lead { max-width: 68em; margin: 0 0 14px; font-size: 13px; color: var(--ink-2); }
 .pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 0 9px; font-size: 12px; font-weight: 600; line-height: 22px; white-space: nowrap; }
 .pill.ok { background: var(--ok-soft); color: var(--ok); }
@@ -179,11 +191,12 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .seg button.on { background: var(--canvas); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(31, 35, 40, .14); }
 .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .tbl { width: 100%; border-collapse: collapse; }
-.tbl th { padding: 9px 12px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--subtle); font-size: 12px; font-weight: 600; color: var(--ink-3); text-align: left; white-space: nowrap; }
+.tbl th { padding: 9px 12px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: none; font-size: 12px; font-weight: 500; color: var(--ink-3); text-align: left; white-space: nowrap; }
 .tbl td { padding: 12px; border-bottom: 1px solid var(--line); font-size: 14px; vertical-align: middle; }
 .tbl tr:last-child td { border-bottom: 0; }
-.tbl th:first-child, .tbl td:first-child { padding-left: 20px; }
-.tbl th:last-child, .tbl td:last-child { padding-right: 20px; }
+.tbl th:first-child, .tbl td:first-child { padding-left: 16px; }
+.tbl th:last-child, .tbl td:last-child { padding-right: 16px; }
+@media (min-width: 901px) { .tbl th:first-child, .tbl td:first-child { padding-left: 24px; } .tbl th:last-child, .tbl td:last-child { padding-right: 24px; } }
 .tbl .r { text-align: right; font-variant-numeric: tabular-nums; }
 .tbl .c { text-align: center; }
 .tbl .nw { white-space: nowrap; }
@@ -202,22 +215,24 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .legend { display: flex; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--ink-2); }
 .legend span { display: inline-flex; align-items: center; margin: 0 14px 4px 0; }
 .legend .d { width: 9px; height: 9px; margin: 0 6px 0 0; }
-.say { border: 1px dashed var(--line-2); border-radius: var(--r); padding: 14px 16px; }
-.say .tt { display: flex; align-items: center; font-size: 13px; font-weight: 600; color: var(--ink-2); }
-.say .tt svg { flex: none; margin-right: 6px; }
-.say button { margin: 8px 8px 0 0; border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px; background: var(--canvas); font-size: 13px; cursor: pointer; }
+/* 报告最下面的一行“可以这样跟员工说”：安静的一行，不加框 */
+.say { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 4px; }
+.say .tt { margin-right: 4px; font-size: 12px; color: var(--ink-3); }
+.say button { border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px; background: var(--canvas); color: var(--ink-2); font-size: 13px; cursor: pointer; }
 .say button:hover { border-color: var(--brand-line); color: var(--brand); }
-.say .hint { margin-top: 8px; font-size: 12px; color: var(--ink-3); }
 
 /* ───────── 工作台首页 ───────── */
-.banner { display: flex; align-items: flex-start; border: 1px solid var(--brand-line); border-radius: var(--r); padding: 16px 18px; background: linear-gradient(135deg, var(--brand-soft) 0%, var(--canvas) 55%); }
-.banner .mascot { width: 40px; height: 40px; margin-right: 14px; }
+.banner { display: flex; align-items: flex-start; border: 1px solid var(--line); border-radius: var(--r); padding: 20px 18px; background: var(--canvas); }
+@media (min-width: 901px) { .banner { padding: 24px 28px; } }
+.banner .mascot { width: 40px; height: 40px; margin-right: 16px; }
 .banner .body { flex: 1; min-width: 0; }
-.banner .tt { font-size: 12px; font-weight: 700; color: var(--brand); }
-.banner .verdict { margin: 2px 0 0; font-size: 19px; font-weight: 700; line-height: 1.45; letter-spacing: -.01em; }
+.banner .tt { font-size: 12px; font-weight: 500; letter-spacing: .02em; color: var(--ink-3); }
+.banner .verdict { margin: 4px 0 0; font-size: 21px; font-weight: 700; line-height: 1.4; letter-spacing: -.01em; }
 .banner .verdict b { color: var(--brand); }
-.banner .brief { max-width: 68em; margin-top: 6px; font-size: 14px; color: var(--ink-2); }
-.banner .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.banner .brief { max-width: 46em; margin-top: 8px; font-size: 14px; line-height: 1.75; color: var(--ink-2); }
+.banner .brief.clamp { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.banner .textbtn { margin-top: 2px; }
+.banner .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .banner .acts .btn { margin: 0; }
 .banner.plain { border-color: var(--line); background: var(--canvas); }
 .steps { margin: 0; padding: 0; list-style: none; }
@@ -237,17 +252,37 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .kpi.static { cursor: default; }
 .kpi.static:hover { border-color: var(--line); box-shadow: none; transform: none; }
 @media (prefers-reduced-motion: reduce) { .kpi { transition: none; } .kpi:hover { transform: none; } }
-.kpi-top { display: flex; align-items: center; font-size: 13px; color: var(--ink-2); }
+.kpi-top { display: flex; align-items: center; min-height: 20px; font-size: 13px; color: var(--ink-3); }
 .kpi-ico { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 26px; height: 26px; margin-right: 8px; border-radius: 8px; background: var(--brand-soft); color: var(--brand); }
 .kpi-ico.bad { background: var(--bad-soft); color: var(--bad); }
 .kpi-ico.ok { background: var(--ok-soft); color: var(--ok); }
 .kpi-ico.plain { background: var(--hover); color: var(--ink-2); }
-.kpi-num { display: block; margin-top: 8px; font-size: 30px; font-weight: 700; line-height: 1.2; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
-.kpi-num.text { padding: 6px 0 5px; overflow: hidden; font-size: 18px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
-.kpi-num small { font-size: 13px; font-weight: 400; color: var(--ink-3); letter-spacing: 0; }
-.kpi-hint { display: block; margin-top: 4px; font-size: 12px; line-height: 1.5; color: var(--ink-3); }
+.kpi-num { display: block; margin-top: 10px; font-size: 32px; font-weight: 600; line-height: 1.15; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kpi-num.text { padding: 6px 0 5px; overflow: hidden; font-size: 18px; line-height: 1.4; letter-spacing: 0; text-overflow: ellipsis; white-space: nowrap; }
+.kpi-num small { margin-left: 2px; font-size: 13px; font-weight: 400; color: var(--ink-3); letter-spacing: 0; }
+.kpi-hint { display: block; margin-top: 6px; font-size: 12px; line-height: 1.5; color: var(--ink-3); }
+/* 每个 AI 各提到几次：三根细条，代替一长串文字 */
+.pmini { display: grid; grid-template-columns: max-content minmax(24px, 1fr) max-content; align-items: center; gap: 5px 8px; margin-top: 12px; font-size: 12px; line-height: 1.3; color: var(--ink-3); }
+.pmini .pbar { min-width: 0; height: 4px; }
+.pmini b { font-weight: 500; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .kpi .spark { position: absolute; right: 16px; top: 16px; width: 64px; height: 26px; }
 @media (max-width: 640px) { .kpi .spark { position: static; display: block; margin-top: 8px; } }  /* 窄屏卡片放不下，走势图挪到最下面，不压住标题 */
+/* 几个数放在一条里，中间用细线隔开，不各占一张卡片 */
+.row.kpis { gap: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: hidden; border: 1px solid var(--line); border-radius: var(--r); background: var(--canvas); }
+.row.kpis > .kpi { border: 0; border-radius: 0; }
+.row.kpis > .kpi:nth-child(2n) { border-left: 1px solid var(--line); }
+.row.kpis > .kpi:nth-child(n+3) { border-top: 1px solid var(--line); }
+@media (min-width: 901px) {
+  .row.kpis.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .row.kpis.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .row.kpis > .kpi + .kpi { border-left: 1px solid var(--line); }
+  .row.kpis > .kpi:nth-child(n+3) { border-top: 0; }
+}
+.row.kpis > .kpi:hover { border-color: var(--line); background: var(--subtle); box-shadow: none; transform: none; }
+/* 首页和报告最上面的结论：不加框，大字直接放在白底上 */
+.banner.hero { border: 0; border-radius: 0; padding: 4px 0 0; background: none; }
+.banner.hero .verdict { font-size: 24px; letter-spacing: -.015em; }
+@media (max-width: 640px) { .banner.hero .verdict { font-size: 20px; } }
 .todos { margin: 0; padding: 0; list-style: none; counter-reset: todo; }
 .todos li { position: relative; padding: 11px 0 11px 36px; border-top: 1px solid var(--line); }
 .todos li:first-child { border-top: 0; padding-top: 2px; }
@@ -368,30 +403,63 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .rowlist li:first-child { border-top: 0; padding-top: 0; }
 .rowlist li:last-child { padding-bottom: 0; }
 .rowlist .mt { margin-top: 2px; font-size: 12px; color: var(--ink-3); }
-.blk-text .p { white-space: pre-wrap; word-break: break-word; }
-.blk-text .gap { height: 8px; }
-.paper { margin: 14px 0 12px; border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; background: var(--subtle); max-width: 720px; }
-.paper-title { margin-bottom: 8px; font-size: 17px; font-weight: 700; line-height: 1.45; }
 .t-strong { margin-top: 4px; font-weight: 700; }
-.paper.note { max-width: 420px; background: var(--canvas); }
-.note-tags { margin-top: 10px; }
+.note-tags { margin-top: 12px; }
 .note-tags span { display: inline-block; margin: 0 8px 4px 0; color: var(--brand); font-size: 14px; }
-.art { padding: 0; overflow: hidden; }
-.art-title { padding: 6px 16px 0; font-size: 16px; font-weight: 700; line-height: 1.5; }
-.art-note { padding: 6px 16px 0; }
-.art-info { margin: 8px 16px 0; font-size: 13px; }
-.art-body { margin: 12px 16px 0; border-top: 1px solid var(--line); }
-.art-body > summary { padding: 10px 0 2px; font-size: 13px; font-weight: 600; color: var(--brand); cursor: pointer; }
-.art-body .paper { margin: 10px 0 0; }
-.art-foot { display: flex; flex-wrap: wrap; align-items: center; padding: 12px 16px 16px; }
-.art-foot .btn { margin-right: 12px; }
-@media (min-width: 901px) {
-  .art-title { padding: 6px 20px 0; }
-  .art-note { padding: 6px 20px 0; }
-  .art-info { margin: 8px 20px 0; }
-  .art-body { margin: 12px 20px 0; }
-  .art-foot { padding: 12px 20px 18px; }
-}
+/* 每周问的问题：一题两行，第一行是问题，第二行灰字写替谁问、他在意什么 */
+.qlist { margin: 0; padding: 0; list-style: none; }
+.qlist li { display: flex; align-items: baseline; padding: 12px 16px; border-top: 1px solid var(--line); }
+.qlist li:first-child { border-top: 0; }
+.qlist .qno { flex: none; width: 36px; }
+.qlist .qb { flex: 1; min-width: 0; }
+.qlist .qt { font-size: 14px; font-weight: 500; line-height: 1.55; }
+.qlist .qm { margin-top: 2px; font-size: 12px; color: var(--ink-3); }
+.qlist li.qgrp { display: block; padding: 18px 16px 6px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
+@media (min-width: 901px) { .qlist li { padding: 12px 24px; } .qlist li.qgrp { padding: 20px 24px 6px; } }
+
+/* ───────── 内容：一篇一行，点开从右边滑出稿子 ───────── */
+.clist { display: block; }
+.card.flush > .card-h + .clist { border-top: 1px solid var(--line); }
+.cgrp { padding: 14px 16px 4px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.cgrp ~ .cgrp { margin-top: 6px; border-top: 1px solid var(--line); }
+.cgrp + .crow { border-top: 0; }
+@media (min-width: 901px) { .cgrp { padding: 16px 24px 4px; } }
+.crow { display: flex; align-items: center; width: 100%; border: 0; border-top: 1px solid var(--line); padding: 14px 16px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.crow:first-child { border-top: 0; }
+.crow:hover { background: var(--subtle); }
+.crow:focus-visible { outline-offset: -2px; }
+.crow .cm { display: block; flex: 1; min-width: 0; }
+.crow .t { display: block; overflow: hidden; font-size: 15px; font-weight: 600; line-height: 1.45; text-overflow: ellipsis; white-space: nowrap; }
+.crow .m { display: block; margin-top: 3px; overflow: hidden; font-size: 12px; color: var(--ink-3); text-overflow: ellipsis; white-space: nowrap; }
+.crow .st { margin-left: 16px; }
+.crow .chev { display: flex; flex: none; margin-left: 8px; color: var(--ink-4); }
+.crow:hover .chev { color: var(--ink-2); }
+@media (min-width: 901px) { .crow { padding: 14px 24px; } }
+@media (max-width: 640px) { .crow .t { white-space: normal; } }
+.siterow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.siterow .cm { flex: 1; min-width: 180px; }
+.siterow .t { font-size: 15px; font-weight: 600; }
+.siterow .m { margin-top: 2px; font-size: 12px; color: var(--ink-3); }
+.siterow .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.siterow .acts .btn { margin: 0; }
+/* 稿子抽屉：电脑上从右边滑出，手机上铺满 */
+.sheet.drawer { align-items: stretch; justify-content: flex-end; padding: 0; }
+.sheet.drawer .sheet-panel { display: flex; flex-direction: column; width: 600px; max-width: 100%; height: 100%; max-height: none; overflow: hidden; border-radius: 0; box-shadow: var(--shadow-lg); animation: drawer-in .28s cubic-bezier(.19, 1, .22, 1); }
+@keyframes drawer-in { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sheet.drawer .sheet-panel { animation: none; } }
+.sheet.drawer .sheet-head { padding: 18px 24px 14px; }
+.sheet.drawer .sheet-head h3 { font-size: 18px; }
+.drawer-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 24px 32px; }
+.drawer-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 24px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--canvas); }
+.drawer-foot .btn { margin: 0; }
+.dmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 12px; color: var(--ink-3); }
+.dinfo { margin-top: 16px; border-radius: 10px; padding: 12px 14px; background: var(--subtle); font-size: 13px; line-height: 1.7; }
+.dinfo dd { color: var(--ink-2); }
+.dlabel { margin-top: 22px; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--ink-3); }
+.ans-text.read { max-width: 36em; margin-top: 18px; font-size: 15px; line-height: 1.85; }
+.dlabel + .ans-text.read { margin-top: 8px; }
+.ans-text.read .h { margin-top: 18px; font-size: 16px; }
+.ans-text.read .p { margin-top: 6px; }
 
 /* ───────── 点开一格：AI 的原话 ───────── */
 .sheet { position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center; background: rgba(15, 18, 21, .5); }
@@ -406,6 +474,11 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .sheet-x { display: flex; flex: none; align-items: center; justify-content: center; width: 32px; height: 32px; margin-left: 12px; border: 0; border-radius: 50%; background: var(--hover); cursor: pointer; }
 .ans { padding: 16px 18px 18px; border-top: 8px solid var(--bg); }
 .sheet-head + .ans { border-top: 0; }
+.link-input { display: block; width: 100%; margin: 10px 0 12px; border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 10px; background: var(--canvas); color: var(--ink); font-size: 13px; }
+.sheet.preview .sheet-panel { display: flex; flex-direction: column; max-width: 460px; height: 88vh; overflow: hidden; }
+.sheet.preview .sheet-head { align-items: center; }
+.sheet.preview .sheet-head .btn { flex: none; margin: 0 0 0 12px; }
+.preview-frame { flex: 1; width: 100%; min-height: 0; border: 0; background: #fff; }
 .ans:last-child { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
 .ans-flags { display: flex; flex-wrap: wrap; align-items: center; }
 .ans-flags > * { margin: 0 8px 6px 0; }
@@ -425,12 +498,12 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
 <noscript><p class="noscript">这个页面需要开启 JavaScript 才能显示。</p></noscript>
 <div id="app" class="app"></div>
 <div id="sheet" class="sheet" hidden><div class="sheet-panel" role="dialog" aria-modal="true" aria-label="AI 的原话"></div></div>
-<script type="application/json" id="geo-data">{"kind":"workbench","generatedAt":"2026-10-08T21:50:00+08:00","runDate":"2026-10-08","store":{"name":"麦的日尝","segment":"local","segmentName":"本地门店","demo":false},"providers":[{"id":"hunyuan","name":"元宝"},{"id":"doubao","name":"豆包"},{"id":"deepseek","name":"DeepSeek"}],"progress":{},"latest":{"date":"2026-10-08","no":1,"questionsVersion":1,"mention":{"hits":1,"valid":69,"byProvider":{"hunyuan":{"hits":0,"valid":24},"doubao":{"hits":1,"valid":21},"deepseek":{"hits":0,"valid":24}}},"refs":{"total":733,"own":1,"storePages":14,"aboutStore":22},"expected":42,"returned":42,"complete":true,"judged":true,"content":{"count":0,"status":"","title":"","note":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"reportFile":"report-2026-10-08.html","reportUrl":"https://claw-cloud.youzan.com/f/mock/ai-visibility-employee/pages/report-2026-10-08.html","buyEntry":null,"rivals":[{"name":"Cycle \u0026 Cycle","count":17},{"name":"猫咪面团","count":15},{"name":"红跑车","count":14},{"name":"可莎蜜儿","count":14}]},"actions":{"brief":"顾客没点名的时候，69 个回答里只有 1 个提到你（豆包，“留下附近”那道题）；AI 最常提的是 Cycle \u0026 Cycle，17 次。豆包主要读抖音、元宝主要读公众号，而讲你的视频和文章，只在顾客点名问你时才被读到。先请你看一眼“监测设置”：店铺信息是我从公开信息里整理的，你确认以后我就开始替你写内容。","todos":[{"text":"看一眼“监测设置”里我整理的店铺信息：两家门店的地址对不对，“面包脑袋Yolanda”是不是你的抖音号","why":"这些是我从公开信息里整理的。你确认以后，我才能开始替你写内容"},{"text":"告诉我你有没有公众号，叫什么","why":"元宝三分之一的引用来自公众号文章，我没有搜到和你同名的号"},{"text":"如果清波街 109 号那家店已经不在了，在 Apple 地图上把它标记为已搬迁或已关闭","why":"DeepSeek 介绍你时用的是这个地址。它出自地图上一个还在线的地点页，你自己能改"}],"gaps":[{"where":"公众号","note":"元宝回答这批问题时，三分之一的引用来自公众号文章。我没有搜到和你同名的公众号；别人写你的两篇公众号文章，只在顾客点名问你时才被读到。"},{"where":"抖音","note":"豆包七成的引用来自抖音。讲你的视频有 3 条被引用，其中 1 条出自“面包脑袋Yolanda”这个账号，也都是在顾客点名问你的时候。"},{"where":"地图和点评","note":"DeepSeek 常读地图上的门店页，会直接用上面的地址。你的两家店在大众点评都有门店页；Apple 地图上还有一个清波街的地点页。"}],"contentNote":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"periods":[{"date":"2026-10-08","no":1,"questionsVersion":1,"mention":{"hits":1,"valid":69,"byProvider":{"hunyuan":{"hits":0,"valid":24},"doubao":{"hits":1,"valid":21},"deepseek":{"hits":0,"valid":24}}},"refs":{"total":733,"own":1,"storePages":14,"aboutStore":22},"expected":42,"returned":42,"complete":true,"judged":true,"content":{"count":0,"status":"","title":"","note":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"reportFile":"report-2026-10-08.html","reportUrl":"https://claw-cloud.youzan.com/f/mock/ai-visibility-employee/pages/report-2026-10-08.html"}],"contents":[],"contentTypes":{"wechat":"公众号文章","xhs":"小红书笔记","text":"长文"},"questions":[{"id":"q01","kind":"open","tag":"品类","text":"杭州有哪些好吃的面包店推荐？","audience":"面包爱好者","worry":"哪几家最值得去"},{"id":"q02","kind":"open","tag":"地段","text":"杭州西湖边南山路附近有什么好吃的面包店或甜品店？","audience":"来杭州玩的游客","worry":"逛街顺不顺路"},{"id":"q03","kind":"open","tag":"单品","text":"杭州哪家的冰面包好吃？","audience":"面包爱好者","worry":"冰面包做得好不好"},{"id":"q04","kind":"open","tag":"单品","text":"杭州哪里能买到好吃的碱水面包？","audience":"面包爱好者","worry":"碱水正不正宗"},{"id":"q05","kind":"open","tag":"场景","text":"来杭州旅游，有什么值得带走的烘焙类伴手礼？","audience":"来杭州玩的游客","worry":"能不能带走、放不放得住"},{"id":"q06","kind":"open","tag":"场景","text":"杭州有哪些适合坐下来喝下午茶的面包店？","audience":"来杭州玩的游客","worry":"有没有座位"},{"id":"q07","kind":"open","tag":"场景","text":"杭州生日蛋糕哪家好吃，可以配送的？","audience":"附近的居民和上班族","worry":"能不能配送"},{"id":"q08","kind":"open","tag":"渠道","text":"杭州有没有可以在微信小程序下单、同城配送的面包店？","audience":"附近的居民和上班族","worry":"能不能线上下单"},{"id":"q09","kind":"open","tag":"场景","text":"杭州哪里能买到低GI面包？适合控糖的人吃的面包店有推荐吗？","audience":"控糖和减脂的人","worry":"是不是真的低 GI"},{"id":"q10","kind":"open","tag":"单品","text":"杭州哪家的恰巴塔和欧包好吃？","audience":"面包爱好者","worry":"恰巴塔和欧包做得好不好"},{"id":"q11","kind":"open","tag":"地段","text":"杭州西溪路留下附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"q12","kind":"open","tag":"地段","text":"杭州上城区江城路望江门附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"b01","kind":"brand","tag":"口碑","text":"杭州的麦的日尝这家面包店怎么样？值得去吗？","audience":"","worry":""},{"id":"b02","kind":"brand","tag":"门店","text":"麦的日尝有哪些招牌产品？门店在哪里？","audience":"","worry":""}],"settings":{"from":"public","confirmed":false,"pending":true,"canWrite":false,"questions":[{"id":"q01","kind":"open","tag":"品类","text":"杭州有哪些好吃的面包店推荐？","audience":"面包爱好者","worry":"哪几家最值得去"},{"id":"q02","kind":"open","tag":"地段","text":"杭州西湖边南山路附近有什么好吃的面包店或甜品店？","audience":"来杭州玩的游客","worry":"逛街顺不顺路"},{"id":"q03","kind":"open","tag":"单品","text":"杭州哪家的冰面包好吃？","audience":"面包爱好者","worry":"冰面包做得好不好"},{"id":"q04","kind":"open","tag":"单品","text":"杭州哪里能买到好吃的碱水面包？","audience":"面包爱好者","worry":"碱水正不正宗"},{"id":"q05","kind":"open","tag":"场景","text":"来杭州旅游，有什么值得带走的烘焙类伴手礼？","audience":"来杭州玩的游客","worry":"能不能带走、放不放得住"},{"id":"q06","kind":"open","tag":"场景","text":"杭州有哪些适合坐下来喝下午茶的面包店？","audience":"来杭州玩的游客","worry":"有没有座位"},{"id":"q07","kind":"open","tag":"场景","text":"杭州生日蛋糕哪家好吃，可以配送的？","audience":"附近的居民和上班族","worry":"能不能配送"},{"id":"q08","kind":"open","tag":"渠道","text":"杭州有没有可以在微信小程序下单、同城配送的面包店？","audience":"附近的居民和上班族","worry":"能不能线上下单"},{"id":"q09","kind":"open","tag":"场景","text":"杭州哪里能买到低GI面包？适合控糖的人吃的面包店有推荐吗？","audience":"控糖和减脂的人","worry":"是不是真的低 GI"},{"id":"q10","kind":"open","tag":"单品","text":"杭州哪家的恰巴塔和欧包好吃？","audience":"面包爱好者","worry":"恰巴塔和欧包做得好不好"},{"id":"q11","kind":"open","tag":"地段","text":"杭州西溪路留下附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"q12","kind":"open","tag":"地段","text":"杭州上城区江城路望江门附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"b01","kind":"brand","tag":"口碑","text":"杭州的麦的日尝这家面包店怎么样？值得去吗？","audience":"","worry":""},{"id":"b02","kind":"brand","tag":"门店","text":"麦的日尝有哪些招牌产品？门店在哪里？","audience":"","worry":""}],"audience":[{"name":"附近的居民和上班族","who":"住在或上班在门店周边的人","scene":"想在家或公司附近找一家常去的面包店","worry":"离得近不近、当天还有没有货","basis":"推测"},{"name":"来杭州玩的游客","who":"在西湖一带游玩的外地游客","scene":"逛街途中想买面包，或者找能带走的伴手礼","worry":"顺不顺路、放不放得住","basis":"推测"},{"name":"控糖和减脂的人","who":"在意糖分和升糖的顾客","scene":"给自己或家人挑日常吃的主食面包","worry":"是不是真的低糖、低 GI","basis":"推测"},{"name":"面包爱好者","who":"冲着某一种面包专门找店的人","scene":"想吃冰面包、碱水、恰巴塔这类具体品种","worry":"这一款做得正不正宗","basis":"推测"}],"rivals":[{"name":"Cycle \u0026 Cycle"},{"name":"猫咪面团"},{"name":"红跑车"},{"name":"可莎蜜儿"}],"extras":{"aliases":["麦の日尝","Wheat daily","wheatdaily","麦的日尝·daily"],"wechatOfficial":"","douyin":"面包脑袋Yolanda","stores":[{"name":"江城店","address":"杭州市上城区江城路410号-5室","status":"在营","source":"抖音门店页"},{"name":"西溪店","address":"杭州市西湖区留下街道西溪路596号701室-2","status":"在营","source":"抖音门店页"}],"tone":"","bannedWords":[],"mustInclude":[]}},"totals":{"periods":1,"contents":0,"contentsWaiting":0,"contentsPublished":0},"compare":{"previous":"","mention":{"now":"1/69","before":""},"ownRefs":{"now":1,"before":null},"trend":"observe","baselineReset":false}}</script>
+<script type="application/json" id="geo-data">{"kind":"workbench","generatedAt":"2026-10-08T21:50:00+08:00","runDate":"2026-10-08","store":{"name":"麦的日尝","segment":"local","segmentName":"本地门店","demo":false},"nav":[{"id":"overview","title":"工作台","icon":"home","subtitle":"最新的结论，和每一期的体检报告"},{"id":"content","title":"内容","icon":"doc","subtitle":"员工替你写的内容：公众号文章、小红书笔记、长文、抖音视频文案"},{"id":"settings","title":"监测设置","icon":"list","subtitle":"员工每周替你问什么、和谁比"}],"providers":[{"id":"hunyuan","name":"元宝"},{"id":"doubao","name":"豆包"},{"id":"deepseek","name":"DeepSeek"}],"progress":{},"latest":{"date":"2026-10-08","no":1,"questionsVersion":1,"mention":{"hits":4,"valid":72,"byProvider":{"hunyuan":{"hits":0,"valid":24},"doubao":{"hits":4,"valid":24},"deepseek":{"hits":0,"valid":24}}},"refs":{"total":733,"own":1,"storePages":14,"aboutStore":22},"expected":42,"returned":42,"complete":true,"judged":true,"content":{"count":0,"status":"","title":"","note":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"reportFile":"report-2026-10-08.html","reportUrl":"https://claw-cloud.youzan.com/f/mock/ai-visibility-employee/pages/report-2026-10-08.html","buyEntry":null,"rivals":[{"name":"Cycle \u0026 Cycle","count":0},{"name":"猫咪面团","count":0},{"name":"红跑车","count":0},{"name":"可莎蜜儿","count":0}],"shops":[]},"actions":{"brief":"顾客没点名的时候，69 个回答里只有 1 个提到你（豆包，“留下附近”那道题）；AI 最常提的是 Cycle \u0026 Cycle，17 次。豆包主要读抖音、元宝主要读公众号，而讲你的视频和文章，只在顾客点名问你时才被读到。先请你看一眼“监测设置”：店铺信息是我从公开信息里整理的，你确认以后我就开始替你写内容。","todos":[{"text":"看一眼“监测设置”里我整理的店铺信息：两家门店的地址对不对，“面包脑袋Yolanda”是不是你的抖音号","why":"这些是我从公开信息里整理的。你确认以后，我才能开始替你写内容"},{"text":"告诉我你有没有公众号，叫什么","why":"元宝三分之一的引用来自公众号文章，我没有搜到和你同名的号"},{"text":"如果清波街 109 号那家店已经不在了，在 Apple 地图上把它标记为已搬迁或已关闭","why":"DeepSeek 介绍你时用的是这个地址。它出自地图上一个还在线的地点页，你自己能改"}],"gaps":[{"where":"公众号","note":"元宝回答这批问题时，三分之一的引用来自公众号文章。我没有搜到和你同名的公众号；别人写你的两篇公众号文章，只在顾客点名问你时才被读到。"},{"where":"抖音","note":"豆包七成的引用来自抖音。讲你的视频有 3 条被引用，其中 1 条出自“面包脑袋Yolanda”这个账号，也都是在顾客点名问你的时候。"},{"where":"地图和点评","note":"DeepSeek 常读地图上的门店页，会直接用上面的地址。你的两家店在大众点评都有门店页；Apple 地图上还有一个清波街的地点页。"}],"contentNote":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"periods":[{"date":"2026-10-08","no":1,"questionsVersion":1,"mention":{"hits":4,"valid":72,"byProvider":{"hunyuan":{"hits":0,"valid":24},"doubao":{"hits":4,"valid":24},"deepseek":{"hits":0,"valid":24}}},"refs":{"total":733,"own":1,"storePages":14,"aboutStore":22},"expected":42,"returned":42,"complete":true,"judged":true,"content":{"count":0,"status":"","title":"","note":"店铺信息是我从公开信息里整理的，还没有经过你确认，所以这一期先不替你写内容。确认以后，第一篇打算回答“杭州哪里能买到低 GI 面包”这道题：AI 回答它时没有提到你，而主理人发过低 GI 面包的实测视频，有真实内容可写。"},"reportFile":"report-2026-10-08.html","reportUrl":"https://claw-cloud.youzan.com/f/mock/ai-visibility-employee/pages/report-2026-10-08.html"}],"contents":[],"contentTypes":{"wechat":"公众号文章","xhs":"小红书笔记","text":"长文","douyin":"抖音视频文案"},"site":{"exists":false},"questions":[{"id":"q01","kind":"open","tag":"品类","text":"杭州有哪些好吃的面包店推荐？","audience":"面包爱好者","worry":"哪几家最值得去"},{"id":"q02","kind":"open","tag":"地段","text":"杭州西湖边南山路附近有什么好吃的面包店或甜品店？","audience":"来杭州玩的游客","worry":"逛街顺不顺路"},{"id":"q03","kind":"open","tag":"单品","text":"杭州哪家的冰面包好吃？","audience":"面包爱好者","worry":"冰面包做得好不好"},{"id":"q04","kind":"open","tag":"单品","text":"杭州哪里能买到好吃的碱水面包？","audience":"面包爱好者","worry":"碱水正不正宗"},{"id":"q05","kind":"open","tag":"场景","text":"来杭州旅游，有什么值得带走的烘焙类伴手礼？","audience":"来杭州玩的游客","worry":"能不能带走、放不放得住"},{"id":"q06","kind":"open","tag":"场景","text":"杭州有哪些适合坐下来喝下午茶的面包店？","audience":"来杭州玩的游客","worry":"有没有座位"},{"id":"q07","kind":"open","tag":"场景","text":"杭州生日蛋糕哪家好吃，可以配送的？","audience":"附近的居民和上班族","worry":"能不能配送"},{"id":"q08","kind":"open","tag":"渠道","text":"杭州有没有可以在微信小程序下单、同城配送的面包店？","audience":"附近的居民和上班族","worry":"能不能线上下单"},{"id":"q09","kind":"open","tag":"场景","text":"杭州哪里能买到低GI面包？适合控糖的人吃的面包店有推荐吗？","audience":"控糖和减脂的人","worry":"是不是真的低 GI"},{"id":"q10","kind":"open","tag":"单品","text":"杭州哪家的恰巴塔和欧包好吃？","audience":"面包爱好者","worry":"恰巴塔和欧包做得好不好"},{"id":"q11","kind":"open","tag":"地段","text":"杭州西溪路留下附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"q12","kind":"open","tag":"地段","text":"杭州上城区江城路望江门附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"b01","kind":"brand","tag":"口碑","text":"杭州的麦的日尝这家面包店怎么样？值得去吗？","audience":"","worry":""},{"id":"b02","kind":"brand","tag":"门店","text":"麦的日尝有哪些招牌产品？门店在哪里？","audience":"","worry":""}],"settings":{"from":"public","confirmed":false,"pending":true,"canWrite":false,"questions":[{"id":"q01","kind":"open","tag":"品类","text":"杭州有哪些好吃的面包店推荐？","audience":"面包爱好者","worry":"哪几家最值得去"},{"id":"q02","kind":"open","tag":"地段","text":"杭州西湖边南山路附近有什么好吃的面包店或甜品店？","audience":"来杭州玩的游客","worry":"逛街顺不顺路"},{"id":"q03","kind":"open","tag":"单品","text":"杭州哪家的冰面包好吃？","audience":"面包爱好者","worry":"冰面包做得好不好"},{"id":"q04","kind":"open","tag":"单品","text":"杭州哪里能买到好吃的碱水面包？","audience":"面包爱好者","worry":"碱水正不正宗"},{"id":"q05","kind":"open","tag":"场景","text":"来杭州旅游，有什么值得带走的烘焙类伴手礼？","audience":"来杭州玩的游客","worry":"能不能带走、放不放得住"},{"id":"q06","kind":"open","tag":"场景","text":"杭州有哪些适合坐下来喝下午茶的面包店？","audience":"来杭州玩的游客","worry":"有没有座位"},{"id":"q07","kind":"open","tag":"场景","text":"杭州生日蛋糕哪家好吃，可以配送的？","audience":"附近的居民和上班族","worry":"能不能配送"},{"id":"q08","kind":"open","tag":"渠道","text":"杭州有没有可以在微信小程序下单、同城配送的面包店？","audience":"附近的居民和上班族","worry":"能不能线上下单"},{"id":"q09","kind":"open","tag":"场景","text":"杭州哪里能买到低GI面包？适合控糖的人吃的面包店有推荐吗？","audience":"控糖和减脂的人","worry":"是不是真的低 GI"},{"id":"q10","kind":"open","tag":"单品","text":"杭州哪家的恰巴塔和欧包好吃？","audience":"面包爱好者","worry":"恰巴塔和欧包做得好不好"},{"id":"q11","kind":"open","tag":"地段","text":"杭州西溪路留下附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"q12","kind":"open","tag":"地段","text":"杭州上城区江城路望江门附近有什么好吃的面包店？","audience":"附近的居民和上班族","worry":"离得近不近"},{"id":"b01","kind":"brand","tag":"口碑","text":"杭州的麦的日尝这家面包店怎么样？值得去吗？","audience":"","worry":""},{"id":"b02","kind":"brand","tag":"门店","text":"麦的日尝有哪些招牌产品？门店在哪里？","audience":"","worry":""}],"edges":[],"rivals":[{"name":"Cycle \u0026 Cycle"},{"name":"猫咪面团"},{"name":"红跑车"},{"name":"可莎蜜儿"}],"extras":{"aliases":["麦の日尝","Wheat daily","wheatdaily","麦的日尝·daily"],"wechatOfficial":"","douyin":"面包脑袋Yolanda","stores":[{"name":"江城店","address":"杭州市上城区江城路410号-5室","status":"在营","source":"抖音门店页"},{"name":"西溪店","address":"杭州市西湖区留下街道西溪路596号701室-2","status":"在营","source":"抖音门店页"}],"tone":"","bannedWords":[],"mustInclude":[]}},"totals":{"periods":1,"contents":0,"contentsWaiting":0,"contentsPublished":0},"compare":{"previous":"","mention":{"now":"4/72","before":""},"ownRefs":{"now":1,"before":null},"trend":"observe","baselineReset":false}}</script>
 <script>
 (function () {
   'use strict';
   var DATA = JSON.parse(document.getElementById('geo-data').textContent);
-  var MASCOT = 'data:image/png;base64,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';
+  var MASCOT = 'data:image/png;base64,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';
   var NS = 'http://www.w3.org/2000/svg';
   var app = document.getElementById('app');
   var sheet = document.getElementById('sheet');
@@ -483,7 +556,9 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     play: ['M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0', 'M10 8.5l5 3.5-5 3.5z'],
     refresh: ['M19.5 12a7.5 7.5 0 1 1-2.2-5.3', 'M19.5 5v3.5H16'],
     cart: ['M3 5h2.5l2 10h10l2-7H7', 'M9 19.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0', 'M15.5 19.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0'],
-    chat: ['M4 5.5h16v10.5H10l-4.5 3.5V16H4z']
+    chat: ['M4 5.5h16v10.5H10l-4.5 3.5V16H4z'],
+    chev: ['M9.5 6l6 6-6 6'],
+    copy: ['M9 9h10v10H9z', 'M15 9V5H5v10h4']
   };
   function icon(name, size) {
     var svg = document.createElementNS(NS, 'svg');
@@ -496,6 +571,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (!/^https?:\/\//i.test(url || '')) { return el('span', cls || '', text); }
     var a = el('a', cls || '', text);
     a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.onclick = function (event) { if (event && event.preventDefault) { event.preventDefault(); } openOutside(url, text); };
     return a;
   }
   /* 内容：不发了的不算；等确认的要提醒 */
@@ -506,7 +582,115 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (!url) { return el('span', cls || '', text); }
     var a = el('a', cls || '', text);
     a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    /* 本机直接打开的文件名照常新开窗口；线上的链接和别的外链一样处理（在客户端里新开窗口会被拦下） */
+    if (httpsUrl(url)) { a.onclick = function (event) { if (event && event.preventDefault) { event.preventDefault(); } openOutside(url, text); }; }
     return a;
+  }
+
+  /* ── 打开链接 ──
+     工作台在龙虾客户端里是嵌在页签里显示的：客户端不让它新开窗口，也不让它跳到别的网站。
+     - 别的网站（AI 引用的原文、官网、店铺）：在客户端里时交给客户端打开（客户端留的 external.open，电脑版用系统浏览器打开）；
+       用普通浏览器打开工作台时照常新开窗口；两样都没成，弹出链接让商家复制。
+     - 和工作台同一个网站的页面（公众号排版预览）：直接在工作台里弹出来看，不用跳走。
+     - 嵌在工作台里的报告拿不到客户端的接口，链接交给外面的工作台去开（open-link 消息，工作台回 open-link-done）。
+     电脑版客户端会自动给页签里的页面挂上 window.clawHost；网页版要先加载有赞官方的接入脚本，
+     它只在页面加载完那一刻建立连接，所以要在页面一开始就加载。普通浏览器里打开时不加载。 */
+  var HOST_SDK = 'https://b.yzcdn.cn/yzclaw/claw-host/0.0.1/claw-host.js';
+  var host = null;     /* 连上了、并且能打开外部链接的客户端接口 */
+  var asking = {};     /* 报告：交给工作台去开、还没收到回音的链接 */
+  function httpsUrl(url) { return /^https:\/\//i.test(String(url || '')) ? String(url) : ''; }
+  function connectHost() {
+    if (EMBED || LOCAL) { return; }
+    function ready() {
+      var client = window.clawHost;
+      if (!client || typeof client.initialize !== 'function') { return; }
+      try {
+        client.initialize().then(function (result) {
+          var methods = (result && result.capabilities && result.capabilities.methods) || [];
+          if (methods.indexOf('external.open') >= 0) { host = client; }
+        }, function () { /* 连不上客户端，就照常新开窗口 */ });
+      } catch (error) { /* 同上 */ }
+    }
+    if (window.clawHost) { ready(); return; }
+    var framed = true;
+    try { framed = window.parent !== window; } catch (error) { framed = true; }
+    if (!framed) { return; }
+    var script = document.createElement('script');
+    script.src = HOST_SDK;
+    script.onload = ready;
+    (document.head || document.body).appendChild(script);
+  }
+  function openOutside(url, title) {
+    var safe = httpsUrl(url);
+    if (EMBED && safe) { askWorkbench(safe, title); return; }
+    if (host && safe) {
+      try {
+        host.call('external.open', { url: safe }).then(function () { toast('已在浏览器里打开'); }, function () { showLink(safe, title); });
+      } catch (error) { showLink(safe, title); }
+      return;
+    }
+    var win = null;
+    try { win = window.open(url, '_blank'); } catch (error) { win = null; }
+    if (win) { try { win.opener = null; } catch (error) { /* 不影响打开 */ } return; }
+    showLink(url, title);
+  }
+  function askWorkbench(url, title) {
+    var id = 'L' + (++askCount);
+    asking[id] = setTimeout(function () { if (asking[id]) { delete asking[id]; showLink(url, title); } }, 1500);
+    try { window.parent.postMessage({ geo: 'open-link', id: id, url: url }, '*'); } catch (error) { clearTimeout(asking[id]); delete asking[id]; showLink(url, title); }
+  }
+  var askCount = 0;
+  function onAskAnswered(event) {
+    var data = event && event.data;
+    if (!data || data.geo !== 'open-link-done' || !asking[data.id]) { return; }
+    clearTimeout(asking[data.id]);
+    delete asking[data.id];
+  }
+  /* 和工作台是不是同一个网站。本机直接打开的文件不算 */
+  function sameSite(url) {
+    var here = '';
+    try { here = location.origin || (location.protocol + '//' + location.host); } catch (error) { here = ''; }
+    var m = /^(https:\/\/[^\/?#]+)/i.exec(String(url || ''));
+    return !LOCAL && !!here && !!m && m[1].toLowerCase() === String(here).toLowerCase();
+  }
+  /* 没能直接打开：把链接给商家，复制到浏览器里打开 */
+  function showLink(url, title) {
+    rememberDrawer();
+    if (sheet.hidden) { lastFocus = document.activeElement; }
+    sheet.className = 'sheet';
+    panel.textContent = '';
+    var close = button('sheet-x', null, closeSheet);
+    close.setAttribute('aria-label', '关闭');
+    close.appendChild(icon('x', 16));
+    add(panel, add(el('div', 'sheet-head'), add(el('h3'), el('span', 'who', '在浏览器里打开'), title || '这个链接'), close));
+    var input = el('input', 'link-input');
+    input.type = 'text';
+    input.readOnly = true;
+    input.value = url;
+    input.onfocus = function () { if (input.select) { input.select(); } };
+    panel.appendChild(add(el('div', 'ans'), el('div', 'small muted', '这里没能直接打开。复制下面的链接，粘贴到浏览器里打开。'), input,
+      button('btn primary', '复制链接', function () { copy(url, '已复制，粘贴到浏览器里打开'); })));
+    sheet.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+  /* 公众号排版预览这类和工作台同一个网站的页面：在工作台里弹出来看。别的网站交给 openOutside */
+  function openPreview(url, title) {
+    if (!sameSite(url)) { openOutside(url, title); return; }
+    rememberDrawer();
+    if (sheet.hidden) { lastFocus = document.activeElement; }
+    sheet.className = 'sheet preview';
+    panel.textContent = '';
+    var close = button('sheet-x', null, closeSheet);
+    close.setAttribute('aria-label', '关闭');
+    close.appendChild(icon('x', 16));
+    var outside = button('btn', '在浏览器里打开', function () { openOutside(url, title); });
+    add(panel, add(el('div', 'sheet-head'), add(el('h3'), el('span', 'who', '排版预览'), title || ''), outside, close));
+    var frame = el('iframe', 'preview-frame');
+    frame.title = title || '排版预览';
+    frame.src = url;
+    panel.appendChild(frame);
+    sheet.hidden = false;
+    document.body.style.overflow = 'hidden';
   }
   /* 去工作台的某个页面。在报告里要带上工作台的地址；拿不到地址时退成普通文字 */
   function nav(text, target, cls) {
@@ -559,7 +743,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   function legend() {
     return add(el('div', 'legend'),
       add(el('span'), el('span', 'd h'), '提到了你'),
-      add(el('span'), el('span', 'd'), '没提到'));
+      add(el('span'), el('span', 'd'), '没提到'),
+      el('span', 'muted', '点一格看 AI 的原话'));
   }
   function questionMeta(id, text) {
     for (var i = 0; i < DATA.questions.length; i++) { if (DATA.questions[i].id === id && DATA.questions[i].text === text) { return DATA.questions[i]; } }
@@ -586,12 +771,39 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     }
     if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(function () { toast(done); }, fallback); } else { fallback(); }
   }
-  /* 页面是只读的。每个页面下面给几句“可以这样跟员工说”，点一下复制，回到龙虾发给员工。 */
-  function sayBlock(lines, hint) {
+  /* 页面是只读的。可以跟员工说的话：工作台收在顶栏右上角的“跟员工说”里，点开才出现；
+     报告是单独的文件，放在报告最下面一行。点一句就复制，回到龙虾发给员工。 */
+  var sayLines = [], sayBtn = null, sayPop = null;
+  function sayBlock(lines, label) {
+    if (KIND !== 'report') { setSay(lines); return document.createDocumentFragment(); }
     var box = el('div', 'say');
-    add(box, add(el('div', 'tt'), icon('chat', 15), '想改这里的内容？回到龙虾，直接跟 AI 曝光专员说'));
+    box.appendChild(el('span', 'tt', label || '可以这样跟员工说'));
     lines.forEach(function (text) { box.appendChild(button('', '“' + text + '”', function () { copy(text); })); });
-    return add(box, el('div', 'hint', hint || '点一句可以复制。员工处理完，这个页面会更新。'));
+    return box;
+  }
+  function setSay(lines) {
+    sayLines = (lines || []).filter(Boolean).slice(0, 6);
+    if (sayBtn) { sayBtn.hidden = !sayLines.length; }
+  }
+  function closeSay() {
+    if (sayPop && sayPop.parentNode) { sayPop.parentNode.removeChild(sayPop); }
+    sayPop = null;
+    if (sayBtn) { sayBtn.className = 'saybtn'; sayBtn.setAttribute('aria-expanded', 'false'); }
+  }
+  function toggleSay() {
+    if (sayPop) { closeSay(); return; }
+    sayPop = el('div', 'saypop');
+    sayPop.setAttribute('role', 'menu');
+    sayLines.forEach(function (text) {
+      var item = button('', null, function () { copy(text); closeSay(); });
+      item.setAttribute('role', 'menuitem');
+      add(item, el('span', '', '“' + text + '”'), icon('copy', 14));
+      sayPop.appendChild(item);
+    });
+    sayPop.appendChild(el('div', 'foot', '点一句复制，回到对话里发给员工'));
+    sayBtn.parentNode.appendChild(sayPop);
+    sayBtn.className = 'saybtn on';
+    sayBtn.setAttribute('aria-expanded', 'true');
   }
   function barChart(values, labels, cls) {
     var width = 240, height = 64, count = values.length;
@@ -656,8 +868,21 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     });
     return list;
   }
+  /* 弹层只有一个。从稿子抽屉里打开排版预览（或弹出链接）后，关掉它回到原来的抽屉，而不是整个关掉 */
+  var currentDraft = null, sheetBack = null;
+  function rememberDrawer() {
+    if (sheet.hidden || !currentDraft || !/\bdrawer\b/.test(sheet.className)) { return; }
+    var item = currentDraft;
+    sheetBack = function () { openDraft(item); };
+  }
   function closeSheet() {
+    var back = sheetBack;
+    sheetBack = null;
+    if (back) { back(); return; }
+    currentDraft = null;
     sheet.hidden = true;
+    sheet.className = 'sheet';
+    panel.textContent = '';
     document.body.style.overflow = '';
     if (lastFocus && lastFocus.focus) { lastFocus.focus(); }
   }
@@ -695,7 +920,16 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     return btn;
   }
   sheet.onclick = function (event) { if (event.target === sheet) { closeSheet(); } };
-  document.addEventListener('keydown', function (event) { if (event.key === 'Escape' && !sheet.hidden) { closeSheet(); } });
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') { return; }
+    if (!sheet.hidden) { closeSheet(); } else if (sayPop) { closeSay(); }
+  });
+  /* 点在“跟员工说”外面，就收起来 */
+  document.addEventListener('click', function (event) {
+    if (!sayPop) { return; }
+    for (var node = event && event.target; node; node = node.parentNode) { if (node === sayPop || node === sayBtn) { return; } }
+    closeSay();
+  });
 
   /* ── 两种页面共用的小块 ── */
   function mascot() { var img = el('img', 'mascot'); img.src = MASCOT; img.alt = ''; return img; }
@@ -713,15 +947,29 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     else { add(node, '顾客没点名时，' + mention.valid + ' 个回答里有 ', el('b', '', mention.hits), ' 个提到你'); }
     return node;
   }
-  /* 一个数的卡片。给了 href 就能点（去报告里对应的那一节），没给就是静态的 */
+  /* 一个数的卡片：短标签、大号数字、一行小字（或者每个 AI 各几次的细条）。给了 href 就能点（去报告里对应的那一节），没给就是静态的。
+     iconName、tone 是旧参数，现在不画图标了 */
   function kpi(iconName, tone, label, value, unit, hint, href, values, tips, isText) {
     var node = el(href ? 'a' : 'div', 'card kpi' + (href ? '' : ' static'));
     if (href) { node.href = href; }
     var num = el('span', 'kpi-num' + (isText ? ' text' : ''), value);
     if (unit) { num.appendChild(el('small', '', ' ' + unit)); }
-    add(node, add(el('span', 'kpi-top'), add(el('span', 'kpi-ico ' + tone), icon(iconName, 15)), label), num, el('span', 'kpi-hint', hint));
+    var note = hint === undefined || hint === null || hint === '' ? null : (typeof hint === 'object' ? hint : el('span', 'kpi-hint', hint));
+    add(node, el('span', 'kpi-top', label), num, note);
     if (values && values.length > 1) { node.appendChild(barChart(values, tips || values.map(String), 'spark')); }
     return node;
+  }
+  /* 指标怎么算的，收进鼠标提示里，卡片上只留数 */
+  var BUY_TIP = '回答里出现了你的小程序名或店铺链接';
+  function withTip(node, text) { node.title = text; return node; }
+  /* 顾客没点名时，每个 AI 各提到你几次 */
+  function providerMini(mention) {
+    var box = el('span', 'pmini');
+    DATA.providers.forEach(function (p) {
+      var bucket = (mention.byProvider || {})[p.id] || { hits: 0, valid: 0 };
+      add(box, el('span', '', p.name), pbar(bucket.hits, bucket.valid || 1), el('b', '', ratio(bucket)));
+    });
+    return box;
   }
   function demoStrip() { return DATA.store.demo ? el('div', 'demo-strip', '演示数据：这家店和页面上的内容都是虚构的，只用来检查页面。') : null; }
   function notesCard(title) {
@@ -742,11 +990,15 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   function progressBanner() {
     var p = DATA.progress;
     var text = p.running
-      ? '正在做 ' + cnDate(p.date) + '这一期体检：' + p.total + ' 条查询已经返回 ' + p.done + ' 条。一轮大约要 5 到 10 分钟，做完后员工会更新这个页面。'
-      : (p.scored ? '这一期的数字已经出来了，员工正在逐条核对 AI 说得对不对。核对完这里会更新。' : '查询已经全部返回，员工正在整理结果。整理完这里会更新。');
+      ? cnDate(p.date) + '这一期：' + p.total + ' 条查询已经返回 ' + p.done + ' 条，一轮大约 5 到 10 分钟'
+      : (p.scored ? '数字已经出来，员工正在核对 AI 说得对不对' : '查询已经全部返回，员工正在整理');
     return add(el('div', 'banner plain'), add(el('span', 'kpi-ico'), icon('play', 15)), add(el('div', 'body'), el('div', 'tt', '体检进行中'), el('div', 'brief', text)));
   }
   var CONTENT_LABEL = { preview: ['warn', '等你确认'], confirmed: ['ok', '你已确认'], published: ['ok', '已发布'], dropped: ['plain', '不发了'] };
+  function statusText(status) {
+    var label = CONTENT_LABEL[status] || CONTENT_LABEL.preview;
+    return el('span', 'st ' + label[0], label[1]);
+  }
   var FACT_LABEL = { address: '地址', hours: '营业时间', phone: '电话', status: '是否在营', product: '商品', price: '价格', other: '其他' };
   var SOURCE_LABEL = { map: '地图或点评上的门店页', note: '别人写的内容', own: '你自己的账号或网站', other: '其他页面', unknown: '没有找到明确的出处' };
   function issueCard(issue) {
@@ -782,7 +1034,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   }
   /* 顾客没点名时 AI 提到了哪些店：排行加分平台的表。同类店只是在里面标出来，不决定列哪些店 */
   function rivalsSection(root, period) {
-    var box = card('被 AI 提到的店', '顾客没点名的 ' + period.mention.valid + ' 个有效回答里，各出现在几个回答里');
+    var box = card('被 AI 提到的店', '在 ' + period.mention.valid + ' 个回答里出现的次数');
     rankRows(box, period, 0);
     var t = table([['店名']].concat(DATA.providers.map(function (p) { return [p.name, 'r']; })).concat([['合计', 'r']]));
     var list = (period.shops || []).map(function (r) { return { name: r.name, by: r.byProvider || {}, count: r.count, rival: r.rival, self: false }; });
@@ -799,8 +1051,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       args.push({ node: el('b', 'tnum', item.count), cls: 'r' });
       t.body.appendChild(cells.apply(null, args));
     });
-    var wrap = add(el('div', 'tbl-wrap rank-table'), t);
-    root.appendChild(add(box, wrap, el('div', 'small muted note-gap', '员工读完每个回答，记下 AI 推荐了哪几家店，同一家店的不同写法算一家。最多列 15 家。标着“同类店”的是你选定要比的几家，想换直接告诉员工。')));
+    root.appendChild(add(box, add(el('div', 'tbl-wrap rank-table'), t)));
   }
 
   /* 员工建议商家做的事。只在报告里列出来，不是一张要打勾的清单 */
@@ -811,14 +1062,13 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     });
     box.appendChild(list);
   }
-  /* 首页上只在有内容等商家确认时才出现的一块：每条一行，点了去内容页 */
+  /* 首页上只在有内容等商家确认时才出现的一块：只列标题，最多三篇，点一篇就在这里打开稿子 */
   function waitingCard(items) {
-    var box = card('等你确认的内容', items.length + ' 篇', nav('去确认', 'content', 'more'));
-    items.slice(0, 3).forEach(function (item) {
-      box.appendChild(add(el('div', 'gap-row'), el('span', 'tag', item.typeName),
-        add(el('span'), el('span', 'ino', '第 ' + item.no + ' 篇'), ' ', el('b', '', item.title), item.reason ? el('div', 'small muted', item.reason) : null)));
-    });
-    return box;
+    var box = card('等你确认', items.length + ' 篇', nav(items.length > 3 ? '全部 ' + items.length + ' 篇' : '去内容页', 'content', 'more'));
+    box.className = 'card flush';
+    var list = el('div', 'clist');
+    items.slice(0, 3).forEach(function (item) { list.appendChild(contentRow(item, true)); });
+    return add(box, list);
   }
   /* 复制出去的文字：小红书笔记是“标题 + 正文 + 话题”；抖音视频文案只复制发布时要填的“标题 + 话题”，口播稿是拍的时候照着念的；
      其他类型去掉小标题和加粗的记号 */
@@ -840,73 +1090,83 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       container.appendChild(line.trim() ? el('div', 'p', line) : el('div', 'gap'));
     });
   }
-  /* 一条内容一张卡片。公共部分（序号、类型、状态、放到了哪）都一样，稿子怎么展示跟着类型走 */
-  function contentCard(item, open) {
-    var box = el('div', 'card art');
-    box.setAttribute('data-type', item.type);
-    var label = CONTENT_LABEL[item.status] || CONTENT_LABEL.preview;
-    var top = add(el('div', 'issue-top art-top'), el('span', 'ino', '第 ' + item.no + ' 篇'), pill('brand', item.typeName), pill(label[0], label[1]));
-    (item.channels || []).forEach(function (channel) { top.appendChild(pill('plain', channel)); });
-    var meta = [cnDate(String(item.createdAt).slice(0, 10)) + '写', item.origin === 'asked' ? '你点名要的' : '', item.forQuestion ? '为 ' + qno(item.forQuestion) + ' 写的' : ''].filter(Boolean).join(' · ');
-    add(box, add(top, el('span', 'meta', meta)), el('div', 'art-title', item.title));
-    var info = el('dl', 'kv art-info');
+  /* 内容清单的一行：标题，下面一行灰字（第几篇、类型、建议发在哪、哪天写的），右边是状态。点了从右边滑出稿子 */
+  function contentMeta(item) {
+    return ['第 ' + item.no + ' 篇', item.typeName || '', item.whereToPost ? '建议发在' + item.whereToPost : '',
+      (item.channels || []).length ? '放在' + item.channels.join('、') : '', cnDate(String(item.createdAt || '').slice(0, 10))].filter(Boolean).join(' · ');
+  }
+  function contentRow(item, noStatus) {
+    var row = el('button', 'crow');
+    row.type = 'button';
+    add(row, add(el('span', 'cm'), el('span', 't', item.title), el('span', 'm', contentMeta(item))),
+      noStatus ? null : statusText(item.status), add(el('span', 'chev'), icon('chev', 16)));
+    row.onclick = function () { openDraft(item); };
+    return row;
+  }
+  /* 稿子正文：公众号文章和长文按小标题、加粗显示；小红书笔记和抖音口播稿原样显示（正文里的 # 是话题，不是小标题） */
+  function draftBody(item) {
+    var plain = item.type === 'xhs' || item.type === 'douyin';
+    var paper = el('div', 'read ans-text' + (plain ? ' note' : ''));
+    if (plain) {
+      renderPlain(paper, item.body);
+      if ((item.tags || []).length) {
+        var tags = el('div', 'note-tags');
+        item.tags.forEach(function (tag) { tags.appendChild(el('span', '', '#' + tag)); });
+        paper.appendChild(tags);
+      }
+    } else {
+      var body = String(item.body);
+      if (body.split('\n')[0].replace(/^\s*#+\s*/, '').trim() === item.title) { body = body.slice(body.indexOf('\n') + 1); }
+      renderText(paper, body, true);
+    }
+    return paper;
+  }
+  function copyLabel(item) { return item.type === 'xhs' ? '复制标题、正文和话题' : (item.type === 'douyin' ? '复制标题和话题' : '复制全文'); }
+  /* 稿子抽屉：上面是这篇的来历，中间是稿子，下面固定放操作。公共部分都一样，稿子怎么展示跟着类型走 */
+  function openDraft(item) {
+    if (sheet.hidden) { lastFocus = document.activeElement; }
+    currentDraft = item;
+    sheetBack = null;
+    sheet.className = 'sheet drawer';
+    panel.textContent = '';
+    var close = button('sheet-x', null, closeSheet);
+    close.setAttribute('aria-label', '关闭');
+    close.appendChild(icon('x', 16));
+    add(panel, add(el('div', 'sheet-head'), add(el('h3'), el('span', 'who', ['第 ' + item.no + ' 篇', item.typeName || ''].filter(Boolean).join(' · ')), item.title), close));
+    var day = cnDate(String(item.createdAt || '').slice(0, 10));
+    var body = add(el('div', 'drawer-body'), add(el('div', 'dmeta'), statusText(item.status),
+      day ? el('span', '', day + '写') : null,
+      item.origin === 'asked' ? el('span', '', '你点名要的') : null,
+      item.forQuestion ? el('span', '', '为 ' + qno(item.forQuestion) + ' 写的') : null,
+      (item.channels || []).length ? el('span', '', '放在' + item.channels.join('、')) : null));
+    var info = el('dl', 'kv dinfo');
     kv(info, '为什么写', item.reason);
     kv(info, '建议发在', item.whereToPost);
     kv(info, '发的时候', item.tip);
-    if (item.reason || item.whereToPost || item.tip) { box.appendChild(info); }
-    var acts = el('div', 'art-foot');
-    if (item.previewUrl) {
-      /* 成品是带排版的页面（公众号文章）：审稿看预览 */
-      var preview = link('看排版预览', item.previewUrl, 'btn primary');
-      preview.appendChild(icon('ext', 14));
-      acts.appendChild(preview);
-    }
+    if (info.children.length) { body.appendChild(info); }
+    var size = item.bodyChars ? ' · ' + item.bodyChars + ' 字' : '';
     if (item.body) {
-      var details = el('details', 'art-body');
-      if (open) { details.open = true; }
-      var plain = item.type === 'xhs' || item.type === 'douyin';
-      var paper = el('div', 'paper ans-text' + (plain ? ' note' : ''));
-      paper.appendChild(el('div', 'paper-title', item.title));
-      if (plain) {
-        renderPlain(paper, item.body);
-        if ((item.tags || []).length) {
-          var tags = el('div', 'note-tags');
-          item.tags.forEach(function (tag) { tags.appendChild(el('span', '', '#' + tag)); });
-          paper.appendChild(tags);
-        }
-      } else {
-        var body = String(item.body);
-        if (body.split('\n')[0].replace(/^\s*#+\s*/, '').trim() === item.title) { body = body.slice(body.indexOf('\n') + 1); }
-        renderText(paper, body, true);
-      }
-      add(details, el('summary', '', (item.previewUrl ? '看文字版' : (item.type === 'douyin' ? '看口播稿' : '看稿子')) + ' · ' + item.bodyChars + ' 字'), paper);
-      box.appendChild(details);
-      acts.appendChild(button('btn', item.type === 'xhs' ? '复制标题、正文和话题' : (item.type === 'douyin' ? '复制标题和话题' : '复制全文'), function () { copy(contentPlain(item), '已复制，可以直接粘贴去发'); }));
+      if (item.previewUrl || item.type === 'douyin') { body.appendChild(el('div', 'dlabel', (item.type === 'douyin' ? '口播稿' : '文字版') + size)); }
+      body.appendChild(draftBody(item));
+    } else if (!item.previewUrl) {
+      body.appendChild(el('div', 'empty note-gap', item.status === 'dropped' ? '这一篇不发了。' : '稿子没有留在这里。要看的话，跟员工说“把第 ' + item.no + ' 篇发我”。'));
     }
-    var hint = item.status === 'dropped' ? '这一篇不发了。'
-      : (!item.body && !item.previewUrl ? '更早的内容这里只保留标题和状态。要看稿子，回到龙虾跟员工说“把第 ' + item.no + ' 篇发我”。'
-        : (item.status === 'preview' ? '员工写好了，等你确认。要改直接告诉它改哪里。'
-          : (item.status === 'confirmed' ? '你已经确认。发的时候按平台要求标注 AI 生成。' : '')));
-    if (hint) { acts.appendChild(el('span', 'small muted', hint)); }
-    return add(box, acts);
+    panel.appendChild(body);
+    var foot = el('div', 'drawer-foot');
+    if (item.previewUrl) { foot.appendChild(button('btn primary', '看排版预览', function () { openPreview(item.previewUrl, item.title); })); }
+    if (item.body) { foot.appendChild(button(item.previewUrl ? 'btn' : 'btn primary', copyLabel(item), function () { copy(contentPlain(item), '已复制，可以直接粘贴去发'); })); }
+    if (foot.children.length) { panel.appendChild(foot); }
+    sheet.hidden = false;
+    document.body.style.overflow = 'hidden';
+    close.focus();
   }
-  /* 官网：员工用“应用”能力替他做的。把店铺资料里的事实放在一页上，给 AI 和顾客一个他自己的出处；
-     店铺资料里官网用到的几样改了，这里提示更新。没做过官网时这一块不出现 */
+  /* 官网：员工用“应用”能力替他做的。一行：状态、哪天上线或出的测试版、店铺资料变没变，右边是打开的按钮。没做过官网时这一块不出现 */
   function siteCard(site) {
-    var box = el('div', 'card art');
-    var top = el('div', 'issue-top art-top');
-    top.appendChild(el('span', 'ino', '官网'));
-    if (site.live) { top.appendChild(pill('ok', '已上线')); }
-    if (site.status === 'test') { top.appendChild(pill('warn', site.live ? '改过的一版等你确认' : '测试版等你确认')); }
-    else if (site.outdated) { top.appendChild(pill('warn', '店铺资料有变化')); }
-    var when = site.live ? cnDate(String(site.publishedAt || '').slice(0, 10)) + '上线' : cnDate(String(site.testAt || '').slice(0, 10)) + '出的测试版';
-    add(box, add(top, el('span', 'meta', when)));
-    box.appendChild(el('div', 'art-note small muted', '店铺资料里的事实放在一页上：这家店是谁、门店、招牌商品、怎么买、顾客常问的问题，给 AI 和顾客一个你自己的出处。AI 引用了它，会算进“你的内容被引用”。'));
-    var info = el('dl', 'kv art-info');
-    kv(info, '网址', site.domain || '');
-    if (site.outdated) { kv(info, '要更新的', (site.status === 'test' ? '测试版做好以后' : '上线以后') + '店铺资料里改过：' + (site.changed || []).join('、')); }
-    if (info.children.length) { box.appendChild(info); }
-    var acts = el('div', 'art-foot');
+    var state = site.status === 'test' ? ['warn', site.live ? '改过的一版等你确认' : '测试版等你确认']
+      : (site.outdated ? ['warn', '店铺资料有变化'] : (site.live ? ['ok', '已上线'] : null));
+    var day = cnDate(String((site.live ? site.publishedAt : site.testAt) || '').slice(0, 10));
+    var meta = [site.domain || '', day ? day + (site.live ? '上线' : '出的测试版') : '', site.outdated ? '店铺资料改过：' + (site.changed || []).join('、') : ''].filter(Boolean).join(' · ');
+    var acts = el('div', 'acts');
     if (site.live) {
       var open = link('打开官网', site.url, 'btn primary');
       open.appendChild(icon('ext', 14));
@@ -917,61 +1177,70 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       test.appendChild(icon('ext', 14));
       acts.appendChild(test);
     }
-    var hint = site.status === 'test' ? (site.outdated ? '这一版用的是改之前的资料，跟员工说“更新官网”，重出一版再看。'
-      : '看过没问题，回到龙虾跟员工说“官网可以发布了”；要改哪里直接告诉它。')
-      : (site.outdated ? '要更新的话，跟员工说“更新官网”。' : '');
-    if (hint) { acts.appendChild(el('span', 'small muted', hint)); }
-    return add(box, acts);
+    return add(el('div', 'card siterow'), add(el('div', 'cm'), el('div', 't', '官网'), meta ? el('div', 'm', meta) : null),
+      state ? el('span', 'st ' + state[0], state[1]) : null, acts.children.length ? acts : null);
   }
   function pageContent(root) {
     var all = DATA.contents || [];
     var live = liveContents();
-    var waiting = waitingContents();
     var site = DATA.site || {};
     var hasSite = site.exists && site.status !== 'dropped';
     if (hasSite) { root.appendChild(siteCard(site)); }
     if (!all.length) {
       /* 还不能写的时候，把“为什么”和“去哪确认”放在一起，商家在这一页就能把这件事解开 */
       var ready = DATA.settings.canWrite;
-      root.appendChild(add(card(ready ? '还没有内容' : '还没有开始替你写内容', '', ready ? null : nav('去监测设置看一眼', 'settings', 'more')),
+      root.appendChild(add(card(ready ? '还没有内容' : '还没有开始写', '', ready ? null : nav('去监测设置', 'settings', 'more')),
         el('div', 'empty', DATA.actions.contentNote || (ready
-          ? '还没有写过内容。每周体检后员工会按 AI 常读的地方备好一篇；你也可以直接让它写。'
-          : '还没有写过内容。你确认过店铺信息以后，才会开始替你写。'))));
+          ? '每周体检后，员工会按 AI 常读的地方写一篇；也可以直接让它写。'
+          : '你确认过店铺信息以后，员工才开始替你写。'))));
     } else {
-      var totals = DATA.totals || {};
-      root.appendChild(add(card(), el('div', 'small muted', '员工替你写的内容都在这里，一共 ' + live.length + ' 篇'
-        + (waiting.length ? '，其中 ' + waiting.length + ' 篇等你确认' : '') + (totals.contentsPublished ? '，' + totals.contentsPublished + ' 篇已发布' : '')
-        + '。不同平台的稿子不一样，所以按类型分开写：公众号文章看排版预览，小红书笔记和长文直接在这里看、复制去发。'
-        + (DATA.actions.contentNote ? ' 这一期：' + DATA.actions.contentNote : ''))));
-      /* 有两种以上类型时，可以按类型筛 */
+      /* 一篇一行。有两种以上类型时，可以按类型筛 */
       var counts = {};
       all.forEach(function (item) { counts[item.type] = (counts[item.type] || 0) + 1; });
-      var cards = [];
-      if (Object.keys(counts).length > 1) {
+      var types = Object.keys(counts);
+      /* 按状态分组：等你确认的在最上面。每组一个小标题，行里就不用再写状态 */
+      var list = el('div', 'clist');
+      var groups = [];
+      [['preview', '等你确认'], ['confirmed', '你已确认，还没发'], ['published', '已发布'], ['dropped', '不发了']].forEach(function (g) {
+        var items = all.filter(function (item) { return (CONTENT_LABEL[item.status] ? item.status : 'preview') === g[0]; });
+        if (!items.length) { return; }
+        var entry = { head: el('div', 'cgrp'), label: g[1], rows: [] };
+        list.appendChild(entry.head);
+        items.forEach(function (item) {
+          var node = contentRow(item, true);
+          entry.rows.push({ node: node, type: item.type });
+          list.appendChild(node);
+        });
+        groups.push(entry);
+      });
+      var applyFilter = function (type) {
+        groups.forEach(function (g) {
+          var shown = 0;
+          g.rows.forEach(function (r) { var on = !type || r.type === type; r.node.style.display = on ? '' : 'none'; if (on) { shown += 1; } });
+          g.head.style.display = shown ? '' : 'none';
+          g.head.textContent = g.label + ' · ' + shown;
+        });
+      };
+      applyFilter('');
+      var bar = el('div', 'card-h');
+      if (types.length > 1) {
         var seg = el('div', 'seg');
         var buttons = [];
-        [['', '全部 ' + all.length]].concat(Object.keys(counts).map(function (type) { return [type, ((DATA.contentTypes || {})[type] || type) + ' ' + counts[type]]; })).forEach(function (option, index) {
+        [['', '全部 ' + all.length]].concat(types.map(function (type) { return [type, ((DATA.contentTypes || {})[type] || type) + ' ' + counts[type]]; })).forEach(function (option, index) {
           var btn = button(index === 0 ? 'on' : '', option[1], function () {
             buttons.forEach(function (b) { b.className = b === btn ? 'on' : ''; });
-            cards.forEach(function (entry) { entry.node.style.display = !option[0] || entry.type === option[0] ? '' : 'none'; });
+            applyFilter(option[0]);
           });
           buttons.push(btn);
           seg.appendChild(btn);
         });
-        root.appendChild(add(el('div'), seg));
+        bar.appendChild(seg);
+      } else {
+        bar.appendChild(el('h3', '', '共 ' + all.length + ' 篇'));
       }
-      all.forEach(function (item, index) {
-        var node = contentCard(item, index === 0);
-        cards.push({ node: node, type: item.type });
-        root.appendChild(node);
-      });
+      root.appendChild(add(el('div', 'card flush'), bar, list));
     }
-    var gaps = DATA.actions.gaps || [];
-    if (gaps.length) {
-      var gapBox = card('你还缺的内容');
-      gaps.forEach(function (gap) { gapBox.appendChild(add(el('div', 'gap-row'), el('span', 'tag', gap.where), el('span', '', gap.note))); });
-      root.appendChild(gapBox);
-    }
+    /* 这一页只放跨期的东西（登记过的内容、官网）。某一期分析出来的“还缺哪里的内容”在那一期的报告里，不在这里重复 */
     if (!DATA.settings.canWrite) { root.appendChild(sayBlock(['这些信息没问题，确认', '店铺信息有不对的：……'])); return; }
     var newest = live[0];
     var lines = !newest ? ['写一篇公众号文章：……', '写一条小红书笔记：……', '这周先不写']
@@ -986,7 +1255,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
      最新结论、几个数的走势、每一期报告的入口、替商家写的内容、监测设置。
      某一期分析出来的东西（提没提到、提到了谁、读了哪里、怎么介绍）都在那一期的报告里。
      报告是每期一份独立的文件；在工作台里看它时，内容区直接把那个文件嵌进来，不用跳到别的页面。 */
-  /* 导航来自数据里的 nav（脚本按 assets/pages.json 和员工填过的页面生成）。旧数据没有 nav 时用这三个页面 */
+  /* 导航来自数据里的 nav（脚本里的 WORKBENCH_PAGES）。旧数据没有 nav 时用这三个页面 */
   var NAV_ITEMS = (DATA.nav && DATA.nav.length ? DATA.nav : [
     { id: 'overview', title: '工作台', icon: 'home', subtitle: '最新的结论，和每一期的体检报告' },
     { id: 'content', title: '内容', icon: 'doc', subtitle: '员工替你写的内容：公众号文章、小红书笔记、长文、抖音视频文案' },
@@ -995,7 +1264,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   var NAV = [{ items: NAV_ITEMS.map(function (p) { return [p.id, p.title, p.icon || 'doc']; }) }];
   var SUBTITLE = {};
   NAV_ITEMS.forEach(function (p) { SUBTITLE[p.id] = p.subtitle || ''; });
-  var frameTimer = null, frameHint = null;
+  var frameTimer = null, frameHint = null, reportFrame = null;
   function closeSide() { side.className = 'side'; scrim.className = 'scrim'; }
   function periodByDate(date) {
     for (var i = 0; i < PERIODS.length; i++) { if (PERIODS[i].date === date) { return PERIODS[i]; } }
@@ -1041,7 +1310,12 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     titleEl = el('h1');
     subEl = el('span', 'sub');
     actEl = el('span', 'act');
-    add(bar, menu, titleEl, subEl, el('span', 'sp'), actEl, el('span', 'upd', '更新于 ' + updatedAt()));
+    sayBtn = button('saybtn', null, toggleSay);
+    add(sayBtn, icon('chat', 15), el('span', '', '跟员工说'));
+    sayBtn.setAttribute('aria-haspopup', 'menu');
+    sayBtn.setAttribute('aria-expanded', 'false');
+    sayBtn.hidden = true;
+    add(bar, menu, titleEl, subEl, el('span', 'sp'), actEl, el('span', 'upd', '更新于 ' + updatedAt()), sayBtn);
     content = el('div', 'content');
     add(app, side, scrim, add(mainEl, bar, content));
   }
@@ -1062,6 +1336,9 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     frameHint = null;
     content.textContent = '';
     actEl.textContent = '';
+    closeSay();
+    setSay([]);
+    titleEl.title = '';
     if (period) {
       titleEl.textContent = '第 ' + period.no + ' 期体检报告';
       subEl.textContent = cnDate(period.date) + '体检' + (period === PERIODS[PERIODS.length - 1] ? ' · 最新一期' : '');
@@ -1071,9 +1348,10 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       mainEl.className = 'main';
       content.className = 'content stack';
       titleEl.textContent = navTitle(page);
-      subEl.textContent = SUBTITLE[page] || '';
+      subEl.textContent = '';
+      titleEl.title = SUBTITLE[page] || '';  /* 页面说明不占地方，鼠标停在标题上才显示 */
       add(content, demoStrip());
-      if (PAGES[page]) { PAGES[page](content); } else { pageCustom(content, page); }
+      PAGES[page](content);
       document.title = navTitle(page) + ' · ' + (DATA.store.name || '本店') + ' · AI 曝光工作台';
     }
     window.scrollTo(0, 0);
@@ -1091,6 +1369,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     content.className = 'content host';
     actEl.appendChild(fileLink('单独打开', file));
     var frame = el('iframe', 'rpt-frame');
+    reportFrame = frame;
     frame.title = '第 ' + period.no + ' 期体检报告';
     frame.src = file + '#embed' + (section ? '/' + section : '');
     /* 报告显示出来以后会打个招呼。等了几秒还没动静，就在上面给一个单独打开的入口，免得商家对着空白发呆 */
@@ -1103,6 +1382,13 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   }
   function onFrameMessage(event) {
     var data = event && event.data;
+    if (data && data.geo === 'open-link') {
+      /* 嵌在工作台里的报告点了外链：只接这一期报告发来的、https 开头的链接 */
+      if (!reportFrame || event.source !== reportFrame.contentWindow || !httpsUrl(data.url)) { return; }
+      try { event.source.postMessage({ geo: 'open-link-done', id: data.id }, '*'); } catch (error) { /* 报告收不到回音，会自己把链接给商家 */ }
+      openOutside(data.url, '');
+      return;
+    }
     if (!data || data.geo !== 'report-ready') { return; }
     if (frameTimer) { clearTimeout(frameTimer); frameTimer = null; }
     if (frameHint) { frameHint.hidden = true; }
@@ -1118,9 +1404,20 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       first.appendChild(icon('arrow', 14));
       acts.appendChild(first);
     }
-    if (waitingContents().length) { acts.appendChild(nav('有 ' + waitingContents().length + ' 篇内容等你确认', 'content', 'btn')); }
-    return add(el('div', 'banner'), mascot(), add(el('div', 'body'),
-      el('div', 'tt', '第 ' + LATEST.no + ' 期 · ' + cnDate(LATEST.date) + '体检 · 员工小结'), verdict(LATEST.mention), el('div', 'brief', brief), acts));
+    if (waitingContents().length) { acts.appendChild(nav(waitingContents().length + ' 篇内容等你确认', 'content', 'btn')); }
+    return add(el('div', 'banner hero'), mascot(), add(el('div', 'body'),
+      el('div', 'tt', '第 ' + LATEST.no + ' 期 · ' + cnDate(LATEST.date) + '体检'), verdict(LATEST.mention), briefBlock(brief), acts));
+  }
+  /* 员工小结：首页上只露两行，长了可以展开 */
+  function briefBlock(text) {
+    var node = el('div', 'brief', text);
+    if (String(text || '').length <= 90) { return node; }
+    node.className = 'brief clamp';
+    var more = button('textbtn', '展开', function () {
+      node.className = 'brief';
+      if (more.parentNode) { more.parentNode.removeChild(more); }
+    });
+    return add(el('div'), node, more);
   }
   /* 还没有体检结果时的首页：告诉商家现在到哪一步了，并让他先看看要问的问题 */
   function firstRun(root) {
@@ -1134,9 +1431,9 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       ['核对 AI 的回答', '', p.scored ? 'doing' : 'todo'],
       ['出第一份报告', '', 'todo']
     ];
-    root.appendChild(add(el('div', 'banner'), mascot(), add(el('div', 'body'), el('div', 'tt', 'AI 曝光专员'),
-      el('div', 'verdict', asked ? '第一次体检正在进行，报告出来后会显示在这里' : '店铺资料和问题已整理好，确认方向后再开始体检'),
-      el('div', 'brief', asked ? '员工正在查询，完成后会在这里展示报告。' : '先看看店铺信息、顾客类型和要问的问题。回到对话确认或告诉员工哪里需要调整，现在还没有开始查询。'),
+    root.appendChild(add(el('div', 'banner hero'), mascot(), add(el('div', 'body'), el('div', 'tt', 'AI 曝光专员'),
+      el('div', 'verdict', asked ? '第一次体检正在进行' : '问题已经出好，等你说开始'),
+      el('div', 'brief', asked ? '报告出来后会显示在这里。' : '先看一眼要问 AI 的问题，没问题就回到对话里说开始。'),
       add(el('div', 'acts'), nav('看要问的问题', 'settings', 'btn primary')))));
     var progress = card('现在到哪一步了');
     var list = el('ol', 'steps');
@@ -1164,16 +1461,15 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     var comparable = PERIODS.filter(function (p) { return p.questionsVersion === LATEST.questionsVersion; }).slice(-12);
     /* 单独一期的涨跌不下结论；连续两期同方向才说 */
     var trend = compare.trend === 'up' ? '，连续上升' : (compare.trend === 'down' ? '，连续下降' : '');
-    var byProvider = DATA.providers.map(function (p) { return p.name + ' ' + ratio(mention.byProvider[p.id]); }).join(' · ');
-    var mentionHint = before ? '上一期 ' + before.mention.before + trend : (compare.baselineReset ? '问题改过了，从这一期重新比' : byProvider);
+    var mentionHint = before ? '上一期 ' + before.mention.before + trend : (compare.baselineReset ? '问题改过了，从这一期重新比' : providerMini(mention));
     /* 第一屏：最新一期的结论和四个数。数的明细在报告里，点了就在这里打开报告对应的那一节 */
     root.appendChild(summaryBanner(reportRoute(LATEST)));
     var third = LATEST.buyEntry
-      ? kpi('cart', LATEST.buyEntry.count ? 'ok' : 'plain', '给出购买入口', LATEST.buyEntry.count, '/ ' + LATEST.buyEntry.valid, '回答里出现了你的小程序名或店铺链接', reportRoute(LATEST, 'mentions'))
+      ? withTip(kpi('cart', LATEST.buyEntry.count ? 'ok' : 'plain', '给出购买入口', LATEST.buyEntry.count, '/ ' + LATEST.buyEntry.valid, '', reportRoute(LATEST, 'mentions')), BUY_TIP)
       : ((LATEST.shops || []).length
         ? kpi('users', 'plain', '最常被提到的店', LATEST.shops[0].name, '', LATEST.shops[0].count + ' 次，你 ' + mention.hits + ' 次', reportRoute(LATEST, 'rivals'), null, null, true)
         : kpi('list', 'plain', '这一期拿到的回答', LATEST.returned, '/ ' + LATEST.expected, LATEST.complete ? '数据完整' : '这一期数据不全', reportRoute(LATEST, 'mentions')));
-    root.appendChild(row('c4',
+    root.appendChild(row('c4 kpis',
       kpi('eye', 'brand', '没点名时提到你', mention.hits, '/ ' + mention.valid, mentionHint, reportRoute(LATEST, 'mentions'),
         comparable.map(function (p) { return p.mention.valid ? p.mention.hits / p.mention.valid : 0; }),
         comparable.map(function (p) { return '第 ' + p.no + ' 期 ' + ratio(p.mention); })),
@@ -1196,14 +1492,11 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (list.length > limit) { more = button('textbtn more', '展开全部 ' + list.length + ' 期', function () { fill(list.length); more.style.display = 'none'; }); }
     var box = card('每一期的报告', '共 ' + total + ' 期', more);
     box.className = 'card flush';
-    var t = table([['期次'], ['日期'], ['没点名时提到你'], ['你的内容被引用', 'r'], ['写的内容'], ['数据'], ['', 'r']]);
-    /* 问题改过以后，之前几期是按旧问题测的，标出来，免得和现在的数放在一起比 */
-    var hasOld = list.some(function (period) { return period.questionsVersion !== LATEST.questionsVersion; });
+    var t = table([['期次'], ['日期'], ['没点名时提到你'], ['你的内容被引用', 'r'], ['写的内容'], ['', 'r']]);
     function fill(count) {
       t.body.textContent = '';
       list.slice(0, count).forEach(function (period, index) {
         var written = period.content || {};
-        var label = CONTENT_LABEL[written.status] || CONTENT_LABEL.preview;
         var href = reportRoute(period);
         var tr = el('tr', href ? 'click' : '');
         var open = href ? el('a', '', '看报告') : el('span', 'muted', '还没传上去');
@@ -1211,67 +1504,78 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
           open.href = href;
           tr.onclick = function () { location.hash = href; };
         }
-        cells(tr, { node: add(document.createDocumentFragment(), '第 ' + period.no + ' 期', index === 0 ? ' ' : '', index === 0 ? pill('brand', '最新') : null), cls: 'nw' },
+        /* 问题改过以后，之前几期是按旧问题测的；数据不全的那一期不拿来比。都只在那一格里标一下 */
+        var old = period.questionsVersion !== LATEST.questionsVersion ? el('span', 'small muted', ' 旧问题') : null;
+        if (old) { old.title = '问题改之前测的，不和现在的数比'; }
+        cells(tr, { node: add(document.createDocumentFragment(), '第 ' + period.no + ' 期', index === 0 ? ' ' : '', index === 0 ? pill('brand', '最新') : null,
+            period.complete ? null : ' ', period.complete ? null : pill('warn', '数据不全')), cls: 'nw' },
           { node: cnDate(period.date), cls: 'nw' },
-          { node: add(document.createDocumentFragment(), el('b', 'tnum', ratio(period.mention)), period.questionsVersion !== LATEST.questionsVersion ? el('span', 'small muted', ' 旧问题') : null), cls: 'nw' },
+          { node: add(document.createDocumentFragment(), el('b', 'tnum', ratio(period.mention)), old), cls: 'nw' },
           { node: period.refs.own + ' 次', cls: 'r nw' },
-          { node: written.count ? add(document.createDocumentFragment(), pill(label[0], label[1]), written.count > 1 ? ' 共 ' + written.count + ' 篇' : '') : el('span', 'muted', '—'), cls: 'nw' },
-          { node: period.complete ? el('span', 'muted', '完整') : pill('warn', '不全') },
+          { node: written.count ? add(document.createDocumentFragment(), statusText(written.status), written.count > 1 ? el('span', 'small muted', '　共 ' + written.count + ' 篇') : null) : el('span', 'muted', '—'), cls: 'nw' },
           { node: open, cls: 'r nw' });
         t.body.appendChild(tr);
       });
     }
     fill(limit);
-    return add(box, add(el('div', 'tbl-wrap'), t), el('div', 'pad small muted', (total > 1
-      ? '每期体检出一份报告，记的是当时的情况。上面的数是最新一期的，不是累计；单独一期的涨跌不说明问题，连续两期同方向才算变化。'
-      : '每期体检出一份报告。这是第一期，也是之后对比的基线；从第二期开始，上面的数会带上和上一期的对比。')
-      + (hasOld ? '标着“旧问题”的几期是问题改之前测的，不和现在的数比。' : '')));
+    return add(box, add(el('div', 'tbl-wrap'), t));
   }
 
   /* ── 监测设置：每周替商家问什么、和谁比，以及员工另外记下的几样信息 ──
      店铺后台里有的资料（门店、营业时间、商品）不在这里列，那是商家自己维护的，这里抄一份只会抄不全。 */
+  function questionRow(question) {
+    var meta = [question.kind === 'brand' ? '' : (question.tag || ''), question.audience ? '替' + question.audience + '问' : '', question.worry ? '在意：' + question.worry : ''].filter(Boolean).join(' · ');
+    return add(el('li'), el('span', 'qno', qno(question.id)), add(el('div', 'qb'), el('div', 'qt', question.text), meta ? el('div', 'qm', meta) : null));
+  }
   function pageSettings(root) {
     var st = DATA.settings || {};
     var x = st.extras || {};
-    root.appendChild(add(card(), el('div', 'small muted', st.from === 'backend'
-      ? '员工每周替你问下面这些问题，看 AI 有没有提到你、怎么介绍你。门店、营业时间、商品这些资料以你店铺后台的为准，每次体检前重新读取，这里不重复列。'
-      : '员工每周替你问下面这些问题，看 AI 有没有提到你、怎么介绍你。这家店的资料是员工从公开信息里整理的' + (st.confirmed ? '，你已经确认过。' : '，还没有经过你确认；确认之前不会替你写内容。'))));
+    /* 资料是员工从公开信息里整理的、商家还没确认时才提一句：这时还不会替他写内容 */
+    if (st.from !== 'backend' && !st.confirmed) { root.appendChild(el('div', 'notice', '店铺资料是员工从公开信息里整理的，你确认以后才开始替你写内容')); }
     var bank = card('每周问 AI 的问题', DATA.questions.length + ' 个');
     bank.className = 'card flush';
-    var t = table([['编号'], ['类型'], ['问题'], ['替谁问'], ['他在意什么']]);
-    DATA.questions.forEach(function (question) {
-      t.body.appendChild(cells(el('tr'), { node: el('span', 'qno', qno(question.id)), cls: 'nw' }, { node: question.kind === 'brand' ? pill('brand', '点名') : el('span', 'tag', question.tag || '没点名'), cls: 'nw' },
-        question.text, { node: question.audience || el('span', 'muted', '—'), cls: 'nw' }, question.worry || el('span', 'muted', '—')));
-    });
-    root.appendChild(add(bank, add(el('div', 'tbl-wrap'), t), el('div', 'pad small muted', '每期体检都问这些问题。改了问题原文，之前的数就不能和之后的比了。')));
+    var list = el('ul', 'qlist');
+    var open = DATA.questions.filter(function (q) { return q.kind !== 'brand'; });
+    var brand = DATA.questions.filter(function (q) { return q.kind === 'brand'; });
+    open.forEach(function (q) { list.appendChild(questionRow(q)); });
+    if (brand.length) {
+      list.appendChild(el('li', 'qgrp', '点名问你的'));
+      brand.forEach(function (q) { list.appendChild(questionRow(q)); });
+    }
+    if (!DATA.questions.length) { list.appendChild(el('li', 'empty', '问题还没有出好。')); }
+    root.appendChild(add(bank, list));
     var edges = st.edges || [];
     if (edges.length) {
-      var edgeBox = card('问题围绕你家的这几个特点出', '');
-      var list = el('ul', 'edge-list');
+      /* 依据收进鼠标提示里，页面上只留特点本身 */
+      var edgeList = el('ul', 'edge-list');
       edges.forEach(function (edge) {
-        list.appendChild(add(el('li'), edge.text, edge.basis ? el('span', 'tag', '依据：' + edge.basis) : null));
+        var item = el('li', '', edge.text);
+        if (edge.basis) { item.title = '依据：' + edge.basis; }
+        edgeList.appendChild(item);
       });
-      root.appendChild(add(edgeBox, list, el('div', 'small muted note-gap', '小店被 AI 提到，靠的是和别家不一样的地方。说得不对，或者你家还有别的特点，直接告诉员工，问题会跟着改。')));
+      root.appendChild(add(card('问题围绕你家的这几个特点'), edgeList));
     }
     var rivals = st.rivals || [];
     var rivalBox = card('和谁比', rivals.length ? rivals.length + ' 家同类店' : '');
-    if (!rivals.length) { rivalBox.appendChild(el('div', 'empty', '还没有选定。第一次体检后，员工会从 AI 实际提到的店里挑。')); }
+    if (!rivals.length) { rivalBox.appendChild(el('div', 'empty', '第一次体检后，员工会从 AI 实际提到的店里挑。')); }
     rivals.forEach(function (rival) { rivalBox.appendChild(el('span', 'tag', rival.name)); });
-    if (rivals.length) { rivalBox.appendChild(el('div', 'small muted note-gap', '这几家是从 AI 实际提到的店里挑的。每期报告会把你和它们放在一起看：顾客没点名时，AI 各提了几次。想换成你真正的对手，直接告诉员工。')); }
     var has = (x.aliases || []).length || x.wechatOfficial || x.douyin || (x.stores || []).length;
-    var extra = card(st.from === 'backend' ? '员工另外记下的（店铺后台里没有）' : '员工整理的店铺信息', st.pending ? '等你确认' : (has && st.confirmed ? '你已确认' : ''));
-    var dl = el('dl', 'kv');
-    kv(dl, '别的叫法', (x.aliases || []).join('、'));
-    kv(dl, '你的公众号', x.wechatOfficial);
-    kv(dl, '你的抖音号', x.douyin);
-    if (has) { extra.appendChild(dl); }
-    (x.stores || []).forEach(function (store) {
-      extra.appendChild(add(el('div', 'gap-row'), el('span', 'tag', store.status || '门店'),
-        add(el('span'), el('b', '', store.name || '门店'), store.address ? '　' + store.address : '', store.source ? el('span', 'small muted', '　来源：' + store.source) : null)));
-    });
-    if (!has) { extra.appendChild(el('div', 'empty', '除了店铺后台里的资料，员工没有另外记别的。')); }
-    else if (st.pending) { extra.appendChild(el('div', 'small muted', '这几样是员工自己找到或推断的，可能不对。看一下，没问题就回复“确认”，有不对的直接说。')); }
-    root.appendChild(row('c2', rivalBox, extra));
+    var extra = null;
+    if (has || st.pending) {
+      extra = card(st.from === 'backend' ? '员工另外记下的' : '员工整理的店铺信息', '',
+        st.pending ? el('span', 'st warn more', '等你确认') : (has && st.confirmed ? el('span', 'st ok more', '你已确认') : null));
+      var dl = el('dl', 'kv');
+      kv(dl, '别的叫法', (x.aliases || []).join('、'));
+      kv(dl, '你的公众号', x.wechatOfficial);
+      kv(dl, '你的抖音号', x.douyin);
+      if (dl.children.length) { extra.appendChild(dl); }
+      (x.stores || []).forEach(function (store) {
+        extra.appendChild(add(el('div', 'gap-row'), el('span', 'tag', store.status || '门店'),
+          add(el('span'), el('b', '', store.name || '门店'), store.address ? '　' + store.address : '', store.source ? el('span', 'small muted', '　来源：' + store.source) : null)));
+      });
+      if (!has) { extra.appendChild(el('div', 'empty', '没有另外记下的信息。')); }
+    }
+    root.appendChild(extra ? row('c2', rivalBox, extra) : rivalBox);
     if (x.tone || (x.bannedWords || []).length || (x.mustInclude || []).length) {
       var style = card('替你写内容时的要求');
       var rl = el('dl', 'kv');
@@ -1284,50 +1588,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   }
 
   var PAGES = { overview: pageOverview, content: pageContent, settings: pageSettings };
-  function hasPage(id) { return !!id && !!navTitle(id) && (!!PAGES[id] || !!(DATA.customPages || {})[id]); }
-
-  /* ── 员工填的页面：由几种固定的内容块拼成，不用为每个新页面写代码 ──
-     块的类型和 geo_report.py 的 BLOCK_TYPES 一致：text、list、table、stats、links、say。 */
-  function pageCustom(root, id) {
-    var info = (DATA.customPages || {})[id] || {};
-    var blocks = info.blocks || [];
-    if (!blocks.length) { root.appendChild(add(card(), el('div', 'empty', '员工还没有填写这一页。'))); return; }
-    blocks.forEach(function (block) { var node = customBlock(block); if (node) { root.appendChild(node); } });
-    if (info.updatedAt) { root.appendChild(el('div', 'small muted', '这一页更新于 ' + cnDate(String(info.updatedAt).slice(0, 10)))); }
-  }
-  function customBlock(block) {
-    var items = block.items || [];
-    if (block.type === 'say') { return items.length ? sayBlock(items) : null; }
-    if (block.type === 'stats') {
-      var grid = el('div', 'row ' + (items.length >= 4 ? 'c4' : (items.length === 3 ? 'c3' : 'c2')));
-      items.forEach(function (item) {
-        grid.appendChild(add(el('div', 'card kpi static'), el('span', 'kpi-top', item.label), el('span', 'kpi-num text', item.value), item.note ? el('span', 'kpi-hint', item.note) : null));
-      });
-      return block.title ? add(el('div', 'stack'), el('div', 'sec-label', block.title), grid) : grid;
-    }
-    var box = card(block.title || '');
-    if (block.type === 'text') {
-      var text = el('div', 'blk-text');
-      renderPlain(text, block.text);
-      box.appendChild(text);
-    } else if (block.type === 'list') {
-      var ul = el('ul', 'rowlist');
-      items.forEach(function (item) { ul.appendChild(el('li', '', item)); });
-      box.appendChild(ul);
-    } else if (block.type === 'table') {
-      box.className = 'card flush';
-      var t = table((block.columns || []).map(function (c) { return [c]; }));
-      (block.rows || []).forEach(function (r) { var tr = el('tr'); r.forEach(function (c) { tr.appendChild(el('td', '', c)); }); t.body.appendChild(tr); });
-      box.appendChild(add(el('div', 'tbl-wrap'), t));
-    } else if (block.type === 'links') {
-      var list = el('ul', 'rowlist');
-      items.forEach(function (item) { list.appendChild(add(el('li'), link(item.text, item.url))); });
-      box.appendChild(list);
-    } else {
-      return null;
-    }
-    return box;
-  }
+  function hasPage(id) { return !!id && !!PAGES[id]; }
 
   /* ══════════ 体检报告：一期一份，单独的页面 ══════════
      记的是这一期当时的情况：问了什么、AI 提没提到、提到了谁、读了哪里的内容、怎么介绍这家店。
@@ -1363,19 +1624,19 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   function reportSummary(root, S) {
     root.appendChild(h2('summary', '结论'));
     var before = DATA.compare && DATA.compare.previous ? DATA.compare : null;
-    root.appendChild(add(el('div', 'banner'), mascot(), add(el('div', 'body'),
-      el('div', 'tt', '第 ' + P.no + ' 期 · ' + cnDate(P.date) + '体检 · 员工小结'), verdict(S.mention),
+    root.appendChild(add(el('div', 'banner hero'), mascot(), add(el('div', 'body'),
+      el('div', 'tt', '第 ' + P.no + ' 期 · ' + cnDate(P.date) + '体检'), verdict(S.mention),
       DATA.actions.brief ? el('div', 'brief', DATA.actions.brief) : null)));
-    var byProvider = DATA.providers.map(function (p) { return p.name + ' ' + ratio(S.mention.byProvider[p.id]); }).join(' · ');
     var rivals = DATA.shops || [];
     var third = S.buyEntry
-      ? kpi('cart', S.buyEntry.count ? 'ok' : 'plain', '给出购买入口', S.buyEntry.count, '/ ' + S.buyEntry.valid, '回答里出现了你的小程序名或店铺链接')
+      ? withTip(kpi('cart', S.buyEntry.count ? 'ok' : 'plain', '给出购买入口', S.buyEntry.count, '/ ' + S.buyEntry.valid, ''), BUY_TIP)
       : (rivals.length ? kpi('users', 'plain', '最常被提到的店', rivals[0].name, '', rivals[0].count + ' 次，你 ' + S.mention.hits + ' 次', null, null, null, true) : null);
-    root.appendChild(row('c4',
-      kpi('eye', 'brand', '没点名时提到你', S.mention.hits, '/ ' + S.mention.valid, before ? '上一期 ' + before.mention.before : byProvider),
+    var cellsKpi = [
+      kpi('eye', 'brand', '没点名时提到你', S.mention.hits, '/ ' + S.mention.valid, before ? '上一期 ' + before.mention.before : providerMini(S.mention)),
       kpi('ext', S.refs.own ? 'ok' : 'plain', '你的内容被引用', S.refs.own, '次', before && before.ownRefs.before !== null ? '上一期 ' + before.ownRefs.before + ' 次' : '门店页 ' + S.refs.storePages + ' 次 · 别人写你 ' + S.refs.aboutStore + ' 次'),
       third,
-      kpi('list', 'plain', '这一期拿到的回答', S.returned, '/ ' + S.expected, S.complete ? '数据完整' : '这一期数据不全')));
+      kpi('list', 'plain', '这一期拿到的回答', S.returned, '/ ' + S.expected, S.complete ? '数据完整' : '这一期数据不全')].filter(Boolean);
+    root.appendChild(row.apply(null, ['c' + cellsKpi.length + ' kpis'].concat(cellsKpi)));
     findingsCard(root);
     if ((DATA.actions.todos || []).length) {
       var todos = card('这一期建议你做的', DATA.actions.todos.length + ' 件');
@@ -1436,8 +1697,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       buttons.push(btn);
       filter.appendChild(btn);
     });
-    add(box, add(el('div', 'qbar'), filter), add(t, body), legend(),
-      el('div', 'small muted', '点任何一格，可以看 AI 的原话和它引用的内容。'));
+    add(box, add(el('div', 'qbar'), filter), add(t, body), legend());
     root.appendChild(box);
   }
   function reportRivals(root, S) {
@@ -1529,18 +1789,17 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     var written = DATA.contents || [];
     if (written.length) {
       var box = card('这一期替你写的内容', written.length + ' 篇', nav('去工作台看稿子', 'content', 'more'));
+      /* 报告生成后不再更新，这里不写状态（确认、发布都是之后的事），现在的状态在工作台上看 */
       written.forEach(function (item) {
-        var label = CONTENT_LABEL[item.status] || CONTENT_LABEL.preview;
-        box.appendChild(add(el('div', 'gap-row'), el('span', 'tag', item.typeName), add(el('span'), el('b', '', item.title), ' ', pill(label[0], label[1]))));
+        box.appendChild(add(el('div', 'gap-row'), el('span', 'tag', item.typeName), el('b', '', item.title)));
       });
       root.appendChild(box);
     }
     var silent = DATA.providers.filter(function (p) { return !((DATA.summary.mention.byProvider[p.id] || {}).hits); });
     var issues = DATA.issues || [];
     root.appendChild(sayBlock([silent.length ? '为什么' + silent[0].name + '不提我' : '怎么让 AI 多提我',
-      '把 Q3 换一个问法', '把同类店换成我真正的对手', issues.length && issues[0].no ? issues[0].no + ' 号我改好了' : '重新体检一次'],
-      '点一句可以复制，回到龙虾发给员工。'));
-    root.appendChild(el('div', 'rpt-foot', '这份报告记的是第 ' + P.no + ' 期体检当时的情况，生成于 ' + updatedAt() + '。之后做了什么、改了什么，在工作台上看。'));
+      '把 Q3 换一个问法', '把同类店换成我真正的对手', issues.length && issues[0].no ? issues[0].no + ' 号我改好了' : '重新体检一次']));
+    root.appendChild(el('div', 'rpt-foot', '第 ' + P.no + ' 期体检 · 生成于 ' + updatedAt()));
   }
   /* 嵌在工作台里时，显示出来以后跟外面打个招呼（外面据此知道报告显示成功了）。一层一层往上说，中间隔着别的壳也能传到 */
   function tellAncestors(message) {
@@ -1581,7 +1840,9 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (EMBED) { tellAncestors({ geo: 'report-ready', date: P.date }); }
   }
 
+  try { connectHost(); } catch (error) { /* 连不上客户端不影响页面 */ }
   if (KIND === 'report') {
+    if (EMBED) { window.addEventListener('message', onAskAnswered); }
     renderReport();
   } else {
     renderShell();

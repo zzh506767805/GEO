@@ -19,7 +19,7 @@
 
 | 文件 | 是什么 |
 | --- | --- |
-| `ai-visibility.html` | 工作台。一个固定的链接，三个固定页面：工作台首页、内容、监测设置。只放跨期的东西。另外可以有员工用内容块填的页面（示例里没有） |
+| `ai-visibility.html` | 工作台。一个固定的链接，三个固定页面：工作台首页、内容、监测设置。只放跨期的东西。|
 | `report-2026-10-08.html` | 第 1 期体检报告。每期一份，是独立的文件。在工作台左边点“第 1 期”，它就在右边打开，不跳页面；也可以单独打开 |
 
 两个文件要放在同一个文件夹里，工作台才找得到报告。
@@ -164,10 +164,8 @@ geo_state.py   status | init | show | set-facts [--replace]（默认合并，没
 geo_run.py     start [--only q01,b02] [--retry] [--fresh 同一天重新测] | wait [--max-seconds 90] | status   （两类问题一起问）
 geo_score.py   score | answers --provider P [--only ...] | set-reading --file F [--file F ...] | set-findings --file F | brand-digest | set-judgement | issues [--status S] | mark-issue --no N --status done|dismissed|open
 geo_report.py  publish | links | show | compare | set-actions
-               add-content | contents [--no N] | mark-content [--no N] [--status S] [--channel 去向] [--ref 凭据]
-               pages | set-page --id P --file <json> | remove-page --id P
-               template | template-init | template-diff | template-rebase | template-reset（这家店自己的模板）
-               build（只在本地生成）| set-page-url --url U [--report 日期] | render --data <json> --out <html>
+               add-content | mark-content [--no N] [--status S] [--channel 去向] [--ref 凭据]
+               site-brief | set-site | set-page-url --url U [--report 日期]
 ```
 
 测试用的环境变量：
@@ -186,10 +184,10 @@ geo_report.py  publish | links | show | compare | set-actions
 
 - `geo_common.py` 在三个技能目录里各有一份，内容必须完全一样。技能目录是独立安装的只读目录，不能跨目录 import。测试会校验三份一致。
 - 改了数据的命令要调 `gc.mark_changed("变了什么")`，否则员工不会被提醒同步。
-- 工作台和报告共用一个模板：`geo-workbench/assets/page.html`，数据里的 `kind` 决定出哪一种。样式、图标、交互全在这一个文件里。员工可以给某一家店复制一份随便改（`template-init`），那家店以后就用自己的；标准模板升级时，员工用 `template-diff` 拿增量自己合。所以 `geo-data` 里的字段只加不改。
+- 工作台和报告共用一个模板：`geo-workbench/assets/page.html`，数据里的 `kind` 决定出哪一种。样式、图标、交互全在这一个文件里。
 - 以前各期的报告文件生成后不再更新。所以报告嵌在工作台里用到的两个约定（地址里的 `#embed`、`report-ready` 消息）以后只能加、不能改，否则旧报告在新工作台里会显示不对。
 - **往工作台加页面或者往首页加模块之前先问两件事：它放的是不是跨期的东西；商家要在上面做什么。** 某一期分析出来的东西，放进报告当一节。导航和首页上放什么，等于告诉商家我们主要做什么。
-- 加工作台的页面：只在 `geo-workbench/assets/pages.json` 里加一项，员工用 `geo_report.py set-page` 填内容块，不用改模板和脚本；商家也可以让员工单独给他加一页。只有内容块拼不出来的页面才要写代码。增减报告的小节：`geo_report.py` 的 `REPORT_SECTIONS`、模板里的 `SECTIONS`、`geo-workbench/SKILL.md` 里的小节表要一起改，测试会核对。详见 `MAINTAINING.md`。
+- 加工作台的页面：`geo_report.py` 的 `WORKBENCH_PAGES` 和模板里的 `PAGES` 一起改。增减报告的小节：`geo_report.py` 的 `REPORT_SECTIONS`、模板里的 `SECTIONS`、`geo-workbench/SKILL.md` 里的小节表要一起改，测试会核对。详见 `MAINTAINING.md`。
 - **脚本里有一类文字会原样出现在商家的报告上：`readerNotes` 和报告里追加的 `notes`（“读这份报告前要知道的”）。** 它们要用对商家说话的口吻，称呼用“你”，不能写给员工看的提示。给员工的提示放在命令输出的 `notes` 和 `next` 里。测试会查这类文字里有没有“商家”“周报”这类词。
 - 模板里动态拼出来的类名要加前缀。踩过两次：条形图的 `.bar` 和顶栏撞名；时间线图标直接用事件类型当类名，`content` 和页面容器撞名。这类问题逐页渲染检查抓不到，要看截图。
 - 颜色用的是龙虾客户端的主题变量；页面里的龙虾形象取自客户端仓库的应用图标（`src/renderer/src/assets/images/app-icon.png`，缩到 88 像素后内嵌）。
@@ -205,7 +203,6 @@ geo_report.py  publish | links | show | compare | set-actions
 - 报告在工作台里打开，靠的是一个网页把另一个网页嵌进来。本机测过，云盘上没有实测；嵌不进来时退成“单独打开”。
 - 旧期的报告生成后不再更新：之后商家回的话、模板改的样式，都不会回到旧报告里。只有最新一期的报告会跟着更新。
 - 每期多一个报告文件（约 200 到 450KB）。云盘有没有容量和数量限制，没有确认；现在也没有清理旧报告的逻辑。
-- 工作台上内容的稿子只带最近 10 条，更早的只留标题和状态。
 - 商家在对话里临时要的内容，员工没登记的话脚本发现不了，只靠规则约束。
 - 小红书笔记的写法只有几条基本规格；抖音文案、视频脚本还没有对应的类型。
 - 抖音的引用不带作者，只有员工记下过作品编号的视频才能认出是本店的。

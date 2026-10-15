@@ -403,8 +403,6 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .rowlist li:first-child { border-top: 0; padding-top: 0; }
 .rowlist li:last-child { padding-bottom: 0; }
 .rowlist .mt { margin-top: 2px; font-size: 12px; color: var(--ink-3); }
-.blk-text .p { white-space: pre-wrap; word-break: break-word; }
-.blk-text .gap { height: 8px; }
 .t-strong { margin-top: 4px; font-weight: 700; }
 .note-tags { margin-top: 12px; }
 .note-tags span { display: inline-block; margin: 0 8px 4px 0; color: var(--brand); font-size: 14px; }
@@ -1257,7 +1255,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
      最新结论、几个数的走势、每一期报告的入口、替商家写的内容、监测设置。
      某一期分析出来的东西（提没提到、提到了谁、读了哪里、怎么介绍）都在那一期的报告里。
      报告是每期一份独立的文件；在工作台里看它时，内容区直接把那个文件嵌进来，不用跳到别的页面。 */
-  /* 导航来自数据里的 nav（脚本按 assets/pages.json 和员工填过的页面生成）。旧数据没有 nav 时用这三个页面 */
+  /* 导航来自数据里的 nav（脚本里的 WORKBENCH_PAGES）。旧数据没有 nav 时用这三个页面 */
   var NAV_ITEMS = (DATA.nav && DATA.nav.length ? DATA.nav : [
     { id: 'overview', title: '工作台', icon: 'home', subtitle: '最新的结论，和每一期的体检报告' },
     { id: 'content', title: '内容', icon: 'doc', subtitle: '员工替你写的内容：公众号文章、小红书笔记、长文、抖音视频文案' },
@@ -1353,7 +1351,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       subEl.textContent = '';
       titleEl.title = SUBTITLE[page] || '';  /* 页面说明不占地方，鼠标停在标题上才显示 */
       add(content, demoStrip());
-      if (PAGES[page]) { PAGES[page](content); } else { pageCustom(content, page); }
+      PAGES[page](content);
       document.title = navTitle(page) + ' · ' + (DATA.store.name || '本店') + ' · AI 曝光工作台';
     }
     window.scrollTo(0, 0);
@@ -1590,50 +1588,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
   }
 
   var PAGES = { overview: pageOverview, content: pageContent, settings: pageSettings };
-  function hasPage(id) { return !!id && !!navTitle(id) && (!!PAGES[id] || !!(DATA.customPages || {})[id]); }
-
-  /* ── 员工填的页面：由几种固定的内容块拼成，不用为每个新页面写代码 ──
-     块的类型和 geo_report.py 的 BLOCK_TYPES 一致：text、list、table、stats、links、say。 */
-  function pageCustom(root, id) {
-    var info = (DATA.customPages || {})[id] || {};
-    var blocks = info.blocks || [];
-    if (!blocks.length) { root.appendChild(add(card(), el('div', 'empty', '员工还没有填写这一页。'))); return; }
-    blocks.forEach(function (block) { var node = customBlock(block); if (node) { root.appendChild(node); } });
-    if (info.updatedAt) { root.appendChild(el('div', 'small muted', '这一页更新于 ' + cnDate(String(info.updatedAt).slice(0, 10)))); }
-  }
-  function customBlock(block) {
-    var items = block.items || [];
-    if (block.type === 'say') { return items.length ? sayBlock(items) : null; }
-    if (block.type === 'stats') {
-      var grid = el('div', 'row ' + (items.length >= 4 ? 'c4' : (items.length === 3 ? 'c3' : 'c2')));
-      items.forEach(function (item) {
-        grid.appendChild(add(el('div', 'card kpi static'), el('span', 'kpi-top', item.label), el('span', 'kpi-num text', item.value), item.note ? el('span', 'kpi-hint', item.note) : null));
-      });
-      return block.title ? add(el('div', 'stack'), el('div', 'sec-label', block.title), grid) : grid;
-    }
-    var box = card(block.title || '');
-    if (block.type === 'text') {
-      var text = el('div', 'blk-text');
-      renderPlain(text, block.text);
-      box.appendChild(text);
-    } else if (block.type === 'list') {
-      var ul = el('ul', 'rowlist');
-      items.forEach(function (item) { ul.appendChild(el('li', '', item)); });
-      box.appendChild(ul);
-    } else if (block.type === 'table') {
-      box.className = 'card flush';
-      var t = table((block.columns || []).map(function (c) { return [c]; }));
-      (block.rows || []).forEach(function (r) { var tr = el('tr'); r.forEach(function (c) { tr.appendChild(el('td', '', c)); }); t.body.appendChild(tr); });
-      box.appendChild(add(el('div', 'tbl-wrap'), t));
-    } else if (block.type === 'links') {
-      var list = el('ul', 'rowlist');
-      items.forEach(function (item) { list.appendChild(add(el('li'), link(item.text, item.url))); });
-      box.appendChild(list);
-    } else {
-      return null;
-    }
-    return box;
-  }
+  function hasPage(id) { return !!id && !!PAGES[id]; }
 
   /* ══════════ 体检报告：一期一份，单独的页面 ══════════
      记的是这一期当时的情况：问了什么、AI 提没提到、提到了谁、读了哪里的内容、怎么介绍这家店。

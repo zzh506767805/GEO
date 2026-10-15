@@ -23,22 +23,11 @@
   geo_report.py compare [--date D]         和上一期对比
   geo_report.py set-actions --file <json> [--date D]   本期小结、建议商家做的事、缺的内容、这一期没写内容的原因
   geo_report.py add-content --file <json>              登记一条内容（公众号文章、小红书笔记、长文、抖音视频文案）；带 no 是改稿
-  geo_report.py contents [--no N]                      内容清单；带 --no 时给出那一条的全文
   geo_report.py mark-content [--no N] [--status S] [--channel 放到了哪] [--ref 交付凭据]
   geo_report.py site-brief                             做官网要用的东西：能放上去的店铺资料、顾客常问的问题、现在官网到了哪一步
   geo_report.py set-site [--status test|published|dropped] [--test-url U] [--url U] [--page-name N] [--domain D]
                                                        登记官网：测试版好了、正式上线了、绑了独立域名、不要了
-  geo_report.py build [--date D]           只在本地生成，不上传
-  geo_report.py pages                                  工作台有哪些页面、哪几页要员工填、每一页放什么
-  geo_report.py set-page --id <页面> --file <json>      填写一个由内容块组成的页面（assets/pages.json 里登记的，或这家店单独加的）
-  geo_report.py remove-page --id <页面>                 去掉这家店单独加的页面，或清空登记页面里员工填的内容
-  geo_report.py template                               这家店用的是标准模板还是自己的模板，标准模板有没有更新
-  geo_report.py template-init                          复制一份标准模板给这家店，之后想怎么改就怎么改
-  geo_report.py template-diff                          标准模板自上次以来改了什么（升级时把这些改动合进这家店的模板）
-  geo_report.py template-rebase                        改动合完了，记下这家店已经跟上了现在的标准模板
-  geo_report.py template-reset                         不用自己的模板了，恢复标准模板（原来那份留作备份）
   geo_report.py set-page-url --url <云盘链接> [--report 日期]
-  geo_report.py render --data <页面数据.json> --out <输出.html>
 
 内容按类型登记。稿子本身跟着类型走：公众号文章是带排版的长文（公众号技能产出，登记排版预览链接），
 小红书笔记是短标题、短正文加话题，长文是纯文字稿。这里不关心稿子是谁写的、用哪个技能写的，
@@ -47,7 +36,6 @@
 from __future__ import annotations
 
 import argparse
-import difflib
 import json
 import os
 import re
@@ -62,8 +50,6 @@ sys.dont_write_bytecode = True
 import geo_common as gc  # noqa: E402
 
 TEMPLATE = Path(__file__).resolve().parent.parent / "assets" / "page.html"
-# 工作台有哪些页面。加页面只改这个文件，见员工定义目录下的 MAINTAINING.md
-PAGE_REGISTRY = Path(__file__).resolve().parent.parent / "assets" / "pages.json"
 PLACEHOLDER = "__GEO_DATA__"
 # 内容类型。稿子本身跟着类型走：公众号文章和小红书笔记不是同一份稿子换个排版，标题长度、正文长度、写法都不一样。
 # 加一种类型：这里加一行规格，再在 geo-content 技能的 references/writing.md 里写清这种稿子怎么写、谁来写、商家怎么审。
@@ -78,28 +64,16 @@ CONTENT_TYPES = {
 # 状态和类型无关：等商家确认 → 商家确认了 → 已发布；或者不发了。放到了哪（公众号草稿箱、知乎……）另外记在 channels 里。
 CONTENT_STATUS = ("preview", "confirmed", "published", "dropped")
 CONTENT_ORIGINS = ("weekly", "asked")  # 每周主动写的 / 商家点名要的
-CONTENT_BODIES_SHOWN = 10  # 工作台上带全文的条数，更早的只留标题和状态
 WEEKLY_CONTENT_CAP = 2     # 每一期主动写的内容上限。批量铺稿是红线，这里用脚本卡住
 ACTION_KEYS = ("brief", "todos", "gaps", "contentNote")
 EXPECTED_PAGE_HOST = "claw-cloud.youzan.com"
-PERIOD_LIMIT = 26
 UPLOAD_TIMEOUT = 50  # 一次同步要传报告和工作台两个文件，加起来要比 Bash 工具默认的 2 分钟短
-# 工作台的页面登记在 assets/pages.json。builtin 的三个页面（工作台、内容、监测设置）由模板里的代码画；
-# 其余页面由员工用 set-page 填内容块。某一期分析出来的东西放进那一期的报告，不要做成工作台的页面。
-PAGE_ID = re.compile(r"^[a-z][a-z0-9-]{1,23}$")
-RESERVED_PAGE_IDS = ("report", "embed")
-PAGE_ICONS = ("home", "doc", "list", "clock", "users", "user", "store", "activity", "cart", "chat", "eye", "info", "alert", "check")
-CUSTOM_PAGE_CAP = 5  # 一家店单独加的页面最多几个：工作台是给商家快速看的，不是什么都往上放
-# 员工填的页面由这几种内容块拼成。模板里的 customBlock 按同样的类型画；加一种块要两边一起改。
-BLOCK_TYPES = {
-    "text": "一段文字：text（可以换行）",
-    "list": "列表：items（文字列表）",
-    "table": "表格：columns（表头，最多 6 列）、rows（每行一个文字列表）",
-    "stats": "几个数：items（每项 label、value，可选 note），最多 4 项",
-    "links": "链接：items（每项 text、url，url 必须 https 开头，只能来自查询结果或商家提供的）",
-    "say": "可以这样跟员工说：items（商家点一下就能复制的话），最多 5 句",
-}
-BLOCKS_PER_PAGE = 20
+# 工作台的三个页面，按导航顺序。每一页由模板里 PAGES 的同名函数画。某一期分析出来的东西放进那一期的报告，不要做成工作台的页面。
+WORKBENCH_PAGES = (
+    {"id": "overview", "title": "工作台", "icon": "home", "subtitle": "最新的结论，和每一期的体检报告"},
+    {"id": "content", "title": "内容", "icon": "doc", "subtitle": "员工替你写的内容：公众号文章、小红书笔记、长文、抖音视频文案"},
+    {"id": "settings", "title": "监测设置", "icon": "list", "subtitle": "员工每周替你问什么、和谁比"},
+)
 # 每期报告里的小节，顺序和模板里的一致。
 REPORT_SECTIONS = (("结论", "summary"), ("有没有提到你", "mentions"), ("提到了谁", "rivals"),
                    ("读哪里的内容", "sources"), ("怎么介绍你", "says"))
@@ -213,8 +187,9 @@ def _period(day: str, number: int, written: dict, reports: dict):
 
 def _periods(date: str) -> list:
     written, reports = _period_contents(), _report_urls()
+    # 每一期都留着：旧报告不清理，工作台上就要一直有它的入口
     rows = [_period(day, number, written, reports) for number, day in enumerate(_scored_dates(date), 1)]
-    return [row for row in rows if row][-PERIOD_LIMIT:]
+    return [row for row in rows if row]
 
 
 def _progress() -> dict:
@@ -324,7 +299,37 @@ def _clean_block(value) -> str:
     return "\n".join(out).strip()
 
 
+def _check_actions(raw: dict) -> None:
+    """员工写给商家的话超出长度就退回去改，不从中间截断：截掉的半句话会原样出现在商家的页面上。"""
+    errors = []
+
+    def over(label, text, limit):
+        text = gc.clean_text(text)
+        if len(text) > limit:
+            errors.append("%s最多 %d 字，现在是 %d 字" % (label, limit, len(text)))
+
+    todos = raw.get("todos") or []
+    if len(todos) > 3:
+        errors.append("建议最多三件，现在是 %d 件" % len(todos))
+    for number, item in enumerate(todos, 1):
+        entry = item if isinstance(item, dict) else {"text": item}
+        over("第 %d 件建议的“做什么”" % number, entry.get("text"), 120)
+        over("第 %d 件建议的“为什么”" % number, entry.get("why"), 120)
+    gaps = raw.get("gaps") or []
+    if len(gaps) > 5:
+        errors.append("缺口最多五条，现在是 %d 条" % len(gaps))
+    for number, item in enumerate(gaps, 1):
+        if isinstance(item, dict):
+            over("第 %d 条缺口的平台" % number, item.get("where"), 20)
+            over("第 %d 条缺口的说明" % number, item.get("note"), 160)
+    over("本期小结", raw.get("brief"), 240)
+    over("没写内容的原因", raw.get("contentNote"), 160)
+    if errors:
+        raise gc.GeoError("没有保存，请改短后重新提交：" + "；".join(errors))
+
+
 def normalize_actions(raw: dict) -> dict:
+    """整理存档里的小结和建议。长度在 set-actions 时已经卡过，这里的截断只是兜底。"""
     if not isinstance(raw, dict):
         raise gc.GeoError("本周动作应为一个对象")
     todos = []
@@ -356,6 +361,7 @@ def cmd_set_actions(args) -> None:
         raise gc.GeoError("本周动作应为一个对象")
     if "article" in raw or "content" in raw:
         raise gc.GeoError("写好的内容不放在这里，用 add-content 登记（要写明类型并带上稿子）；这一期没写，把原因写在 contentNote")
+    _check_actions(raw)
     previous = gc.read_json(gc.run_dir(date) / "actions.json") or {}
     # 只传要改的部分：没传的 brief、todos、gaps、contentNote 保持这一期原来的内容。
     actions = normalize_actions({key: raw[key] if key in raw else previous.get(key) for key in ACTION_KEYS})
@@ -374,10 +380,12 @@ def cmd_set_actions(args) -> None:
 
 
 def cmd_show(_args) -> None:
-    """最新一期写了什么（小结、建议、缺的内容）、最近的内容，以及页面是不是最新的。商家说“第 2 篇”时先看这里。"""
+    """最新一期写了什么（小结、建议、缺的内容）、最近的内容，以及页面是不是最新的。商家说“第 2 篇”时先看这里。
+    更早的内容和稿子全文不在这里，直接读 contentsFile（内容账本）。"""
     dates = _scored_dates()
     actions = normalize_actions((gc.read_json(gc.run_dir(dates[-1]) / "actions.json") if dates else None) or {})
-    ledger = _load_contents()["items"]
+    contents = _load_contents()
+    ledger = contents["items"]
     items = sorted(ledger, key=lambda a: -a["no"])
     live = [a for a in ledger if a["status"] != "dropped"]
     state = gc.workbench_state()
@@ -390,6 +398,10 @@ def cmd_show(_args) -> None:
                                      for p, v in ((summary.get("sources") or {}).get("byProvider") or {}).items()},
                "refs": {k: (summary.get("refs") or {}).get(k, 0) for k in ("total", "own", "storePages", "aboutStore")},
                "contents": [_content_view(item) for item in items[:5]],
+               # 内容账本：每一篇的全文、状态、放到了哪都在这个文件里，要看哪一篇直接读
+               "contentsFile": str(_contents_path()),
+               # 下一篇会拿到的序号。让别的技能生成文件时用它起文件名，免得把上一篇的文件和预览盖掉
+               "nextNo": _next_no(contents),
                # 官网到了哪一步、有没有跟上店铺资料（outdated、changed）
                "site": gc.site_state(),
                # 商家问“你都做了哪些事”时用这几个数回答
@@ -399,11 +411,7 @@ def cmd_show(_args) -> None:
                "workbench": state, "links": links(state["url"], _linkable(dates)),
                "reportUrl": report_link(state["url"], _linkable(dates)),
                "reportSections": report_sections(state["url"], _linkable(dates))}
-    todo = [r["title"] for r in _pages_payload() if not r["filled"]]
-    if todo:
-        # 维护的人在 assets/pages.json 里加了页面、这家店还没填的。用 pages 看每一页放什么
-        payload["pagesToFill"] = todo
-    hint = gc.sync_hint(state) or (("工作台上这几页还没填：%s。执行 pages 看每一页放什么，用 set-page 填好再 publish" % "、".join(todo)) if todo else "")
+    hint = gc.sync_hint(state)
     if hint:
         payload["next"] = hint
     gc.emit(payload)
@@ -449,7 +457,7 @@ def cmd_add_content(args) -> None:
     number = int(raw.get("no") or 0)
     current = next((a for a in items if a["no"] == number), None) if number else None
     if number and not current:
-        raise gc.GeoError("没有第 %d 篇。请先执行 contents 看现在有哪些" % number)
+        raise gc.GeoError("没有第 %d 篇。现在有哪些看 show 输出里的 contentsFile（内容账本）" % number)
     kind = current["type"] if current else str(raw.get("type") or "")
     if kind not in CONTENT_TYPES:
         raise gc.GeoError("要写明内容类型 type：" + _type_list())
@@ -504,7 +512,7 @@ def cmd_add_content(args) -> None:
             written = sum(1 for a in items if a.get("origin") == "weekly" and a.get("period") == period and a["status"] != "dropped")
             if written >= WEEKLY_CONTENT_CAP:
                 raise gc.GeoError("这一期已经主动写了 %d 篇，每期最多 %d 篇。商家点名要的内容，把 origin 写成 asked" % (written, WEEKLY_CONTENT_CAP))
-        number = max([int(ledger.get("nextNo") or 0)] + [a["no"] + 1 for a in items] + [1])
+        number = _next_no(ledger)
         current = dict({"summary": "", "reason": "", "whereToPost": "", "tip": "", "forQuestion": ""}, **extra)
         current.update(no=number, type=kind, title=title, body=body, previewUrl=preview, tags=tags, status="preview",
                        origin=origin, period=period, channels=[], ref="", createdAt=gc.now_iso(), updatedAt=gc.now_iso())
@@ -519,23 +527,8 @@ def cmd_add_content(args) -> None:
     gc.emit(payload)
 
 
-def cmd_contents(args) -> None:
-    """内容清单，序号和工作台上显示的一致。带 --no 时给出那一条的全文。"""
-    ledger = _load_contents()
-    items = ledger["items"]
-    if args.no:
-        item = next((a for a in items if a["no"] == args.no), None)
-        if not item:
-            raise gc.GeoError("没有第 %d 篇" % args.no)
-        gc.emit({"ok": True, "content": _content_view(item, with_body=True)})
-        return
-    rows = [_content_view(a) for a in sorted(items, key=lambda a: -a["no"])]
-    gc.emit({"ok": True, "count": len(rows), "waiting": sum(1 for a in rows if a["status"] == "preview"),
-             # 下一条会拿到的序号。让别的技能生成文件时，用它起文件名，免得把上一篇的文件和预览盖掉。
-             "nextNo": max([int(ledger.get("nextNo") or 0)] + [a["no"] + 1 for a in items] + [1]),
-             "types": {key: spec["name"] for key, spec in CONTENT_TYPES.items()}, "items": rows,
-             "next": "商家说某一篇可以发：mark-content --no <序号> --status confirmed；说已经发了：--status published --channel <发在哪>；"
-                     "要改稿：改好后 add-content 带上 no"})
+def _next_no(ledger: dict) -> int:
+    return max([int(ledger.get("nextNo") or 0)] + [a["no"] + 1 for a in ledger["items"]] + [1])
 
 
 def cmd_mark_content(args) -> None:
@@ -760,13 +753,9 @@ def _settings(facts: dict, meta: dict, questions: list, rivals: list) -> dict:
 
 
 def _contents_for_page() -> list:
-    """内容：新的在前。稿子全文只带最近几条，更早的只留标题和状态，免得页面越来越大。"""
-    contents, with_body = [], 0
-    for item in sorted(_load_contents()["items"], key=lambda a: -a["no"]):
-        keep = item["status"] != "dropped" and with_body < CONTENT_BODIES_SHOWN
-        with_body += keep
-        contents.append(dict(_content_view(item), body=item.get("body", "") if keep else ""))
-    return contents
+    """内容：新的在前，每一篇都带全文（一篇约 2KB，几百篇也只有几百 KB）。不发了的不带稿子。"""
+    return [dict(_content_view(item), body=item.get("body", "") if item["status"] != "dropped" else "")
+            for item in sorted(_load_contents()["items"], key=lambda a: -a["no"])]
 
 
 def _facts() -> dict:
@@ -803,8 +792,7 @@ def workbench_data(date: str = "") -> dict:
         "generatedAt": gc.now_iso(),
         "runDate": current,
         "store": _store(facts),
-        "nav": [{k: p[k] for k in ("id", "title", "icon", "subtitle")} for p in visible_pages()],
-        "customPages": {pid: {"blocks": page["blocks"], "updatedAt": page.get("updatedAt", "")} for pid, page in _custom_pages().items()},
+        "nav": list(WORKBENCH_PAGES),
         "providers": [{"id": p, "name": gc.PROVIDER_NAMES[p]} for p in gc.PROVIDERS],
         "progress": _progress(),
         "latest": latest,
@@ -892,172 +880,6 @@ def report_data(day: str) -> dict:
     }
 
 
-def page_registry() -> list:
-    """assets/pages.json 里登记的页面，按导航顺序。格式不对时直接报错，免得维护的人改坏了还不知道。"""
-    try:
-        raw = json.loads(PAGE_REGISTRY.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise gc.GeoError("工作台的页面清单（assets/pages.json）读不出来") from exc
-    out, seen = [], set()
-    for item in raw.get("pages") or []:
-        pid = str(item.get("id") or "")
-        if not PAGE_ID.match(pid) or pid in RESERVED_PAGE_IDS or pid in seen or not gc.clean_text(item.get("title")):
-            raise gc.GeoError("assets/pages.json 里有一个页面的 id 或 title 不对：" + (pid or "（没有 id）"))
-        seen.add(pid)
-        out.append({"id": pid, "title": gc.clean_text(item.get("title"))[:12],
-                    "icon": item.get("icon") if item.get("icon") in PAGE_ICONS else "doc",
-                    "subtitle": gc.clean_text(item.get("subtitle"))[:60], "builtin": bool(item.get("builtin")),
-                    "guide": gc.clean_text(item.get("guide"))[:300]})
-    if [p["id"] for p in out if p["builtin"]][:1] != ["overview"]:
-        raise gc.GeoError("assets/pages.json 的第一个页面必须是 overview（工作台首页）")
-    return out
-
-
-def _custom_path() -> Path:
-    return gc.profile_dir() / "pages.json"
-
-
-def _custom_pages() -> dict:
-    """员工填过的页面：id → {title, icon, subtitle, blocks, updatedAt}。"""
-    return (gc.read_json(_custom_path(), {}) or {}).get("items") or {}
-
-
-def visible_pages() -> list:
-    """工作台导航里显示的页面：内置的三个，加填过内容的。登记了但还没填的不显示，免得商家点进去是空的。"""
-    filled = _custom_pages()
-    out = []
-    for page in page_registry():
-        if page["builtin"] or page["id"] in filled:
-            mine = filled.get(page["id"]) or {}
-            out.append(dict(page, subtitle=mine.get("subtitle") or page["subtitle"]))
-    for pid, mine in filled.items():
-        if pid not in [p["id"] for p in out]:
-            out.append({"id": pid, "title": mine["title"], "icon": mine.get("icon") or "doc",
-                        "subtitle": mine.get("subtitle", ""), "builtin": False, "guide": "", "shopOnly": True})
-    return out
-
-
-def _block_text(value, limit: int) -> str:
-    return gc.clean_text(value)[:limit]
-
-
-def normalize_blocks(raw) -> list:
-    """检查员工写的内容块。页面上的文字一律按纯文字显示，链接只收 https。"""
-    if not isinstance(raw, list) or not raw:
-        raise gc.GeoError("blocks 应为一个不为空的列表。可用的块：" + "；".join("%s（%s）" % kv for kv in BLOCK_TYPES.items()))
-    if len(raw) > BLOCKS_PER_PAGE:
-        raise gc.GeoError("一个页面最多 %d 块" % BLOCKS_PER_PAGE)
-    out = []
-    for index, block in enumerate(raw, 1):
-        kind = block.get("type") if isinstance(block, dict) else None
-        if kind not in BLOCK_TYPES:
-            raise gc.GeoError("第 %d 块的 type 不对。可用的块：%s" % (index, "；".join("%s（%s）" % kv for kv in BLOCK_TYPES.items())))
-        row = {"type": kind}
-        title = _block_text(block.get("title"), 30)
-        if title:
-            row["title"] = title
-        items = block.get("items") if isinstance(block.get("items"), list) else []
-        if kind == "text":
-            row["text"] = _clean_block(block.get("text"))[:3000]
-            if not row["text"]:
-                raise gc.GeoError("第 %d 块（text）没有 text" % index)
-        elif kind in ("list", "say"):
-            limit = 5 if kind == "say" else 30
-            row["items"] = [t for t in (_block_text(i, 60 if kind == "say" else 200) for i in items[:limit]) if t]
-        elif kind == "table":
-            columns = [_block_text(c, 20) for c in (block.get("columns") or [])[:6]]
-            if not columns or not all(columns):
-                raise gc.GeoError("第 %d 块（table）要有 columns（表头）" % index)
-            rows = block.get("rows") if isinstance(block.get("rows"), list) else []
-            row["columns"] = columns
-            row["rows"] = [[_block_text(c, 200) for c in (r if isinstance(r, list) else [])[:len(columns)]]
-                           + [""] * max(0, len(columns) - len(r if isinstance(r, list) else [])) for r in rows[:50]]
-        elif kind == "stats":
-            row["items"] = [{"label": _block_text(i.get("label"), 20), "value": _block_text(i.get("value"), 20),
-                             "note": _block_text(i.get("note"), 60)} for i in items[:4]
-                            if isinstance(i, dict) and _block_text(i.get("label"), 20) and _block_text(i.get("value"), 20)]
-        elif kind == "links":
-            row["items"] = []
-            for i in items[:20]:
-                url = str((i or {}).get("url") or "").strip() if isinstance(i, dict) else ""
-                parsed = urlparse(url)
-                if parsed.scheme != "https" or not parsed.netloc:
-                    raise gc.GeoError("第 %d 块（links）里有不是 https 开头的链接" % index)
-                row["items"].append({"text": _block_text(i.get("text"), 60) or parsed.netloc, "url": url[:500]})
-        if kind != "text" and not row.get("items") and kind != "table":
-            raise gc.GeoError("第 %d 块（%s）是空的" % (index, kind))
-        out.append(row)
-    return out
-
-
-def _pages_payload() -> list:
-    filled = _custom_pages()
-    rows = []
-    for page in page_registry():
-        mine = filled.get(page["id"]) or {}
-        rows.append({"id": page["id"], "title": page["title"], "builtin": page["builtin"],
-                     "filled": page["builtin"] or bool(mine), "updatedAt": mine.get("updatedAt", ""), "guide": page["guide"]})
-    for page in visible_pages():
-        if page.get("shopOnly"):
-            rows.append({"id": page["id"], "title": page["title"], "builtin": False, "filled": True, "shopOnly": True,
-                         "updatedAt": filled[page["id"]].get("updatedAt", ""), "guide": ""})
-    return rows
-
-
-def cmd_pages(_args) -> None:
-    rows = _pages_payload()
-    todo = [r for r in rows if not r["builtin"] and not r["filled"]]
-    payload = {"ok": True, "pages": rows, "blockTypes": BLOCK_TYPES}
-    payload["next"] = ("这几页登记了但还没填：%s。按每一页的 guide 准备内容块，用 set-page 填好再 publish" % "、".join(r["title"] for r in todo)) if todo \
-        else "内置页面由脚本生成；其余页面用 set-page 填内容块，改完 publish"
-    gc.emit(payload)
-
-
-def cmd_set_page(args) -> None:
-    """填一个由内容块组成的页面。登记在 assets/pages.json 里的用登记的标题；不在里面的就是这家店单独加的，要给 title。"""
-    _facts()
-    pid = gc.clean_text(args.id).lower()
-    registry = {p["id"]: p for p in page_registry()}
-    if pid in registry and registry[pid]["builtin"]:
-        raise gc.GeoError("“%s”这一页由脚本按存档生成，不能用 set-page 改。要改上面的内容，改对应的数据再 publish" % registry[pid]["title"])
-    if not PAGE_ID.match(pid) or pid in RESERVED_PAGE_IDS:
-        raise gc.GeoError("页面 id 只能用小写字母开头的英文、数字和短横线，2 到 24 个字符，例如 events")
-    raw = gc.load_input(args.file)
-    if not isinstance(raw, dict):
-        raise gc.GeoError("页面应为一个对象：{\"title\": \"\", \"blocks\": [...]}")
-    ledger = gc.read_json(_custom_path(), {}) or {}
-    items = ledger.setdefault("items", {})
-    old = items.get(pid) or {}
-    title = gc.clean_text(raw.get("title"))[:12] or old.get("title") or (registry[pid]["title"] if pid in registry else "")
-    if not title:
-        raise gc.GeoError("这一页没有登记在页面清单里，是这家店单独加的，要写 title（12 个字以内）")
-    shop_only = [k for k in items if k not in registry]
-    if pid not in registry and pid not in items and len(shop_only) >= CUSTOM_PAGE_CAP:
-        raise gc.GeoError("这家店已经单独加了 %d 个页面，最多 %d 个。先 remove-page 去掉不用的" % (len(shop_only), CUSTOM_PAGE_CAP))
-    blocks = normalize_blocks(raw.get("blocks"))
-    items[pid] = {"title": title, "icon": raw.get("icon") if raw.get("icon") in PAGE_ICONS else old.get("icon", "doc"),
-                  "subtitle": gc.clean_text(raw.get("subtitle"))[:60] or old.get("subtitle", ""),
-                  "blocks": blocks, "updatedAt": gc.now_iso()}
-    ledger["updatedAt"] = gc.now_iso()
-    gc.write_json(_custom_path(), ledger)
-    gc.mark_changed("页面：" + title)
-    gc.emit({"ok": True, "id": pid, "title": title, "blocks": len(blocks), "shopOnly": pid not in registry,
-             "next": "请执行 publish 同步工作台；告诉商家时给 links 里“%s”的链接" % title})
-
-
-def cmd_remove_page(args) -> None:
-    pid = gc.clean_text(args.id).lower()
-    ledger = gc.read_json(_custom_path(), {}) or {}
-    items = ledger.get("items") or {}
-    if pid not in items:
-        raise gc.GeoError("没有员工填过的“%s”页面。内置页面不能去掉；要从所有店的工作台上去掉一个登记的页面，改 assets/pages.json" % pid)
-    title = items.pop(pid)["title"]
-    ledger["updatedAt"] = gc.now_iso()
-    gc.write_json(_custom_path(), ledger)
-    gc.mark_changed("页面：" + title)
-    gc.emit({"ok": True, "removed": pid, "next": "请执行 publish 同步工作台"})
-
-
 def embed_json(data: dict) -> str:
     """放进 <script type="application/json"> 里的数据：不能出现能提前结束标签的字符。"""
     text = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
@@ -1066,93 +888,14 @@ def embed_json(data: dict) -> str:
     return text
 
 
-def active_template() -> Path:
-    """生成网页用哪份模板：这家店有自己的就用自己的，没有就用标准模板。"""
+def render_html(data: dict) -> str:
     try:
-        shop = gc.shop_template_path()
-    except gc.GeoError:
-        return TEMPLATE
-    return shop if shop.is_file() else TEMPLATE
-
-
-def render_html(data: dict, template_path: Path = None) -> str:
-    path = template_path or active_template()
-    mine = path != TEMPLATE
-    try:
-        template = path.read_text(encoding="utf-8")
+        template = TEMPLATE.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
-        raise gc.GeoError("这家店的页面模板读不出来" if mine else "工作台模板读取失败") from exc
+        raise gc.GeoError("工作台模板读取失败") from exc
     if template.count(PLACEHOLDER) != 1:
-        if mine:
-            # 页面怎么改都行，只有这一处不能动：脚本要把数据放进这里，页面上的数才会每期自动更新
-            raise gc.GeoError("这家店的页面模板里要有且只有一处 %s（脚本把数据放在这里），现在有 %d 处。"
-                              "改回来再同步；不想用自己的模板了，执行 template-reset" % (PLACEHOLDER, template.count(PLACEHOLDER)))
         raise gc.GeoError("工作台模板不完整")
     return template.replace(PLACEHOLDER, embed_json(data))
-
-
-def _template_base() -> Path:
-    """复制模板那一刻的标准模板。拿它和现在的标准模板比，就知道标准模板后来改了什么。"""
-    return gc.shop_template_path().parent / "base.html"
-
-
-def _template_payload() -> dict:
-    shop, base = gc.shop_template_path(), _template_base()
-    if not shop.is_file():
-        return {"ok": True, "using": "standard",
-                "next": "现在用的是标准模板。商家想改页面的样子、在哪一页加什么模块时，先执行 template-init 复制一份，再改复制出来的文件"}
-    standard = TEMPLATE.read_text(encoding="utf-8")
-    behind = not base.is_file() or base.read_text(encoding="utf-8") != standard
-    payload = {"ok": True, "using": "shop", "file": str(shop), "standardUpdated": behind}
-    payload["next"] = ("标准模板在你复制之后更新过。执行 template-diff 看改了什么，把这些改动合进这家店的模板，再执行 template-rebase"
-                       if behind else "这家店用的是自己的模板，改完直接 publish")
-    return payload
-
-
-def cmd_template(_args) -> None:
-    gc.emit(_template_payload())
-
-
-def cmd_template_init(_args) -> None:
-    _facts()
-    shop = gc.shop_template_path()
-    if shop.is_file():
-        raise gc.GeoError("这家店已经有自己的模板了，直接改它就行：" + str(shop))
-    shop.parent.mkdir(parents=True, exist_ok=True)
-    standard = TEMPLATE.read_text(encoding="utf-8")
-    shop.write_text(standard, encoding="utf-8")
-    _template_base().write_text(standard, encoding="utf-8")
-    gc.emit({"ok": True, "file": str(shop),
-             "next": "复制好了。直接改这个文件（布局、样式、模块都可以改），改完 publish。"
-                     "页面上的数据在 id 为 geo-data 的那段 JSON 里，每期由脚本放进去；文件里的 %s 要留着" % PLACEHOLDER})
-
-
-def cmd_template_diff(_args) -> None:
-    shop, base = gc.shop_template_path(), _template_base()
-    if not shop.is_file():
-        raise gc.GeoError("这家店用的是标准模板，标准模板更新了会自动用上，不用合并")
-    old = base.read_text(encoding="utf-8") if base.is_file() else ""
-    new = TEMPLATE.read_text(encoding="utf-8")
-    diff = "".join(difflib.unified_diff(old.splitlines(True), new.splitlines(True), "标准模板（你复制时）", "标准模板（现在）", n=3))
-    gc.emit({"ok": True, "changed": bool(diff), "diff": diff, "file": str(shop),
-             "next": ("这是标准模板的改动。把它们合进这家店的模板（和这家店自己的改动冲突时，以这家店的为准，除非改动是修错），"
-                      "合完 publish 检查页面正常，再执行 template-rebase") if diff else "标准模板没有更新"})
-
-
-def cmd_template_rebase(_args) -> None:
-    if not gc.shop_template_path().is_file():
-        raise gc.GeoError("这家店用的是标准模板，不用记")
-    _template_base().write_text(TEMPLATE.read_text(encoding="utf-8"), encoding="utf-8")
-    gc.emit({"ok": True, "next": "记下了：这家店的模板已经跟上现在的标准模板"})
-
-
-def cmd_template_reset(_args) -> None:
-    shop = gc.shop_template_path()
-    if not shop.is_file():
-        raise gc.GeoError("这家店本来就用的是标准模板")
-    backup = shop.with_name("page-%s.html" % gc.now().strftime("%Y%m%d-%H%M%S"))
-    shop.rename(backup)
-    gc.emit({"ok": True, "backup": str(backup), "next": "已经恢复标准模板，原来那份留作备份。请执行 publish"})
 
 
 def report_link(url: str, day: str) -> str:
@@ -1168,7 +911,7 @@ def report_sections(url: str, day: str) -> dict:
 
 def links(url: str, report_day: str = "") -> dict:
     """员工跟商家说到某件事时给的链接：工作台上能打开的每一个页面，加“在工作台里打开这一期的报告”。"""
-    out = {page["title"]: url + "#/" + page["id"] for page in visible_pages()} if url else {}
+    out = {page["title"]: url + "#/" + page["id"] for page in WORKBENCH_PAGES} if url else {}
     if url and report_day:
         out["这一期的报告"] = report_link(url, report_day)
     return out
@@ -1231,17 +974,6 @@ def _build_workbench(date: str) -> dict:
 def _current(date: str) -> str:
     scored = _scored_dates(date)
     return scored[-1] if scored else ""
-
-
-def cmd_build(args) -> None:
-    date = gc.check_date(args.date) if args.date else ""
-    reports = _build_reports(_current(date))
-    built = _build_workbench(date)
-    gc.mark_built()
-    url = (gc.read_json(gc.profile_dir() / "meta.json", {}) or {}).get("pageUrl", "")
-    gc.emit(dict(built, ok=True, pageUrl=url, links=links(url, _linkable()),
-                 reportFiles=[str(path) for _, path in reports],
-                 next="这一步只在本地生成，没有上传。要让商家看到最新内容，请执行 publish"))
 
 
 def _save_url(url: str) -> bool:
@@ -1369,10 +1101,6 @@ def cmd_publish(args) -> None:
     payload["tabSetup"] = "用 Bash 里的 claw-admin-request 按 geo-workbench/references/tabs.md 固定工作台：先读，不对再写，写完读回核对。"
     if urlparse(saved).netloc != EXPECTED_PAGE_HOST:
         payload["hostWarning"] = "链接的域名不是 %s" % EXPECTED_PAGE_HOST
-    template = _template_payload()
-    payload["template"] = template["using"]  # standard：标准模板；shop：这家店自己的模板
-    if template.get("standardUpdated"):
-        payload["templateNotice"] = template["next"]
     gc.emit(payload)
 
 
@@ -1408,7 +1136,7 @@ def cmd_set_page_url(args) -> None:
             raise gc.GeoError("没有 %s 这一期" % day)
         _save_report_urls(dict(_report_urls(), **{day: url}))
         payload = {"ok": True, "report": day, "reportFileUrl": url,
-                   "next": "报告文件的链接存好了。请重新生成工作台并传上去（publish，或 build 后用 youzan-oss 上传再 set-page-url），工作台里才打得开这份报告"}
+                   "next": "报告文件的链接存好了。请重新生成工作台并传上去（publish），工作台里才打得开这份报告"}
     else:
         _save_url(url)
         gc.mark_published()
@@ -1418,27 +1146,10 @@ def cmd_set_page_url(args) -> None:
     gc.emit(payload)
 
 
-def cmd_render(args) -> None:
-    """给一份页面数据就出网页，不读体检存档。用于调样式。数据里的 kind 决定出工作台还是报告。"""
-    data = gc.load_input(args.data)
-    data = data if isinstance(data, dict) else {}
-    need = ("store", "providers", "period", "summary", "questions", "dots") if data.get("kind") == "report" \
-        else ("store", "providers", "periods", "settings", "actions")
-    missing = [key for key in need if key not in data]
-    if missing:
-        raise gc.GeoError("页面数据缺少这些部分：" + "、".join(missing) + "。说明见 geo-workbench 的 SKILL.md")
-    target = Path(args.out)
-    if target.suffix.lower() != ".html":
-        raise gc.GeoError("输出文件要以 .html 结尾")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(render_html(data, Path(args.template) if args.template else None), encoding="utf-8")
-    gc.emit({"ok": True, "file": str(target), "kind": data.get("kind", "workbench"), "sizeKB": round(target.stat().st_size / 1024)})
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="工作台")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name, func in (("publish", cmd_publish), ("build", cmd_build), ("compare", cmd_compare)):
+    for name, func in (("publish", cmd_publish), ("compare", cmd_compare)):
         p = sub.add_parser(name)
         p.add_argument("--date", default="")
         p.set_defaults(func=func)
@@ -1451,9 +1162,6 @@ def main() -> None:
     p = sub.add_parser("add-content")
     p.add_argument("--file", required=True)
     p.set_defaults(func=cmd_add_content)
-    p = sub.add_parser("contents")
-    p.add_argument("--no", type=int, default=0)
-    p.set_defaults(func=cmd_contents)
     p = sub.add_parser("mark-content")
     p.add_argument("--no", type=int, default=0)
     p.add_argument("--status", default="", choices=("",) + CONTENT_STATUS)
@@ -1468,26 +1176,10 @@ def main() -> None:
     p.add_argument("--page-name", default="")
     p.add_argument("--domain", default=None)
     p.set_defaults(func=cmd_set_site)
-    sub.add_parser("pages").set_defaults(func=cmd_pages)
-    p = sub.add_parser("set-page")
-    p.add_argument("--id", required=True)
-    p.add_argument("--file", required=True)
-    p.set_defaults(func=cmd_set_page)
-    p = sub.add_parser("remove-page")
-    p.add_argument("--id", required=True)
-    p.set_defaults(func=cmd_remove_page)
     p = sub.add_parser("set-page-url")
     p.add_argument("--url", required=True)
     p.add_argument("--report", default="")
     p.set_defaults(func=cmd_set_page_url)
-    p = sub.add_parser("render")
-    p.add_argument("--data", required=True)
-    p.add_argument("--out", required=True)
-    p.add_argument("--template", default="")  # 指定用哪份模板，不给就和 publish 一样
-    p.set_defaults(func=cmd_render)
-    for name, func in (("template", cmd_template), ("template-init", cmd_template_init), ("template-diff", cmd_template_diff),
-                       ("template-rebase", cmd_template_rebase), ("template-reset", cmd_template_reset)):
-        sub.add_parser(name).set_defaults(func=func)
     args = parser.parse_args()
     args.func(args)
 

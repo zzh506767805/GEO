@@ -10,10 +10,9 @@
 | 流程 | `skills/*/SKILL.md` | 每件事按什么顺序做、每一步跑哪个命令 | 不用 |
 | 细则 | `skills/*/references/*.md` | 怎么出题、怎么核对、各类内容怎么写、页面上的东西从哪来 | 不用 |
 | 每周体检 | `skills/geo-weekly/SKILL.md` 的“开启每周体检” | 商家同意后员工替他建的定时任务：每周几点、触发时对员工说什么 | 不用 |
-| 页面清单 | `skills/geo-workbench/assets/pages.json` | 工作台导航里有哪些页面、什么顺序 | 不用 |
+| 页面清单 | `skills/geo-workbench/scripts/geo_report.py` 的 `WORKBENCH_PAGES` | 工作台导航里有哪些页面、什么顺序 | 要 |
 | 护栏 | `skills/*/scripts/*.py` | 数据格式、硬性的上限和顺序、给员工的 `next` 提示 | 要 |
 | 页面样式 | `skills/geo-workbench/assets/page.html` | 标准模板：工作台和报告长什么样 | 要 |
-| 每家店自己的页面 | `<会话工作区>/ai-visibility-employee/template/page.html` | 员工按商家的意思改出来的模板，有它就不用标准模板 | 员工自己改 |
 
 流程写在文档里，脚本只管“错了就拦住”的那几件事。改流程时先看下面这张表：表里的规矩由脚本卡住，只改文档改不掉；其余规矩都只写在文档里，改文档就行。
 
@@ -29,7 +28,6 @@
 | 发现最多 5 条，每条至少一句能在原文里逐字找到的原话 | `geo_score.py` 的 `cmd_set_findings`、`FINDINGS_CAP` |
 | 存草稿、记发布之前必须先确认 | `geo_report.py` 的 `cmd_mark_content` |
 | 资料还不能写内容时不能登记官网；没有等商家确认的测试版，不能登记正式上线；不要了以后重做，旧的链接和域名清掉 | `geo_report.py` 的 `cmd_set_site` |
-| 一家店单独加的页面最多 5 个；内容块的格式 | `geo_report.py` 的 `CUSTOM_PAGE_CAP`、`normalize_blocks` |
 
 ## 想改什么 → 改哪里
 
@@ -42,27 +40,11 @@
 3. 搜一下脚本里的 `next` 文案（`grep -n '"next"' skills/*/scripts/*.py`）。员工会照着 `next` 做，文档改了顺序而 `next` 还指旧的下一步，新员工会跟着 `next` 走。
 4. 新的流程碰到上面那张表里的规矩时，才需要改脚本。
 
-### 给所有店的工作台加一个页面
+### 给工作台加一个页面
 
-不用写代码。在 `skills/geo-workbench/assets/pages.json` 里加一项：
+在 `geo_report.py` 的 `WORKBENCH_PAGES` 里加一项（id、标题、图标、副标题），在 `page.html` 的 `PAGES` 里加一个画它的函数，在 `workbench_data` 里准备它要的数据，`skills/geo-workbench/SKILL.md` 的页面清单表里加一行。测试会核对脚本里的每个页面在模板里都有画它的函数。
 
-```json
-{"id": "events", "title": "活动", "icon": "clock", "subtitle": "这个月店里的活动",
- "guide": "放这个月店里的活动：时间、内容、怎么参加。每周出周报时看一眼，有新活动就更新"}
-```
-
-- `id`：小写英文，2 到 24 个字符，不能用 `report`、`embed`。它也是链接的末尾（`#/events`）。
-- `guide`：写给员工看的。这一页放什么、数据从哪来、什么时候更新。员工执行 `geo_report.py pages` 时会看到它，`show` 也会提醒“这几页还没填”。
-- 页面的内容由员工用 `geo_report.py set-page` 填，用的是固定的几种内容块（文字、列表、表格、几个数、链接、可以复制的话），怎么填写在 `skills/geo-workbench/references/pages.md` 的“员工负责的页面”。
-- 员工还没填的页面不会出现在导航里。
-
-只有内容块拼不出来的页面（要画图、要从体检存档里算数）才需要写代码：在 `pages.json` 里把它标成 `"builtin": true`，在 `page.html` 的 `PAGES` 里加一个画它的函数，在 `geo_report.py` 的 `workbench_data` 里准备它要的数据。测试会核对每个内置页面在模板里都有画它的函数。
-
-去掉一个页面：从 `pages.json` 里删掉那一项。员工以前填的内容还留在存档里，不显示。
-
-### 加一种内容块
-
-在 `geo_report.py` 的 `BLOCK_TYPES` 和 `normalize_blocks` 里加上这种块的格式和检查，在 `page.html` 的 `customBlock` 里加上怎么画，在 `skills/geo-workbench/references/pages.md` 的块表里加一行。
+加之前先问两件事：放的是不是跨期的东西；商家要在上面做什么。某一期分析出来的东西放进报告当一节。
 
 ### 加一种内容类型（比如抖音脚本）
 
@@ -95,24 +77,14 @@
 | 想调的 | 在哪 |
 | --- | --- |
 | 每期主动写几篇 | `geo_report.py` 的 `WEEKLY_CONTENT_CAP`，同时改 `skills/geo-content/SKILL.md`、`prompt.md`、上面“脚本卡住的规矩”表里写的数，以及 `tests/run_tests.py` 里“第三篇被拒”那条检查 |
-| 一家店能单独加几个页面 | `geo_report.py` 的 `CUSTOM_PAGE_CAP` |
 | 问题的数量 | `geo_state.py` 的 `OPEN_RANGE`、`BRAND_RANGE`、`RECOMMENDED`，同时改 `skills/geo-profile/SKILL.md`（“出题”和“判断是本地门店还是电商”里写的 10 道、2 道）和 `references/segment-*.md` 的配比表 |
 | 改了题只重问几道时，最近一期多旧就不往里补 | `geo_run.py` 的 `STALE_PERIOD_DAYS` |
 | 一条查询等多久算缺失 | `geo_run.py` 的 `DEADLINE_SECONDS` |
-| 工作台保留几期 | `geo_report.py` 的 `PERIOD_LIMIT` |
-
-### 每家店自己的页面
-
-员工可以按商家的意思改页面，什么都能改：`geo_report.py template-init` 把标准模板复制到这家店的数据目录，员工改这一份，以后同步都用它。数据还是脚本放进去的（模板里唯一不能删的是 `__GEO_DATA__`）。员工怎么做写在 `skills/geo-workbench/references/pages.md` 的“改这家店的页面”。
-
-这对改标准模板有两个影响：
-
-- **标准模板的改动不会自动到达这些店。** 员工在 `publish` 的输出里看到 `templateNotice`，用 `template-diff` 拿到标准模板自他复制以来的增量，自己合进去。所以改标准模板时尽量一次只改一件事、改动集中，增量才好合；数据的格式（`geo-data` 里的字段）只加不改，改了字段名，改过模板的店会读不到。
-- **存量不处理**：以前各期的报告不重新生成；改过模板的店，旧改动和标准模板的差异也不回头去对齐。
+| 店铺资料各列表上限（门店、商品、差异点） | `geo_state.py` 的 `FACTS_CAPS` |
 
 ### 改样式
 
-标准模板只改 `assets/page.html`，工作台和报告共用这一个模板，数据里的 `kind` 决定出哪一种。
+只改 `assets/page.html`，工作台和报告共用这一个模板，数据里的 `kind` 决定出哪一种。
 
 - 颜色只用文件开头定义的变量，取值和有赞龙虾客户端一致。只有浅色一套：页面嵌在客户端里时，跟着系统变深色会和客户端对不上，所以不做深色（`color-scheme` 写的是 `only light`，浏览器也不会自动把它调暗）。页面是白底（客户端的内容区就是白的），分区靠细线和留白，不靠灰底。
 - 页面不解释自己：不加副标题，不在每块下面写说明段落，只在空状态（比如还没有内容）时说一句；指标怎么算的放进鼠标提示（`title`）；可以跟员工说的话放顶栏的“跟员工说”（报告放在最下面一行）。列表只放标题，详情点开再看（内容页的稿子在右边的抽屉里）；状态用一个小圆点加两三个字，不用整块的彩色底。
@@ -123,7 +95,7 @@
 - 模板不要挪到 `references/` 或 `scripts/` 下面。
 - 报告嵌在工作台里靠两个约定：工作台给报告的地址带 `#embed`（报告据此不显示自己的标题）；报告显示出来以后向外发一条 `report-ready` 的消息（工作台等不到，就在上面给一个“单独打开”的入口）。**以前各期的报告文件生成后不再更新，所以这两个约定以后只能加、不能改**，否则旧报告在新工作台里会显示不对。
   另有一条消息：嵌在工作台里的报告点了外链，发 `{geo: 'open-link', id, url}` 给工作台，工作台回 `{geo: 'open-link-done', id}` 并替它打开；报告 1.5 秒没收到回音，就自己把链接给商家。它和上面两个约定一样只能加、不能改。这条消息是后来加的：在它之前生成的旧报告，里面的链接在客户端里仍然打不开。
-- 只想看样式：`geo_report.py render --data <页面数据.json> --out <输出.html>`。数据样例是 `tests/fixtures/page-data.demo.json`（工作台）和 `tests/fixtures/report-data.demo.json`（报告），都是虚构的多期数据，页面上会标“演示数据”。
+- 只想看样式：跑一遍 `tests/run_tests.py`，多期回归会用 `tests/fixtures/page-data.demo.json`（工作台）和 `report-data.demo.json`（报告）生成网页。都是虚构的多期数据，页面上会标“演示数据”。
 
 ### 改商家在报告上看到的说明
 

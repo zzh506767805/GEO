@@ -19,10 +19,12 @@ description: 替商家写内容并登记到工作台：按 AI 常读的地方定
 内容登记、改状态用的是工作台的脚本，每条命令写全路径：
 
 ```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" contents
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" add-content --file <json>
 ```
 
-下文的 `add-content`、`mark-content`、`contents`、`publish` 都是这个脚本的子命令。
+下文的 `add-content`、`mark-content`、`show`、`publish` 都是这个脚本的子命令。
+
+所有内容都记在内容账本 `ai-visibility-employee/profile/contents.json` 里（`show` 输出的 `contentsFile`）：每一篇的序号、类型、标题、全文、状态、放到了哪。要看某一篇、找序号，直接读这个文件；改它只用 `add-content`、`mark-content`，不要直接编辑。
 
 ## 红线
 
@@ -90,7 +92,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 
 ## 商家针对某一篇来说话
 
-序号是工作台上显示的“第 N 篇”。拿不准时先 `contents` 对一下。
+序号是工作台上显示的“第 N 篇”。拿不准时读内容账本对一下。
 
 | 商家说 | 做法 |
 | --- | --- |
@@ -98,6 +100,6 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 | “第 4 篇可以发” | `mark-content --no 4 --status confirmed` → 按这种类型的“确认后”去做：公众号文章委派 `wechat-writer` 存草稿箱，再 `mark-content --no 4 --channel 公众号草稿箱 --ref <草稿编号>`；其他类型请他在工作台上复制去发 → `publish` |
 | “把第 4 篇存进公众号草稿箱” | 只有公众号文章能存，而且要已确认。同上一行 |
 | “第 4 篇我已经发了” | `mark-content --no 4 --status published --channel <发在哪>` → `publish` |
-| “第 4 篇标题改短一点”“第 4 篇再改一下：……” | `contents --no 4` 取回稿子 → 改稿（公众号文章让 `wechat-writer` 改，拿新的预览链接）→ `add-content` 带上 `"no": 4`，只传改了的部分 → `publish`。确认过的稿子改了会变回“等你确认”，请他再看一眼 |
+| “第 4 篇标题改短一点”“第 4 篇再改一下：……” | 从内容账本里读出第 4 篇 → 改稿（公众号文章让 `wechat-writer` 改，拿新的预览链接）→ `add-content` 带上 `"no": 4`，只传改了的部分 → `publish`。确认过的稿子改了会变回“等你确认”，请他再看一眼 |
 | “第 4 篇不发了” | `mark-content --no 4 --status dropped` → `publish` |
 | “这周先不写” | 用 `set-actions` 把原因写进 `contentNote` → `publish` |

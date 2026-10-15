@@ -676,9 +676,12 @@ def normalize_issue(raw: dict, run: dict) -> dict:
         raise gc.GeoError("每一条对不上的说法需要一个英文短编号，例如 address-old-store")
     fact = raw.get("fact") if raw.get("fact") in FACT_KINDS else "other"
     source_type = raw.get("sourceType") if raw.get("sourceType") in SOURCE_KINDS else "unknown"
-    ai_says, truth, fix = (gc.clean_text(raw.get(k))[:200] for k in ("aiSays", "truth", "fix"))
+    ai_says, truth, fix = (gc.clean_text(raw.get(k)) for k in ("aiSays", "truth", "fix"))
     if not (ai_says and truth and fix):
         raise gc.GeoError(issue_id + "：AI 的说法、店铺资料里怎么写、怎么改，三项都要写")
+    for label, text in (("AI 的说法", ai_says), ("店铺资料里怎么写", truth), ("怎么改", fix)):
+        if len(text) > 200:
+            raise gc.GeoError("%s：%s最多 200 字，现在是 %d 字" % (issue_id, label, len(text)))
     evidence = [gc.clean_text(e) for e in (raw.get("evidence") or [])][:12]
     if not evidence:
         raise gc.GeoError(issue_id + "：要写明出自哪几个回答")
@@ -704,10 +707,15 @@ def cmd_set_judgement(args) -> None:
         raise gc.GeoError("核对结果应为一个对象")
     descriptions = {}
     for provider in gc.PROVIDERS:
-        text = gc.clean_text((payload.get("descriptions") or {}).get(provider))[:120]
+        text = gc.clean_text((payload.get("descriptions") or {}).get(provider))
+        if len(text) > 120:
+            raise gc.GeoError("%s 的介绍最多 120 字，现在是 %d 字" % (gc.PROVIDER_NAMES[provider], len(text)))
         if text:
             descriptions[provider] = text
-    issues = [normalize_issue(item, run) for item in (payload.get("issues") or [])[:20] if isinstance(item, dict)]
+    raw_issues = [item for item in (payload.get("issues") or []) if isinstance(item, dict)]
+    if len(raw_issues) > 20:
+        raise gc.GeoError("对不上的说法最多记 20 条，现在是 %d 条。只留改得动、值得改的" % len(raw_issues))
+    issues = [normalize_issue(item, run) for item in raw_issues]
     if len({i["id"] for i in issues}) != len(issues):
         raise gc.GeoError("对不上的说法编号重复")
     ledger_path = gc.profile_dir() / "issues.json"
