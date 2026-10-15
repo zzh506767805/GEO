@@ -31,7 +31,7 @@ OLD_STORE = {"url": "https://m.dianping.com/shop/demo-hemu-riverside", "host": "
 NEW_STORE = {"url": "https://m.dianping.com/shop/demo-hemu-gongshu", "host": "m.dianping.com", "title": "禾木烘焙(拱墅店)", "source": "大众点评"}
 OLD_NOTE = {"url": "https://www.demo-notes.cn/p/hemu-late-night", "host": "www.demo-notes.cn", "title": "禾木烘焙探店：晚上十点还亮着灯的面包店", "source": "本地生活笔记"}
 OWN_INFO = {"url": "https://mp.weixin.qq.com/s?demo=hemu-store-info", "host": "mp.weixin.qq.com", "title": "禾木烘焙门店信息（2026 年 9 月更新）", "source": "禾木烘焙"}
-OWN_TOAST = {"url": "https://mp.weixin.qq.com/s?demo=hemu-wholewheat", "host": "mp.weixin.qq.com", "title": "拱墅区哪里能买到现烤的全麦吐司", "source": "禾木烘焙"}
+OWN_TOAST = {"url": "https://mp.weixin.qq.com/s?demo=hemu-wholewheat", "host": "mp.weixin.qq.com", "title": "早上七点，第一炉是全麦吐司", "source": "禾木烘焙"}
 GENERIC = {
     "hunyuan": [
         {"url": "https://mp.weixin.qq.com/s?demo=a1", "host": "mp.weixin.qq.com", "title": "杭州社区面包店地图：这 8 家值得专门去", "source": "杭城吃喝指南"},

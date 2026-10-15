@@ -2515,7 +2515,7 @@
     "mentioned": true,
     "refs": [
      {
-      "t": "拱墅区哪里能买到现烤的全麦吐司",
+      "t": "早上七点，第一炉是全麦吐司",
       "s": "禾木烘焙",
       "u": "https://mp.weixin.qq.com/s?demo=hemu-wholewheat",
       "k": "微信公众号",
@@ -3546,7 +3546,7 @@
     "type": "微信公众号",
     "site": "微信公众号",
     "relation": "own",
-    "title": "拱墅区哪里能买到现烤的全麦吐司",
+    "title": "早上七点，第一炉是全麦吐司",
     "source": "禾木烘焙",
     "url": "https://mp.weixin.qq.com/s?demo=hemu-wholewheat",
     "no": 1,
@@ -3644,7 +3644,7 @@
    "period": "2026-10-05",
    "forQuestion": "q04",
    "reason": "“适合带孩子去的面包店”这道题没提到你，评价里家长最在意配料。",
-   "summary": "用顾客的问法起标题，开头两句直接给答案，写清地址、营业时间和小程序名称。",
+   "summary": "知乎回答：带孩子买面包怎么看配料表，配上店里合适的两款。",
    "whereToPost": "知乎，同一篇也可以发头条号",
    "tip": "",
    "tags": [],
@@ -3680,7 +3680,7 @@
    "createdAt": "2026-10-05T11:40:00+08:00",
    "updatedAt": "2026-10-05T11:40:00+08:00",
    "typeName": "小红书笔记",
-   "bodyChars": 147
+   "bodyChars": 159
   }
  ],
  "factsFrom": "backend",

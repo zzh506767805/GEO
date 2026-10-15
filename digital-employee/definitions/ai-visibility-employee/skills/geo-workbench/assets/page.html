@@ -886,7 +886,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     var hint = item.status === 'dropped' ? '这一篇不发了。'
       : (!item.body && !item.previewUrl ? '更早的内容这里只保留标题和状态。要看稿子，回到龙虾跟员工说“把第 ' + item.no + ' 篇发我”。'
         : (item.status === 'preview' ? '员工写好了，等你确认。要改直接告诉它改哪里。'
-          : (item.status === 'confirmed' ? '你已经确认。发的时候按平台要求标注 AI 生成。' : '')));
+          : (item.status === 'confirmed' ? '你已经确认。' : '')));
     if (hint) { acts.appendChild(el('span', 'small muted', hint)); }
     return add(box, acts);
   }
