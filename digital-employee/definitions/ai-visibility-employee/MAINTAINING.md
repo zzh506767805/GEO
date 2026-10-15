@@ -71,7 +71,12 @@
 
 ### 官网
 
-官网由员工调用平台的“应用”能力做，流程在 `skills/geo-site/SKILL.md`。脚本只记官网在哪、到了哪一步：
+官网由员工调用平台的“应用”能力做，流程在 `skills/geo-site/SKILL.md`。SKILL.md 本身是索引，细则在它的 `references/` 下：
+
+- 长什么样：`design-index.md` 写三个设计参考各适合什么店、怎么挑，员工挑一个，再读对应的 `design-qiaomu.md`、`design-frontend.md`、`design-uiux.md`。这三份是从 GitHub 上的设计 Skill 收的做法要点，来源和版本记在 `design-index.md` 末尾；要加或换参考，在那张表和“怎么挑”里一起改。三种方向的效果样例在仓库根目录 `官网对比/`。
+- 让搜索引擎和 AI 读得到：`seo-geo.md`，包括交给“应用”能力的页面要求、测试版的检查命令、上线以后的事。规则来自 Google 的 AI 优化指南和几个开源 SEO/GEO Skill，来源也记在文件末尾，规则变了改这一份。
+
+脚本只记官网在哪、到了哪一步：
 
 - 记录在 `<数据目录>/profile/site.json`，`geo_report.py set-site` 写，`site-brief` 把做官网要用的资料一次给全。
 - “官网过时了”看 `geo_common.py` 的 `SITE_PARTS`（店名和品类、门店、招牌商品、怎么买）：做测试版那一刻的这几样和现在的店铺资料不一样，就算过时。想多比一样，在 `site_facts` 和 `SITE_PARTS` 里加，三份 `geo_common.py` 一起改。
