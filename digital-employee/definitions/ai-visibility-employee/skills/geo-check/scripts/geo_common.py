@@ -146,9 +146,9 @@ def period_stage(date: str) -> dict:
     if any(i.get("status") == "running" for i in items):
         stage, hint = "asking", "还有查询在运行：按 geo-check 执行 geo_run.py wait%s，等它们返回" % flag
     elif not asked["open"] and summary is None:
-        stage, hint = "asking", "这一期还没有问成功：按 geo-check 执行 geo_run.py start --phase open --retry%s" % flag
+        stage, hint = "asking", "这一期还没有问成功：按 geo-check 执行 geo_run.py start --retry%s" % flag
     elif not phase_rows["brand"] and summary is None:
-        stage, hint = "asking", "不带店名的问题已经返回，还没问带店名的：按 geo-check 执行 geo_run.py start --phase brand%s" % flag
+        stage, hint = "asking", "还有带店名的问题没问：按 geo-check 执行 geo_run.py start%s（已经问过的不会重复问）" % flag
     elif summary is None or _asked_after(items, summary):
         stage, hint = "scoring", "提问都返回了，还没算分（或者算分之后又重问过几道题）：按 geo-check 执行 geo_score.py score%s" % flag
     elif summary.get("shopsPending"):

@@ -142,7 +142,7 @@ node tests/page_smoke.cjs <工作台或报告.html> [更多文件]
 
 ```
 geo_state.py   status | init | show | set-facts [--replace]（默认合并，没传的字段保留）| set-questions | set-rivals | confirm | confirm-monitoring | set-schedule --status on|declined|off|unavailable
-geo_run.py     start --phase open|brand [--only q01,q03] [--retry] [--fresh 同一天重新测] | wait [--max-seconds 90] | status
+geo_run.py     start [--only q01,b02] [--retry] [--fresh 同一天重新测] | wait [--max-seconds 90] | status   （两类问题一起问）
 geo_score.py   score | answers --provider P [--only ...] | set-reading --file F [--file F ...] | set-findings --file F | brand-digest | set-judgement | issues [--status S] | mark-issue --no N --status done|dismissed|open
 geo_report.py  publish | links | show | compare | set-actions
                add-content | contents [--no N] | mark-content [--no N] [--status S] [--channel 去向] [--ref 凭据]

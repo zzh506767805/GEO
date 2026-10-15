@@ -25,13 +25,11 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 ## 第一步：提问和等待
 
 ```bash
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open     # 先问全部不带店名的问题
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" wait                   # 等结果，可以反复执行
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase brand    # 不带店名的全部返回后，再问带店名的问题
-python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" wait
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start    # 一次发出全部问题，带店名的和不带店名的一起
+python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" wait     # 等结果，可以反复执行
 ```
 
-顺序不能反：取数账号万一带着记忆，先问带店名的问题，后面的回答会凭空提到这家店。脚本会拦住错误的顺序。
+带店名的问题和不带店名的一起问，不分先后：提问用的 AI 账号已经关掉了记忆，先问到店名不会影响别的回答。读全文时如果看到“你之前问过”“上次聊到”这类话，说明账号又带上了记忆，在这一期的发现里记一条。
 
 第一次 `start` 之后执行一次 `publish`：工作台会显示“体检进行中”，商家这时打开不会以为看到的是最新结果。之后等待的过程中不用再同步。
 
@@ -41,12 +39,12 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_ru
 - 超过 15 分钟还没返回的查询，脚本会自动记为缺失，这一期该题该平台不计分，不用补救。
 - `start` 返回 `ok: false` 时按 `error` 处理。如果是“还没有开通问 AI 能力”，告诉商家暂时不能体检。
 
-只想重跑个别问题（例如商家改了某道题）：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --only q03,q07`。改过原文的题会重新问，没改的不会。带 `--only` 时，重问的题算进最近一期，不另开一期；最近一期在 7 天以前时脚本会拦下，这时问商家要不要现在整轮重新体检（开新的一期），不要就等下一次体检按新问题问；带店名的题用 `--phase brand`。之后照常 `wait`、`score`，改的是带店名的题时还要重新核对（第四步）。
+只想重跑个别问题（例如商家改了某道题）：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --only q03,q07`，带店名的题也一样写编号（比如 `b01`）。改过原文的题会重新问，没改的不会。带 `--only` 时，重问的题算进最近一期，不另开一期；最近一期在 7 天以前时脚本会拦下，这时问商家要不要现在整轮重新体检（开新的一期），不要就等下一次体检按新问题问。之后照常 `wait`、`score`，改的是带店名的题时还要重新核对（第四步）。
 
 **接着上一次，和重新测一次，是两回事：**
 
 - 不带 `--fresh` 的 `start` 是“接着上一次”：这一天已经有回答的题不会重新问。同一天再执行，输出里 `started` 是 0，`next` 会说明用的是已有的回答。
-- 商家说“重新体检”“重新测一下”，要的是重新问一遍：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --phase open --fresh`。上一次的回答、算分和核对会挪进这一天目录下的 `old-<时间>/` 留底，然后从头问；等不带店名的全部返回，再 `start --phase brand`，接着照常算分、读全文、核对。还有查询在运行时不能重新测，先等它们返回。
+- 商家说“重新体检”“重新测一下”，要的是重新问一遍：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --fresh`。上一次的回答、算分和核对会挪进这一天目录下的 `old-<时间>/` 留底，然后全部问题一起重新问，接着照常等待、算分、读全文、核对。还有查询在运行时不能重新测，先等它们返回。
 - 商家删掉的题不用重跑：重新 `score`，最新一期就不再算它（输出的 `notes` 会列出来）。以前各期按当时问的题算，不变。
 
 ## 第二步：算分

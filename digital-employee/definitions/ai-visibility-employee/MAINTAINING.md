@@ -19,7 +19,6 @@
 
 | 脚本卡住的规矩 | 在哪 |
 | --- | --- |
-| 先问不带店名的问题，再问带店名的 | `geo_run.py` 的 `cmd_start` |
 | 不带店名的问题里不能有店名；问题数量 6–12 加 1–3 | `geo_state.py` 的 `normalize_questions`、`OPEN_RANGE`、`BRAND_RANGE` |
 | 资料不是后台读的、商家也没确认时，不能登记内容 | `geo_common.py` 的 `confirm_state` |
 | 每期主动写的内容最多 2 篇 | `geo_report.py` 的 `WEEKLY_CONTENT_CAP` |

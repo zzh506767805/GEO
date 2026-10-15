@@ -179,25 +179,22 @@ def test_synthetic():
         check("工作台页签配置保留对话和真实工作台链接", first["tabConfiguration"]["tabs"][0]["tabKey"] == "conversation"
               and first["tabConfiguration"]["tabs"][1]["tabUrl"] == first["pageUrl"] + "#/overview", first["tabConfiguration"])
 
-        error = call(RUN, "start", "--phase", "brand", "--date", DATE, env=env, expect=2)
-        check("带店名的问题不能先于不带店名的问题", "还没有跑完" in error.get("error", ""), error)
-        started = call(RUN, "start", "--phase", "open", "--date", DATE, env=env)
-        check("发起 30 条不带店名的查询", started["started"] == 30 and started["running"] == 30 and not started["finished"], started)
+        started = call(RUN, "start", "--date", DATE, env=env)
+        check("一次发出全部 36 条查询：不带店名的 30 条和带店名的 6 条一起",
+              started["started"] == 36 and started["running"] == 36 and not started["finished"]
+              and started["phases"]["open"]["total"] == 30 and started["phases"]["brand"]["total"] == 6, started)
         waiting = call(RUN, "status", "--date", DATE, env=env)
         check("运行中的提示写明“不要当成出错”", "不要把它当成出错" in waiting["next"], waiting["next"])
         check("发起体检后工作台又变成待同步", call(STATE, "status", env=env)["workbench"]["pending"] == ["体检进度"])
         running = call(REPORT, "publish", env=env)
         check("体检进行中同步一次，工作台上是进度而不是旧结果",
-              running["progress"].get("running") == 30 and running["periods"] == 0 and running["firstTime"] is False, running)
+              running["progress"].get("running") == 36 and running["periods"] == 0 and running["firstTime"] is False, running)
         keep_page("体检进行中", running["file"])
         progress = wait_all(env, DATE)
         check("挂起的查询到时限后记为缺失，失败的查询也记为缺失",
-              sorted(progress["missing"]) == ["q04_deepseek", "q05_hunyuan"] and progress["done"] == 28, progress)
-        check("两段没跑完时不算整轮结束", progress["finished"] is False and "start --phase brand" in progress["next"], progress)
-        call(RUN, "start", "--phase", "brand", "--date", DATE, env=env)
-        progress = wait_all(env, DATE)
-        check("带店名的 6 条查询返回，整轮结束", progress["done"] == 34 and progress["finished"] is True, progress)
-        noop = call(RUN, "start", "--phase", "open", "--date", DATE, env=env)
+              sorted(progress["missing"]) == ["q04_deepseek", "q05_hunyuan"] and progress["done"] == 34, progress)
+        check("全部返回，整轮结束，下一步算分", progress["finished"] is True and "score" in progress["next"], progress)
+        noop = call(RUN, "start", "--date", DATE, env=env)
         check("重复发起不会重复提问", noop["started"] == 0, noop)
 
         digest = call(SCORE, "score", "--date", DATE, env=env)
@@ -501,8 +498,8 @@ def test_resume_mid_check():
               now["period"]["stage"] == "asking" and "wait" in now["next"] and "每周体检" not in now["next"], now.get("next"))
         wait_all(env, DATE)
         now = stage()
-        check("不带店名的问完了、还没问带店名的：status 让员工问带店名的，并带上这一期的日期",
-              now["period"]["stage"] == "asking" and "start --phase brand --date " + DATE in now["next"], now.get("next"))
+        check("只问了不带店名的（旧的分段写法）：status 让员工把带店名的补上，并带上这一期的日期",
+              now["period"]["stage"] == "asking" and "带店名" in now["next"] and "geo_run.py start --date " + DATE in now["next"], now.get("next"))
         call(RUN, "start", "--phase", "brand", "--date", DATE, env=env)
         wait_all(env, DATE)
         check("问完还没算分：status 让员工算分", stage()["period"]["stage"] == "scoring")
@@ -981,8 +978,8 @@ def test_data_reliability():
         log = Path(env["MOCK_STATE"])
         before = log.read_text(encoding="utf-8") if log.exists() else ""
         fresh = call(RUN, "start", "--phase", "open", "--fresh", "--date", DATE, env=env)
-        check("重新测一次：不带店名的问题全部重新发起，带店名的要等它们返回后重新问",
-              fresh["started"] == 24 and fresh["phases"]["brand"]["started"] is False, fresh)
+        check("重新测一次（哪怕带着旧的 --phase open）：全部问题一起重新发起，带店名的也在里面",
+              fresh["started"] == 30 and fresh["phases"]["brand"]["started"] is True, fresh)
         run_dir = Path(env["GEO_DATA_ROOT"]) / "runs" / DATE
         check("重新测时，上一次的算分和核对挪走留底，不会被当成这一次的",
               not (run_dir / "summary.json").exists() and not (run_dir / "judgement.json").exists()

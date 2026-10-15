@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """批量向 AI 平台提问并等待结果。
 
-一轮体检分两段：先问全部不带店名的问题（open），全部返回后再问带店名的问题（brand）。
-顺序不能反：取数账号万一带着记忆，先问带店名的会让后面的回答凭空提到这家店。豆包已经关掉了记忆，顺序仍然保留，当作保险。
+一轮体检一次发出全部问题：不带店名的（open）和带店名的（brand）一起问，不再分先后两段。
+以前分两段，是怕提问用的 AI 账号带着记忆，先问了带店名的，后面的回答会凭空提到这家店；现在这些账号的记忆已经关掉了。
 
 用法（脚本用绝对路径执行）：
-  geo_run.py start --phase open|brand [--date D] [--only q01,q03] [--retry]   带 --only 不带 --date 时算进最近一期
-  geo_run.py start --phase open --fresh [--date D]   同一天重新测一次：上一次的结果挪走留底，全部重新问
+  geo_run.py start [--date D] [--only q01,b02] [--retry]   带 --only 不带 --date 时算进最近一期
+  geo_run.py start --fresh [--date D]                      同一天重新测一次：上一次的结果挪走留底，全部重新问
+  geo_run.py start --phase open|brand ...                  只问其中一类（一般用不到）
   geo_run.py wait [--date D] [--max-seconds 90]
   geo_run.py status [--date D]
 
@@ -37,7 +38,7 @@ TERMINAL = ("done", "failed", "expired")
 DEADLINE_SECONDS = int(os.environ.get("GEO_DEADLINE_SECONDS", str(15 * 60)))
 POLL_INTERVAL = float(os.environ.get("GEO_POLL_INTERVAL", "15"))
 CALL_TIMEOUT = 60
-PHASE_KIND = {"open": "open", "brand": "brand"}
+PHASES = ("open", "brand")  # 问题的两类：不带店名的、带店名的。一次全问时两类一起发
 
 
 def query_command() -> list:
@@ -168,7 +169,7 @@ def progress(state: dict) -> dict:
         "running": count("running"),
         "missing": missing,
         "phases": phases,
-        # 两段都发起过、且没有还在运行的查询，才算整轮结束。
+        # 两类问题都问过、且没有还在运行的查询，才算整轮结束。
         "finished": phases["open"]["started"] and phases["brand"]["started"] and count("running") == 0,
     }
     payload["next"] = _next_hint(payload)
@@ -176,12 +177,12 @@ def progress(state: dict) -> dict:
 
 
 def _next_hint(p: dict) -> str:
-    if not p["phases"]["open"]["started"]:
-        return "还没有发起查询，请执行 start --phase open"
+    if not p["phases"]["open"]["started"] and not p["phases"]["brand"]["started"]:
+        return "还没有发起查询，请执行 start"
     if p["running"]:
         return "还有 %d 条查询在运行，这是正常情况，请再执行一次 wait；不要把它当成出错" % p["running"]
-    if not p["phases"]["brand"]["started"]:
-        return "不带店名的问题已全部返回，请执行 start --phase brand"
+    if not p["phases"]["open"]["started"] or not p["phases"]["brand"]["started"]:
+        return "还有%s的问题没问，请执行 start（已经问过的不会重复问）" % ("带店名" if p["phases"]["open"]["started"] else "不带店名")
     if p["missing"]:
         return "本轮已结束，有 %d 条没有拿到结果，按缺失处理；请执行 geo_score.py score" % len(p["missing"])
     return "本轮已全部返回，请执行 geo_score.py score"
@@ -210,29 +211,24 @@ def cmd_start(args) -> None:
     if args.only and not args.date and latest and (gc.parse_iso(gc.today()) - gc.parse_iso(latest)).days > STALE_PERIOD_DAYS:
         # 最近一期是好几周前的（比如商家关了每周体检）：今天的回答不往那一期里加，报告上的日期会误导人
         raise gc.GeoError("最近一期是 %s，已经超过 %d 天，改过的题不往那一期里补。问商家要不要现在整轮重新体检一次"
-                          "（start --phase open，会开新的一期）；不要的话，下一次体检会按新问题问" % (latest, STALE_PERIOD_DAYS))
-    phase = args.phase
+                          "（start，会开新的一期）；不要的话，下一次体检会按新问题问" % (latest, STALE_PERIOD_DAYS))
+    # 重新测一次就是整轮重问，两类问题一起
+    phase = "all" if args.fresh else args.phase
     questions = _load_questions()
     state = _load_state(date)
     archived = ""
     if args.fresh:
         # “重新测一次”和“接着上一次”是两回事：不带 --fresh 时已经有结果的题不会重新问
-        if phase != "open":
-            raise gc.GeoError("重新测一次要从不带店名的问题开始：start --phase open --fresh")
         if state["items"]:
             archived = _archive_round(date, state)
         state = _load_state(date)
     # 问题清单里已经删掉的题，不再算进这一期
     dropped = gc.drop_removed_questions(state, {q["id"] for q in questions["items"]})
     state["questionsVersion"] = questions.get("version", 0)
-    if phase == "brand" and not args.force:
-        open_rows = [item for item in state["items"].values() if item["kind"] == "open"]
-        if not open_rows or any(item["status"] == "running" for item in open_rows):
-            raise gc.GeoError("不带店名的问题还没有跑完，现在不能问带店名的问题")
     only = {q.strip().lower() for q in args.only.split(",") if q.strip()} if args.only else None
     todo = []
     for question in questions["items"]:
-        if question["kind"] != PHASE_KIND[phase] or (only and question["id"] not in only):
+        if (phase != "all" and question["kind"] != phase) or (only and question["id"] not in only):
             continue
         for provider in gc.PROVIDERS:
             key = question["id"] + "_" + provider
@@ -249,10 +245,10 @@ def cmd_start(args) -> None:
         payload["started"] = 0
         if dropped:
             payload["dropped"] = dropped
-        if payload["finished"] or (phase == "open" and payload["phases"]["open"]["finished"]):
+        if payload["finished"] or (phase != "all" and payload["phases"][phase]["finished"]):
             # 这一天已经问过了。没有新问的题时什么都不会重新问，免得员工以为“重新体检”了
             payload["next"] = ("这一天的问题都已经问过，这次没有重新提问，用的是已有的回答（接着上一次）。"
-                               "商家要“重新测一次”，执行 start --phase open --fresh；否则按原来的进度继续：" + payload["next"])
+                               "商家要“重新测一次”，执行 start --fresh；否则按原来的进度继续：" + payload["next"])
         gc.emit(payload)
         return
     query_command()  # 环境不可用时在这里直接报清楚，不要每条都失败一遍
@@ -281,7 +277,8 @@ def cmd_start(args) -> None:
         if raw_file.exists():
             raw_file.unlink()  # 问题改过或重跑时，旧结果不能留着
         state["items"][key] = item
-    state["phases"][phase] = {"startedAt": gc.now_iso()}
+    for kind in {question["kind"] for _, question, _ in todo}:
+        state["phases"][kind] = {"startedAt": gc.now_iso()}  # 超时按这一类问题发出的时间算
     gc.write_json(_state_path(date), state)
     if not started:
         raise gc.GeoError("查询一条都没有发起成功：" + (errors[0] if errors else "原因不明"))
@@ -359,11 +356,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="批量提问")
     sub = parser.add_subparsers(dest="command", required=True)
     p = sub.add_parser("start")
-    p.add_argument("--phase", required=True, choices=("open", "brand"))
+    p.add_argument("--phase", default="all", choices=("all",) + PHASES)  # 默认两类问题一起问
     p.add_argument("--date", default="")
     p.add_argument("--only", default="")
     p.add_argument("--retry", action="store_true")
-    p.add_argument("--force", action="store_true")
+    p.add_argument("--force", action="store_true")  # 以前用来跳过先后顺序的检查，现在不用了，留着免得旧写法报错
     p.add_argument("--fresh", action="store_true")  # 同一天重新测一次
     p.set_defaults(func=cmd_start)
     p = sub.add_parser("wait")
