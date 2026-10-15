@@ -109,6 +109,25 @@ node tests/page_smoke.cjs <工作台或报告.html> [更多文件]
 
 不用浏览器，把工作台的每个页面（包括在工作台里打开每一期报告）渲染一遍，报告按单独打开和嵌在工作台里两种方式各渲染一遍，再把能点的都点一遍；有报错或者页面上出现 `undefined` 这类空值就失败。它查不了样式和排版，也查不了报告是不是真的嵌进来了，这些要用浏览器看。
 
+## 改代码、推到测试店的规范
+
+几个会话（本机的、云端的）会同时改这个员工，下面几条是为了不互相盖掉。
+
+1. **只在这个仓库改。** 本地是 `NewSaaS/GEO数字员工/`，远程是 GitHub `zzh506767805/GEO`。公司仓库 `yzclaw/digital-employee` 在本地那份（`NewSaaS/digital-employee/`）平时不改、不往测试店推，只在要合进集成线出包时按下面“装进仓库”同步一次。
+2. **推测试店只用推送工具**：`NewSaaS/employee-push/push.sh`，它默认从这个仓库推。不要用 `--source`、`--mirror` 换成别的文件夹（第 3 条的情况除外）。
+3. **先提交，再推。** 推送工具推的是文件夹里现在的文件，没提交的改动会一起推上去，别的会话改到一半的也会。推之前看 `git status`：
+   - 只有自己的改动、都已提交：直接推。
+   - 有别人没提交的改动：只推自己提交的那一版，例如：
+     ```bash
+     rm -rf /tmp/geo-push && mkdir /tmp/geo-push
+     git archive HEAD digital-employee/definitions/ai-visibility-employee | tar -x -C /tmp/geo-push
+     NewSaaS/employee-push/push.sh --source /tmp/geo-push/digital-employee/definitions/ai-visibility-employee
+     ```
+4. **推之前先预演（`push.sh --dry-run`）。** “线上现在是哪一版”如果不是你上一次推的，或者要改的文件里有你没碰过的，说明别人推过，先弄清楚改了什么，把要留的并进来再推，不要直接盖掉。
+5. **有人正在测时不推。** 员工对话里正在跑体检、做官网时推，会换掉它手上的技能。推完在员工对话里发 `/new` 才生效。
+6. **撤销只撤自己的。** 不要用 `git checkout`、`git reset` 整个文件回滚，工作区里可能有别人的改动；先 `git diff` 看清楚，只删自己加的。推 GitHub 前先 `git fetch`，远程有新提交先合进来。
+7. **别在工作区留长时间没提交的半成品。** 测试店被重置后，看门程序会按这个仓库工作区里现在的文件自动放回去，半成品会被一起放上去。
+
 ## 装进仓库
 
 1. 把 `digital-employee/definitions/ai-visibility-employee/` 拷到 `yzclaw/digital-employee` 仓库的同名位置。
