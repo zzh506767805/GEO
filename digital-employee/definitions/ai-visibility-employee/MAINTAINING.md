@@ -73,7 +73,7 @@
 
 官网由员工调用平台的“应用”能力做，流程在 `skills/geo-site/SKILL.md`。SKILL.md 本身是索引，细则在它的 `references/` 下：
 
-- 长什么样：`design-index.md` 写三个设计 Skill 各适合什么店、怎么挑、怎么放进做官网的流程，员工挑一个用 `Skill` 工具加载。三个 Skill 是从 GitHub 原样拷过来的，放在 `skills/qiaomu-design/`、`skills/frontend-design/`、`skills/ui-ux-pro-max/`，也列在 `employee.yaml` 的 `inclusions` 里。**不要改这三个目录里的文件**：升级时整个目录换成新版本，改 `design-index.md` 末尾的版本号；和做官网流程的对接只写在 `design-index.md`。三种方向的效果样例在仓库根目录 `官网对比/`。
+- 长什么样：`design-index.md` 写三个设计 Skill 各适合什么店、怎么挑、怎么放进做官网的流程，员工挑一个用 `Skill` 工具加载。三个 Skill 是从 GitHub 原样拷过来的，放在 `skills/qiaomu-design/`、`skills/frontend-design/`、`skills/ui-ux-pro-max/`，也列在 `employee.yaml` 的 `inclusions` 里。**不要改这三个目录里的文件**：升级时整个目录换成新版本（`qiaomu-design` 换完再删掉 `assets/qiaomu-profile/` 和 `docs/assets/cases/`），改 `design-index.md` 末尾的版本号；和做官网流程的对接只写在 `design-index.md`。三种方向的效果样例在仓库根目录 `官网对比/`。
 - 让搜索引擎和 AI 读得到：`seo-geo.md`，包括交给“应用”能力的页面要求、测试版的检查命令、上线以后的事。规则来自 Google 的 AI 优化指南和几个开源 SEO/GEO Skill，来源也记在文件末尾，规则变了改这一份。
 
 脚本只记官网在哪、到了哪一步：

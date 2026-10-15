@@ -43,4 +43,4 @@
 | `frontend-design` | https://github.com/anthropics/skills 的 `skills/frontend-design` | `dbd4588` | Apache-2.0 |
 | `ui-ux-pro-max` | https://github.com/nextlevelbuilder/ui-ux-pro-max-skill 的 `.claude/skills/ui-ux-pro-max` | `56ea9cf` | MIT（`LICENSE` 从仓库根目录拷过来） |
 
-三个目录都是原样拷贝，不要改里面的文件。要升级：拉对应仓库的新版本，整个目录替换，再改上表的版本号。和做官网流程的对接写在本文件，不写进它们的文件里。
+三个目录都是原样拷贝，不要改里面的文件。唯一的删减：`qiaomu-design` 删掉了作者头像和二维码（`assets/qiaomu-profile/`）和案例截图、演示动图（`docs/assets/cases/`），约 15M，做官网用不上；它 README 里的这些图片因此显示不出来。要升级：拉对应仓库的新版本，整个目录替换，再改上表的版本号。和做官网流程的对接写在本文件，不写进它们的文件里。
