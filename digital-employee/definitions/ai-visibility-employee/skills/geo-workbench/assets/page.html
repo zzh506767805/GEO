@@ -901,7 +901,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     box.appendChild(el('div', 'art-note small muted', '店铺资料里的事实放在一页上：这家店是谁、门店、招牌商品、怎么买、顾客常问的问题，给 AI 和顾客一个你自己的出处。AI 引用了它，会算进“你的内容被引用”。'));
     var info = el('dl', 'kv art-info');
     kv(info, '网址', site.domain || '');
-    if (site.outdated && site.status !== 'test') { kv(info, '要更新的', '上线以后店铺资料里改过：' + (site.changed || []).join('、')); }
+    if (site.outdated) { kv(info, '要更新的', (site.status === 'test' ? '测试版做好以后' : '上线以后') + '店铺资料里改过：' + (site.changed || []).join('、')); }
     if (info.children.length) { box.appendChild(info); }
     var acts = el('div', 'art-foot');
     if (site.live) {
@@ -914,7 +914,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       test.appendChild(icon('ext', 14));
       acts.appendChild(test);
     }
-    var hint = site.status === 'test' ? '看过没问题，回到龙虾跟员工说“官网可以发布了”；要改哪里直接告诉它。'
+    var hint = site.status === 'test' ? (site.outdated ? '这一版用的是改之前的资料，跟员工说“更新官网”，重出一版再看。'
+      : '看过没问题，回到龙虾跟员工说“官网可以发布了”；要改哪里直接告诉它。')
       : (site.outdated ? '要更新的话，跟员工说“更新官网”。' : '');
     if (hint) { acts.appendChild(el('span', 'small muted', hint)); }
     return add(box, acts);

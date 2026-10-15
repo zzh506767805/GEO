@@ -696,7 +696,8 @@ def test_site():
               and "priceRange" not in brief["products"][0] and brief["aliases"] == [] and len(brief["faq"]) == len(SYNTHETIC_QUESTIONS)
               and brief["pageTitle"] == "示例小店 · 测试市面包店" and brief["site"] == {"exists": False}, brief)
         error = call(REPORT, "set-site", "--status", "published", "--url", "https://pages.example.com/s/official-site", env=env, expect=2)
-        check("没出过测试版，不能登记正式上线", "还没有登记过测试版" in error.get("error", ""), error)
+        check("没出过测试版，不能登记正式上线", "没有等商家确认的测试版" in error.get("error", ""), error)
+        check("还没体检过：site-brief 不给商城被引用的次数", brief["shopCited"] == {}, brief.get("shopCited"))
         error = call(REPORT, "set-site", "--status", "test", "--test-url", "http://pages.example.com/t", env=env, expect=2)
         check("测试版链接不是 https 的完整链接，退回", "https" in error.get("error", ""), error)
         error = call(REPORT, "set-site", "--status", "test", "--test-url", "https://pages.example.com/t", "--page-name", "Site", env=env, expect=2)
@@ -713,6 +714,10 @@ def test_site():
         check("登记正式上线", (live["site"]["status"], live["site"]["live"], live["site"]["url"]) == ("published", True, "https://pages.example.com/s/official-site"), live)
         check("AI 引用了已上线的官网（带参数也认），算本店自己的内容；同一个网站的别的页面不算",
               _relations(env, ["https://pages.example.com/s/official-site?from=ai", "https://pages.example.com/s/official-site/", "https://pages.example.com/s/other-site"]) == ["own", "own", ""])
+        check("官网下面的页面算本店的，名字相近的别的页面不算",
+              _relations(env, ["https://pages.example.com/s/official-site/menu", "https://pages.example.com/s/official-site-2"]) == ["own", ""])
+        error = call(REPORT, "set-site", "--status", "published", "--url", "https://pages.example.com/s/official-site", env=env, expect=2)
+        check("已经上线、没有新的测试版：不能再登记一次上线", "没有等商家确认的测试版" in error.get("error", ""), error)
         call(REPORT, "set-site", "--domain", "www.sample-shop.com", env=env)
         check("绑了独立域名：这个域名下的页面都算本店自己的内容，名字相近的别的域名不算",
               _relations(env, ["https://www.sample-shop.com/about", "https://notsample-shop.com/x"]) == ["own", ""])
@@ -729,9 +734,19 @@ def test_site():
               (again["site"]["status"], again["site"]["live"], again["site"]["outdated"]) == ("test", True, False), again)
         published = call(REPORT, "publish", env=env)
         keep_page("工作台（官网在线、改过的一版等确认）", published["file"])
+        edges = call(STATE, "set-facts", "--file", write(tmp, "f3.json", {"edges": [{"text": "测试路上唯一一家现烤面包", "basis": "门店位置"}]}), env=env)
+        stale = call(REPORT, "set-site", "--status", "published", "--url", "https://pages.example.com/s/official-site", env=env)
+        check("测试版做好后改了这家店的特点：上线时提醒官网已经跟不上",
+              stale["site"]["changed"] == ["这家店的特点"] and "跟不上" in stale["next"], stale)
         dropped = call(REPORT, "set-site", "--status", "dropped", env=env)
         check("官网不要了：不再算在线，它的链接也不再算本店自己的内容",
               dropped["site"]["live"] is False and _relations(env, ["https://pages.example.com/s/official-site"]) == [""], dropped)
+        error = call(REPORT, "set-site", "--status", "published", "--url", "https://pages.example.com/s/official-site", env=env, expect=2)
+        check("不要了以后，不出新的测试版不能直接上线", "没有等商家确认的测试版" in error.get("error", ""), error)
+        remade = call(REPORT, "set-site", "--status", "test", "--test-url", "https://pages.example.com/t/new-site", env=env)
+        check("不要了以后重做：是新的官网，旧的正式链接、域名、页面标识都清掉",
+              (remade["site"]["live"], remade["site"]["url"], remade["site"]["domain"], remade["site"]["pageName"]) == (False, "", "", "")
+              and _relations(env, ["https://pages.example.com/s/official-site", "https://www.sample-shop.com/about"]) == ["", ""], remade)
 
 
 def test_backend_source():

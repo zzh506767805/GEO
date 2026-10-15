@@ -364,9 +364,9 @@ def confirm_state(facts: dict = None, meta: dict = None) -> dict:
 
 # ── 官网 ──
 # 员工用有赞的“应用”能力替商家做的官网。这里只记它在哪、到了哪一步，和做的时候用的是哪一版店铺资料：
-# 官网上放的那几样（店名和品类、门店、招牌商品、怎么买）后来在店铺资料里改了，官网就过时了，要提醒商家更新。
+# 官网上放的那几样（店名和品类、这家店的特点、门店、招牌商品、怎么买）后来在店铺资料里改了，官网就过时了，要提醒商家更新。
 SITE_STATUS = ("test", "published", "dropped")  # 有测试版等商家看 / 已上线 / 不要了
-SITE_PARTS = (("brand", "店名和品类"), ("stores", "门店"), ("products", "招牌商品"), ("buyEntry", "怎么买"))
+SITE_PARTS = (("brand", "店名和品类"), ("edges", "这家店的特点"), ("stores", "门店"), ("products", "招牌商品"), ("buyEntry", "怎么买"))
 
 
 def site_path() -> Path:
@@ -382,6 +382,7 @@ def site_facts(facts: dict, meta: dict = None) -> dict:
               if not unconfirmed or "有赞后台" in str(s.get("source") or "")]
     return {
         "brand": {k: brand.get(k, "") for k in ("name", "category", "city")},
+        "edges": list(facts.get("edges") or []),
         "stores": [{k: s.get(k, "") for k in ("name", "address", "hours", "phone", "status")} for s in stores],
         # 不带价格：价格常变，写在官网上很快就过时
         "products": [{k: p.get(k, "") for k in ("name", "spec", "origin")} for p in facts.get("products") or []],
@@ -405,7 +406,8 @@ def site_state(facts: dict = None, meta: dict = None) -> dict:
     changed = []
     if status != "dropped" and isinstance(basis, dict):
         now_basis = site_facts(facts, meta)
-        changed = [name for key, name in SITE_PARTS if basis.get(key) != now_basis.get(key)]
+        # 只比做的时候记下的那几样：以前登记的官网没记“这家店的特点”，不能因此算过时
+        changed = [name for key, name in SITE_PARTS if key in basis and basis[key] != now_basis.get(key)]
     return {"exists": True, "status": status, "live": bool(site.get("url")) and status != "dropped",
             "url": site.get("url", ""), "testUrl": site.get("testUrl", ""), "domain": site.get("domain", ""),
             "pageName": site.get("pageName", ""), "testAt": site.get("testAt", ""), "publishedAt": site.get("publishedAt", ""),

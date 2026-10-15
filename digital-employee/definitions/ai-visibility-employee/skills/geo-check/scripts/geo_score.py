@@ -228,14 +228,14 @@ def classify_ref(ref: dict, facts: dict, aliases: list, related: dict = None) ->
     url = str(ref.get("url") or "")
     # 抖音等平台的引用不带作者，只能靠建档时记下的“本店内容编号”来认。
     own_keys = [k for k in channels.get("ownContentKeys") or [] if k]
-    # 员工替商家做的官网：按正式链接的前缀认；绑了独立域名的，这个域名下的页面都算
+    # 员工替商家做的官网：正式链接本身和它下面的页面都算（official-site-2 这种名字相近的不算）；绑了独立域名的，这个域名下的页面都算
     site_url = _bare_url(channels.get("siteUrl"))
     site_domain = str(channels.get("siteDomain") or "").lower()
     relation = ""
     if ((kind == "微信公众号" and official and source == official)
             or any(h and h in host for h in own_hosts)
             or any(key in url for key in own_keys)
-            or (site_url and _bare_url(url).startswith(site_url))
+            or (site_url and (_bare_url(url) + "/").startswith(site_url + "/"))
             or (site_domain and (host == site_domain or host.endswith("." + site_domain)))):
         relation = "own"
     elif gc.contains_any(title, aliases):
