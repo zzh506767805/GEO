@@ -13,8 +13,7 @@ AI 介绍一家店时，要有地方可读。公众号文章、抖音视频是�
 
 | 文件 | 管什么 | 什么时候读 |
 | --- | --- | --- |
-| `references/design-index.md` | 三个设计参考各适合什么店、怎么挑 | 第 3 步 |
-| `references/design-qiaomu.md`、`design-frontend.md`、`design-uiux.md` | 各个设计参考的做法 | 第 3 步挑中哪个读哪个，只读一份 |
+| `references/design-index.md` | 三个设计 Skill（`qiaomu-design`、`frontend-design`、`ui-ux-pro-max`）各适合什么店、怎么挑、怎么放进做官网的流程 | 第 3 步 |
 | `references/seo-geo.md` | 让搜索引擎和 AI 读得到、读得懂：页面要求、测试版怎么查、上线以后做什么 | 第 4、5、6 步 |
 
 用到的脚本是工作台的 `geo_report.py`，下文的 `site-brief`、`set-site`、`publish` 都是它的子命令，每条命令都写全路径。
@@ -63,9 +62,9 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 
 ## 3. 挑一个设计参考
 
-读 `references/design-index.md`，按里面“怎么挑”选一个设计参考，再读那一份的做法。按它写出这个官网的设计方向：一个推荐方向，配色、字体、版式各一句话；“乔木设计”还要写功能契约。下一步写进方案的“整体感觉”。
+读 `references/design-index.md`，按里面“怎么挑”选一个设计 Skill，用 `Skill` 工具加载它，按它的做法和 `design-index.md` 里写的对接方式定出这个官网的设计方向。下一步写进方案的“整体感觉”。
 
-设计参考只管长相。它和第 2 步、`references/seo-geo.md` 冲突时，以那两处为准。
+设计 Skill 只管长相。它和第 2 步、`references/seo-geo.md` 冲突时，以那两处为准。
 
 ## 4. 交给“应用”能力做
 

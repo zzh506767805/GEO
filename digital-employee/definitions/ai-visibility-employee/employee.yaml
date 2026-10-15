@@ -12,6 +12,9 @@ inclusions:
     - geo-workbench
     - geo-content
     - geo-site
+    - qiaomu-design
+    - frontend-design
+    - ui-ux-pro-max
 
 exclusions:
   skills:

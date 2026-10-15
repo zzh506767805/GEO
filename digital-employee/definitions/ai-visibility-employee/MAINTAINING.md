@@ -7,11 +7,11 @@
 | 层 | 文件 | 管什么 | 改它要不要动代码 |
 | --- | --- | --- | --- |
 | 角色和红线 | `prompt.md` | 员工是谁、什么能做什么不能做、对商家怎么说话、哪句话找哪个 Skill。每次对话都加载，Skill 里不再重复这里的规矩 | 不用 |
-| 流程 | `skills/*/SKILL.md` | 每件事按什么顺序做、每一步跑哪个命令 | 不用 |
-| 细则 | `skills/*/references/*.md` | 怎么出题、怎么核对、各类内容怎么写、页面上的东西从哪来 | 不用 |
+| 流程 | `skills/geo-*/SKILL.md` | 每件事按什么顺序做、每一步跑哪个命令 | 不用 |
+| 细则 | `skills/geo-*/references/*.md` | 怎么出题、怎么核对、各类内容怎么写、页面上的东西从哪来 | 不用 |
 | 每周体检 | `skills/geo-weekly/SKILL.md` 的“开启每周体检” | 商家同意后员工替他建的定时任务：每周几点、触发时对员工说什么 | 不用 |
 | 页面清单 | `skills/geo-workbench/assets/pages.json` | 工作台导航里有哪些页面、什么顺序 | 不用 |
-| 护栏 | `skills/*/scripts/*.py` | 数据格式、硬性的上限和顺序、给员工的 `next` 提示 | 要 |
+| 护栏 | `skills/geo-*/scripts/*.py` | 数据格式、硬性的上限和顺序、给员工的 `next` 提示 | 要 |
 | 页面样式 | `skills/geo-workbench/assets/page.html` | 标准模板：工作台和报告长什么样 | 要 |
 | 每家店自己的页面 | `<会话工作区>/ai-visibility-employee/template/page.html` | 员工按商家的意思改出来的模板，有它就不用标准模板 | 员工自己改 |
 
@@ -40,7 +40,7 @@
 
 1. 改 `skills/geo-weekly/SKILL.md` 的“每周出周报”（体检那一段在 `skills/geo-check/SKILL.md`）。
 2. 触发时间、触发时的那段话改 `skills/geo-weekly/SKILL.md` 的“开启每周体检”。只对之后新建的任务生效，已经建好的任务不会跟着变。
-3. 搜一下脚本里的 `next` 文案（`grep -n '"next"' skills/*/scripts/*.py`）。员工会照着 `next` 做，文档改了顺序而 `next` 还指旧的下一步，新员工会跟着 `next` 走。
+3. 搜一下脚本里的 `next` 文案（`grep -n '"next"' skills/geo-*/scripts/*.py`）。员工会照着 `next` 做，文档改了顺序而 `next` 还指旧的下一步，新员工会跟着 `next` 走。
 4. 新的流程碰到上面那张表里的规矩时，才需要改脚本。
 
 ### 给所有店的工作台加一个页面
@@ -73,7 +73,7 @@
 
 官网由员工调用平台的“应用”能力做，流程在 `skills/geo-site/SKILL.md`。SKILL.md 本身是索引，细则在它的 `references/` 下：
 
-- 长什么样：`design-index.md` 写三个设计参考各适合什么店、怎么挑，员工挑一个，再读对应的 `design-qiaomu.md`、`design-frontend.md`、`design-uiux.md`。这三份是从 GitHub 上的设计 Skill 收的做法要点，来源和版本记在 `design-index.md` 末尾；要加或换参考，在那张表和“怎么挑”里一起改。三种方向的效果样例在仓库根目录 `官网对比/`。
+- 长什么样：`design-index.md` 写三个设计 Skill 各适合什么店、怎么挑、怎么放进做官网的流程，员工挑一个用 `Skill` 工具加载。三个 Skill 是从 GitHub 原样拷过来的，放在 `skills/qiaomu-design/`、`skills/frontend-design/`、`skills/ui-ux-pro-max/`，也列在 `employee.yaml` 的 `inclusions` 里。**不要改这三个目录里的文件**：升级时整个目录换成新版本，改 `design-index.md` 末尾的版本号；和做官网流程的对接只写在 `design-index.md`。三种方向的效果样例在仓库根目录 `官网对比/`。
 - 让搜索引擎和 AI 读得到：`seo-geo.md`，包括交给“应用”能力的页面要求、测试版的检查命令、上线以后的事。规则来自 Google 的 AI 优化指南和几个开源 SEO/GEO Skill，来源也记在文件末尾，规则变了改这一份。
 
 脚本只记官网在哪、到了哪一步：

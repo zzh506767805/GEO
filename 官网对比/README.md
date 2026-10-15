@@ -1,6 +1,6 @@
 # 有赞龙虾官网 · 三个设计参考的效果样例
 
-`geo-site` 技能做官网时，员工从三个设计参考里挑一个（见 `digital-employee/definitions/ai-visibility-employee/skills/geo-site/references/design-index.md`）。这里是用同一份内容素材（`_素材/内容素材.md`）、分别照这三个参考做的有赞龙虾官网，给维护的人看三种方向的差别。
+`geo-site` 技能做官网时，员工从三个设计 Skill 里挑一个（见 `digital-employee/definitions/ai-visibility-employee/skills/geo-site/references/design-index.md`）。这里是用同一份内容素材（`_素材/内容素材.md`）、分别照这三个参考做的有赞龙虾官网，给维护的人看三种方向的差别。
 
 每个目录里有 `index.html`、`NOTES.md`（skill 来源、做法、局限）和桌面、手机两张整页截图。
 
