@@ -70,16 +70,16 @@
 
 ### 官网
 
-官网由员工调用平台的“应用”能力做，流程在 `skills/geo-site/SKILL.md`。
+官网由员工调用平台的“应用”能力做，流程在 `skills/geo-site/SKILL.md`。对内容只提一个要求：丰富。不定页面结构、不设默认风格，也不设内容上的禁区（价格、评价都可以放），交给模型按这家店发挥；`geo-site` 第 2 步列的是素材从哪拿，不是必须放的清单。
 
-长什么样：`skills/geo-site/references/design-index.md` 写三个设计参考各适合什么店、怎么挑，员工挑一个，再读对应的 `design-qiaomu.md`、`design-frontend.md`、`design-uiux.md`。这三份是从 GitHub 上的设计 Skill 收的做法要点，来源、版本和许可记在 `design-index.md` 末尾；要加或换参考，在那张表和“怎么挑”里一起改。
+长什么样：`skills/geo-site/references/design-index.md` 写三个设计参考各适合什么店，员工需要时挑一个，再读对应的 `design-qiaomu.md`、`design-frontend.md`、`design-uiux.md`。这三份是从 GitHub 上的设计 Skill 收的做法要点，来源、版本和许可记在 `design-index.md` 末尾；要加或换参考，在那张表和“怎么挑”里一起改。
 
 脚本只记官网在哪、到了哪一步：
 
 - 记录在 `<数据目录>/profile/site.json`，`geo_report.py set-site` 写，`site-brief` 把做官网要用的资料一次给全。
-- “官网过时了”看 `geo_common.py` 的 `SITE_PARTS`（店名和品类、这家店的特点、门店、招牌商品、怎么买）：做测试版那一刻的这几样和现在的店铺资料不一样，就算过时。想多比一样，在 `site_facts` 和 `SITE_PARTS` 里加，三份 `geo_common.py` 一起改；以前登记的官网没记新加的那一样，不算过时。
+- “官网过时了”看 `geo_common.py` 的 `SITE_PARTS`（店名和品类、这家店的特点、门店、招牌商品及价格带、怎么买）：做测试版那一刻的这几样和现在的店铺资料不一样，就算过时。想多比一样，在 `site_facts` 和 `SITE_PARTS` 里加，三份 `geo_common.py` 一起改；以前登记的官网没记新加的那一样，不算过时。
 - AI 引用了已上线的官网算本店自己的内容：`geo_score.py` 的 `_with_site` 和 `classify_ref`，正式链接本身和它下面的页面都算，绑了独立域名的按域名认。
-- `site-brief` 的 `shopCited` 是最近一期 AI 引用商城自己页面的次数，员工提官网前用它判断官网能多给 AI 什么。
+- `site-brief` 的 `shopCited` 是最近一期 AI 引用商城自己页面的次数。
 - 工作台上是“内容”页最上面一块：`page.html` 的 `siteCard`，数据是 `workbench_data` 里的 `site`。
 
 ### 加报告的小节

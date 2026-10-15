@@ -594,7 +594,7 @@ def _site_title(facts: dict) -> str:
 
 
 def _shop_cited(facts: dict) -> dict:
-    """最近一期里，AI 引用了几次商城自己的页面。引用得多，说明 AI 本来就读得到商城，官网多出来的主要是商城里没有的那几块。"""
+    """最近一期里，AI 引用了几次商城自己的页面。"""
     host = urlparse(str((facts.get("buyEntry") or {}).get("shopUrl") or "")).netloc.lower()
     dates = _scored_dates()
     if not host or not dates:
@@ -611,7 +611,7 @@ def _shop_cited(facts: dict) -> dict:
 
 
 def cmd_site_brief(_args) -> None:
-    """做官网要用的东西。员工只用这一份写官网，不用自己去翻存档：没确认的信息已经去掉了。"""
+    """做官网要用的店铺资料，没确认的信息已经去掉了。商品图、详情、评价这些，员工从商品技能里查。"""
     facts = _facts()
     root = gc.profile_dir()
     meta = gc.read_json(root / "meta.json", {}) or {}

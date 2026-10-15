@@ -384,8 +384,7 @@ def site_facts(facts: dict, meta: dict = None) -> dict:
         "brand": {k: brand.get(k, "") for k in ("name", "category", "city")},
         "edges": list(facts.get("edges") or []),
         "stores": [{k: s.get(k, "") for k in ("name", "address", "hours", "phone", "status")} for s in stores],
-        # 不带价格：价格常变，写在官网上很快就过时
-        "products": [{k: p.get(k, "") for k in ("name", "spec", "origin")} for p in facts.get("products") or []],
+        "products": [{k: p.get(k, "") for k in ("name", "spec", "priceRange", "origin")} for p in facts.get("products") or []],
         "buyEntry": {k: (facts.get("buyEntry") or {}).get(k, "") for k in ("miniProgram", "shopUrl")},
     }
 
@@ -406,7 +405,9 @@ def site_state(facts: dict = None, meta: dict = None) -> dict:
     changed = []
     if status != "dropped" and isinstance(basis, dict):
         now_basis = site_facts(facts, meta)
-        # 只比做的时候记下的那几样：以前登记的官网没记“这家店的特点”，不能因此算过时
+        # 只比做的时候记下的那几样：以前登记的官网没记“这家店的特点”、商品没记价格带，不能因此算过时
+        if not any("priceRange" in p for p in basis.get("products") or []):
+            now_basis["products"] = [{k: v for k, v in p.items() if k != "priceRange"} for p in now_basis["products"]]
         changed = [name for key, name in SITE_PARTS if key in basis and basis[key] != now_basis.get(key)]
     return {"exists": True, "status": status, "live": bool(site.get("url")) and status != "dropped",
             "url": site.get("url", ""), "testUrl": site.get("testUrl", ""), "domain": site.get("domain", ""),

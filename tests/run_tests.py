@@ -688,9 +688,9 @@ def test_site():
         call(STATE, "set-facts", "--file", write(tmp, "f1.json", facts), env=env)
         call(STATE, "set-questions", "--file", write(tmp, "q.json", SYNTHETIC_QUESTIONS), env=env)
         brief = call(REPORT, "site-brief", env=env)
-        check("site-brief：在营门店和已关的门店分开给，商品不带价格，没确认的别名不放，顾客常问用全部监测问题，给出页面标题",
+        check("site-brief：在营门店和已关的门店分开给，商品带价格带，没确认的别名不放，顾客常问用全部监测问题，给出页面标题",
               brief["canWrite"] is True and [x["name"] for x in brief["stores"]] == ["测试路店"] and [x["name"] for x in brief["oldStores"]] == ["老街店"]
-              and "priceRange" not in brief["products"][0] and brief["aliases"] == [] and len(brief["faq"]) == len(SYNTHETIC_QUESTIONS)
+              and brief["products"][0].get("priceRange") == "18-25 元" and brief["aliases"] == [] and len(brief["faq"]) == len(SYNTHETIC_QUESTIONS)
               and brief["pageTitle"] == "示例小店 · 测试市面包店" and brief["site"] == {"exists": False}, brief)
         error = call(REPORT, "set-site", "--status", "published", "--url", "https://pages.example.com/s/official-site", env=env, expect=2)
         check("没出过测试版，不能登记正式上线", "没有等商家确认的测试版" in error.get("error", ""), error)
@@ -744,6 +744,23 @@ def test_site():
         check("不要了以后重做：是新的官网，旧的正式链接、域名、页面标识都清掉",
               (remade["site"]["live"], remade["site"]["url"], remade["site"]["domain"], remade["site"]["pageName"]) == (False, "", "", "")
               and _relations(env, ["https://pages.example.com/s/official-site", "https://www.sample-shop.com/about"]) == ["", ""], remade)
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        facts = dict(SYNTHETIC_FACTS, **{"from": "backend", "products": [{"name": "全麦吐司", "spec": "450 克", "priceRange": "18-25 元"}]})
+        call(STATE, "set-facts", "--file", write(tmp, "f1.json", facts), env=env)
+        call(REPORT, "set-site", "--status", "test", "--test-url", "https://pages.example.com/t/official-site", env=env)
+        site_file = Path(env["GEO_DATA_ROOT"]) / "profile" / "site.json"
+        site = json.loads(site_file.read_text(encoding="utf-8"))
+        for product in site["testBasis"]["products"]:
+            product.pop("priceRange")  # 以前登记的官网，商品没记价格带
+        site_file.write_text(json.dumps(site, ensure_ascii=False), encoding="utf-8")
+        check("以前登记的官网商品没记价格带：不因此算过时", call(STATE, "status", env=env)["site"]["outdated"] is False)
+        call(REPORT, "set-site", "--status", "test", "--test-url", "https://pages.example.com/t/official-site?v=2", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "f2.json", dict(facts, products=[{"name": "全麦吐司", "spec": "450 克", "priceRange": "20-28 元"}])), env=env)
+        status = call(STATE, "status", env=env)
+        check("官网上有价格：商品的价格带改了，官网算过时，改的是招牌商品",
+              status["site"]["outdated"] is True and status["site"]["changed"] == ["招牌商品"], status.get("site"))
 
 
 def test_backend_source():
