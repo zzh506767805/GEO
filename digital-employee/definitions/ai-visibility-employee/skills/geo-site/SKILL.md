@@ -12,7 +12,7 @@ description: 用有赞的“应用”能力替商家做一个内容丰富、一�
 - 官网的内容要丰富，素材从哪拿。
 - 做好以后登记到工作台，店铺资料变了提醒商家更新。
 
-用到的脚本是工作台的 `geo_report.py`，下文的 `site-brief`、`set-site`、`publish` 都是它的子命令，每条命令都写全路径。
+用到的脚本是工作台的 `geo_report.py`，下文的 `site-brief`、`set-site`、`publish` 都是它的子命令。
 
 ## 什么时候做
 

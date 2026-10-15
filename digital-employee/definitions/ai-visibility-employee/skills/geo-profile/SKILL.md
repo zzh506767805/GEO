@@ -28,9 +28,6 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" status
 ```
 
-  下文表格里写的 `geo_state.py ...`、`set-facts`、`show` 都是这个全路径的简写，执行时写全。
-
-- 入参先写成 JSON 文件，放在会话临时目录 `$YOUZAN_AGENT_SESSION_TEMP/geo/` 下，再用 `--file` 传入。
 - 先执行 `status`，按结果决定从哪一步接着做。有 `next` 就照 `next` 做，它已经把下面几种情况判断好了：
 
 | `status` 的结果 | 接着做 |
@@ -239,7 +236,3 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_
 
 改完以后告诉商家哪里更新了，给“监测设置”页的链接。
 
-## 对外表达
-
-- 只说业务语言：店铺资料、你家的特点、问题、同类店、体检、报告、工作台。
-- 不向商家展示脚本、命令、字段名、文件路径和内部报错。

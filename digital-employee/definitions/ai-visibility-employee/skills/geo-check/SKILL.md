@@ -19,8 +19,6 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 
 - 先执行 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" status`：没有建档先按 `geo-profile` 建档；`firstCheckPending` 为 true 说明商家还没同意体检，回到 `geo-profile` 的第 3 步；`period.done` 为 false 说明上次体检做到一半，照 `period.next` 接着做完那一期。
 - 每周体检之前，按 `geo-profile` 的“每期体检前”重新读一遍店铺资料。核对用的是它，旧了会对错。
-- 两个脚本是 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py"` 和 `python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_score.py"`。下文表格里写的 `geo_run.py ...`、`geo_score.py ...` 都是全路径的简写，执行时写全。
-- 命令输出里有 `next` 时，写着下一步该做什么，照着做。
 
 ## 第一步：提问和等待
 
@@ -190,6 +188,3 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_sc
 - 每周体检：按 `geo-weekly` 的“每周出周报”走完，发周报。
 - 商家临时要求重新体检（用 `--fresh`，见第一步）：同样按 `geo-weekly` 重写小结和建议、`publish`，然后用两三句话说结果（没点名时多少个回答提到了他、和上一期比怎么样），给 `publish` 输出的 `reportUrl`。不用发完整周报。
 
-## 对外表达
-
-数字只用脚本输出里的，不估算，不凑整。

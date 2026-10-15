@@ -16,7 +16,7 @@ description: 替商家写内容并登记到工作台：按 AI 常读的地方定
 
 每种类型的稿子怎么写、登记带哪些字段，在 `references/writing.md`。**写稿之前先读它。**
 
-内容登记、改状态用的是工作台的脚本，每条命令写全路径：
+内容登记、改状态用的是工作台的脚本：
 
 ```bash
 python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/geo_report.py" add-content --file <json>
