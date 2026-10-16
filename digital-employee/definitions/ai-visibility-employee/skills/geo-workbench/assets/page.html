@@ -455,6 +455,36 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .dmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 12px; color: var(--ink-3); }
 .dinfo { margin-top: 16px; border-radius: 10px; padding: 12px 14px; background: var(--subtle); font-size: 13px; line-height: 1.7; }
 .dinfo dd { color: var(--ink-2); }
+/* 来历（为什么写、建议发在哪）默认收起，抽屉里先看到的是成品 */
+.dmore { margin-top: 12px; font-size: 13px; }
+.dmore > summary { display: inline-flex; align-items: center; gap: 2px; color: var(--ink-2); cursor: pointer; list-style: none; }
+.dmore > summary::-webkit-details-marker { display: none; }
+.dmore > summary svg { color: var(--ink-3); transition: transform .15s; }
+.dmore[open] > summary svg { transform: rotate(90deg); }
+.dmore > summary:hover { color: var(--ink); }
+.dmore .dinfo { margin-top: 8px; }
+/* 公众号：排版预览直接铺在抽屉里，上面只留一行状态 */
+.drawer-body.embed { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.drawer-body.embed > .dmeta, .drawer-body.embed > .dmore { flex: none; padding: 0 24px; }
+.drawer-body.embed > .dmeta { padding-top: 12px; }
+.drawer-body.embed > .dmore { padding-bottom: 4px; }
+.drawer-body.embed .preview-frame { margin-top: 12px; border-top: 1px solid var(--line); }
+/* 小红书：按笔记的样子画，一张手机宽的卡片。还没有配图，封面是占位，写着该配什么图 */
+.xhs { max-width: 340px; margin: 18px auto 0; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: 0 6px 24px rgba(31, 35, 40, .08); color: #333; }
+.xhs-author { display: flex; align-items: center; padding: 10px 14px; }
+.xhs-avatar { display: flex; flex: none; align-items: center; justify-content: center; width: 32px; height: 32px; margin-right: 10px; border-radius: 50%; background: #ff2442; color: #fff; font-size: 14px; font-weight: 700; }
+.xhs-name { min-width: 0; overflow: hidden; font-size: 14px; color: #333; text-overflow: ellipsis; white-space: nowrap; }
+.xhs-cover { display: flex; flex-direction: column; align-items: center; justify-content: center; aspect-ratio: 3 / 4; padding: 24px 32px; background: repeating-linear-gradient(-45deg, #f6f7f8 0 12px, #f1f2f4 12px 24px); color: var(--ink-3); text-align: center; }
+.xhs-cover svg { color: var(--ink-4); }
+.xhs-cover .t { margin-top: 10px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.xhs-cover .m { max-width: 18em; margin-top: 6px; font-size: 13px; line-height: 1.6; }
+.xhs-text { padding: 14px 16px 18px; }
+.xhs-title { font-size: 17px; font-weight: 600; line-height: 1.5; color: #333; }
+.xhs-body { margin-top: 8px; font-size: 15px; line-height: 1.75; }
+.xhs-body .p { white-space: pre-wrap; word-break: break-word; }
+.xhs-body .gap { height: 8px; }
+.xhs-tags { margin-top: 8px; font-size: 15px; line-height: 1.75; }
+.xhs-tags span { margin-right: 6px; color: #13386c; }
 .dlabel { margin-top: 22px; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--ink-3); }
 .ans-text.read { max-width: 36em; margin-top: 18px; font-size: 15px; line-height: 1.85; }
 .dlabel + .ans-text.read { margin-top: 8px; }
@@ -558,7 +588,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     cart: ['M3 5h2.5l2 10h10l2-7H7', 'M9 19.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0', 'M15.5 19.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0'],
     chat: ['M4 5.5h16v10.5H10l-4.5 3.5V16H4z'],
     chev: ['M9.5 6l6 6-6 6'],
-    copy: ['M9 9h10v10H9z', 'M15 9V5H5v10h4']
+    copy: ['M9 9h10v10H9z', 'M15 9V5H5v10h4'],
+    image: ['M4 5h16v14H4z', 'M7.5 9.5a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', 'M4 16l5-4.5 4 3.5 3-2.5 4 3.5']
   };
   function icon(name, size) {
     var svg = document.createElementNS(NS, 'svg');
@@ -1122,8 +1153,23 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     }
     return paper;
   }
+  /* 小红书笔记按发出去的样子画：店名、封面、标题、正文、话题。还没有配图，封面位置写着员工建议配什么图（tip） */
+  function xhsNote(item) {
+    var name = String((DATA.store || {}).name || '');
+    var cover = add(el('div', 'xhs-cover'), icon('image', 40), el('div', 't', '封面图'), item.tip ? el('div', 'm', item.tip) : null);
+    var text = el('div', 'xhs-body');
+    renderPlain(text, item.body);
+    var tags = null;
+    if ((item.tags || []).length) {
+      tags = el('div', 'xhs-tags');
+      item.tags.forEach(function (tag) { tags.appendChild(el('span', '', '#' + tag)); });
+    }
+    return add(el('div', 'xhs'), name ? add(el('div', 'xhs-author'), el('span', 'xhs-avatar', name.charAt(0)), el('span', 'xhs-name', name)) : null,
+      cover, add(el('div', 'xhs-text'), el('div', 'xhs-title', item.title), text, tags));
+  }
   function copyLabel(item) { return item.type === 'xhs' ? '复制标题、正文和话题' : (item.type === 'douyin' ? '复制标题和话题' : '复制全文'); }
-  /* 稿子抽屉：上面是这篇的来历，中间是稿子，下面固定放操作。公共部分都一样，稿子怎么展示跟着类型走 */
+  /* 稿子抽屉：上面一行状态，中间是成品，下面固定放操作。来历默认收起；成品怎么展示跟着类型走：
+     公众号的排版预览直接铺在抽屉里（和工作台同一个网站时才行，否则退成按钮），小红书画成笔记的样子 */
   function openDraft(item) {
     if (sheet.hidden) { lastFocus = document.activeElement; }
     currentDraft = item;
@@ -1140,13 +1186,25 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       item.origin === 'asked' ? el('span', '', '你点名要的') : null,
       item.forQuestion ? el('span', '', '为 ' + qno(item.forQuestion) + ' 写的') : null,
       (item.channels || []).length ? el('span', '', '放在' + item.channels.join('、')) : null));
+    var xhs = item.type === 'xhs' && item.body;
     var info = el('dl', 'kv dinfo');
     kv(info, '为什么写', item.reason);
     kv(info, '建议发在', item.whereToPost);
-    kv(info, '发的时候', item.tip);
-    if (info.children.length) { body.appendChild(info); }
+    if (!xhs) { kv(info, '发的时候', item.tip); }  /* 小红书的配图建议写在封面位置上 */
+    if (info.children.length) {
+      body.appendChild(add(el('details', 'dmore'), add(el('summary', '', info.children.length > 2 ? '为什么写、怎么发' : '为什么写这篇'), icon('chev', 14)), info));
+    }
+    var embed = item.previewUrl && sameSite(item.previewUrl);
     var size = item.bodyChars ? ' · ' + item.bodyChars + ' 字' : '';
-    if (item.body) {
+    if (embed) {
+      body.className = 'drawer-body embed';
+      var frame = el('iframe', 'preview-frame');
+      frame.title = item.title || '排版预览';
+      frame.src = item.previewUrl;
+      body.appendChild(frame);
+    } else if (xhs) {
+      body.appendChild(xhsNote(item));
+    } else if (item.body) {
       if (item.previewUrl || item.type === 'douyin') { body.appendChild(el('div', 'dlabel', (item.type === 'douyin' ? '口播稿' : '文字版') + size)); }
       body.appendChild(draftBody(item));
     } else if (!item.previewUrl) {
@@ -1154,8 +1212,9 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     }
     panel.appendChild(body);
     var foot = el('div', 'drawer-foot');
-    if (item.previewUrl) { foot.appendChild(button('btn primary', '看排版预览', function () { openPreview(item.previewUrl, item.title); })); }
-    if (item.body) { foot.appendChild(button(item.previewUrl ? 'btn' : 'btn primary', copyLabel(item), function () { copy(contentPlain(item), '已复制，可以直接粘贴去发'); })); }
+    if (item.previewUrl && !embed) { foot.appendChild(button('btn primary', '看排版预览', function () { openPreview(item.previewUrl, item.title); })); }
+    if (item.body) { foot.appendChild(button(item.previewUrl && !embed ? 'btn' : 'btn primary', copyLabel(item), function () { copy(contentPlain(item), '已复制，可以直接粘贴去发'); })); }
+    if (embed) { foot.appendChild(button(item.body ? 'btn' : 'btn primary', '在浏览器里打开', function () { openOutside(item.previewUrl, item.title); })); }
     if (foot.children.length) { panel.appendChild(foot); }
     sheet.hidden = false;
     document.body.style.overflow = 'hidden';

@@ -1090,6 +1090,10 @@ def test_template():
     check("首页没有“员工已经做了的工作”“现在该做的”这两块", "员工已经做了的工作" not in html and "现在该做的" not in html)
     check("报告嵌在工作台里打开：模板里有内嵌的入口、内嵌的标记和打不开时的退路",
           "rpt-frame" in html and "#embed" in html and "单独打开这份报告" in html and "report-ready" in html)
+    draft = html.split("function openDraft(item)")[1].split("function siteCard")[0]
+    check("稿子抽屉里先看到成品：公众号排版预览嵌在抽屉里，小红书画成笔记、封面占位写着配图建议，来历收起",
+          "preview-frame" in draft and "sameSite(item.previewUrl)" in draft and "xhsNote(item)" in draft
+          and "'dmore'" in draft and "item.tip" in html.split("function xhsNote(item)")[1].split("function copyLabel")[0])
 
 
 def test_demo_fixture():
