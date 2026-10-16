@@ -1179,11 +1179,6 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     add(panel, add(el('div', 'sheet-head'), add(el('h3'), el('span', 'who', ['第 ' + item.no + ' 篇', item.typeName || ''].filter(Boolean).join(' · ')), item.title), close));
     var body = el('div', 'drawer-body');
     var xhs = item.type === 'xhs' && item.body;
-    var info = el('dl', 'kv dinfo');
-    kv(info, '为什么写', item.reason);
-    kv(info, '建议发在', item.whereToPost);
-    if (!xhs) { kv(info, '发的时候', item.tip); }  /* 小红书的配图建议写在封面位置上 */
-    if (info.children.length) { body.appendChild(info); }
     var embed = item.previewUrl && sameSite(item.previewUrl);
     var size = item.bodyChars ? ' · ' + item.bodyChars + ' 字' : '';
     if (embed) {
