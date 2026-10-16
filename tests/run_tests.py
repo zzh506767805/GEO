@@ -871,6 +871,12 @@ def test_edited_page():
               "/* 商家要的橙色 */" in html and [r["name"] for r in data["settings"]["rivals"]] == ["甲记面包"]
               and [p["id"] for p in data["nav"]][-1] == "keywords" and "keywords" in data["customPages"],
               (data["settings"]["rivals"], [p["id"] for p in data["nav"]]))
+        call(STATE, "set-rivals", "--file", write(tmp, "r2b.json", [{"name": "丙记吐司坊"}]), env=env)
+        call(REPORT, "publish", env=env)
+        html, _, data = page_json(again["file"])
+        check("员工改过的页面连续同步两次，改动还在（只同步一次时测不出来）",
+              "/* 商家要的橙色 */" in html and [r["name"] for r in data["settings"]["rivals"]] == ["丙记吐司坊"]
+              and "keywords" in data["customPages"], data["settings"]["rivals"])
         page.write_text(html.replace('id="geo-data"', 'id="geo-data-gone"'), encoding="utf-8")
         broken = page.read_text(encoding="utf-8")
         error = call(REPORT, "publish", env=env, expect=2)
@@ -980,31 +986,42 @@ def test_data_reliability():
         call(SCORE, "set-judgement", "--date", DATE, "--file", write(tmp, "j.json", {"descriptions": {"hunyuan": "旧的介绍"}, "issues": []}), env=env)
 
         again = call(RUN, "start", "--phase", "open", "--date", DATE, env=env)
-        check("同一天再发起：说清这是接着上一次（没有重新问），并告诉怎么重新测",
-              again["started"] == 0 and "--fresh" in again["next"], again.get("next"))
-        log = Path(env["MOCK_STATE"])
-        before = log.read_text(encoding="utf-8") if log.exists() else ""
-        fresh = call(RUN, "start", "--phase", "open", "--fresh", "--date", DATE, env=env)
-        check("重新测一次（哪怕带着旧的 --phase open）：全部问题一起重新发起，带店名的也在里面",
-              fresh["started"] == 30 and fresh["phases"]["brand"]["started"] is True, fresh)
+        check("指定了这一期再发起：说清没有重新问，并告诉怎么开新的一期",
+              again["started"] == 0 and "开新的一期" in again["next"], again.get("next"))
         run_dir = Path(env["GEO_DATA_ROOT"]) / "runs" / DATE
-        check("重新测时，上一次的算分和核对挪走留底，不会被当成这一次的",
-              not (run_dir / "summary.json").exists() and not (run_dir / "judgement.json").exists()
-              and any(p.name.startswith("old-") for p in run_dir.iterdir()), sorted(p.name for p in run_dir.iterdir()))
-        wait_all(env, DATE)
-        call(RUN, "start", "--phase", "brand", "--date", DATE, env=env)
-        done = wait_all(env, DATE)
-        check("重新测完整轮结束", done["finished"] is True and done["done"] == 30, done)
+        second = call(RUN, "start", env=env)
+        check("同一天、问题没变，再体检一次也是新的一期：编号 日期-2，全部问题一起问，上一期原样留着",
+              second["newPeriod"] == DATE + "-2" and second["started"] == 30 and second["phases"]["brand"]["started"] is True
+              and (run_dir / "summary.json").exists() and (run_dir / "judgement.json").exists(), second)
+        resumed = call(RUN, "start", env=env)
+        check("今天这一期还没问完时再 start：接着这一期，不另开", resumed["date"] == DATE + "-2" and resumed["started"] == 0, resumed)
+        blocked = call(RUN, "start", "--fresh", env=env, expect=2)
+        check("上一期还有查询在运行时不能另开一期", "还有查询在运行" in blocked.get("error", ""), blocked)
+        done = wait_all(env, DATE + "-2")
+        check("新的一期整轮结束", done["finished"] is True and done["done"] == 30, done)
+        call(SCORE, "score", env=env)
+        call(SCORE, "set-judgement", "--file", write(tmp, "j-2.json", {"descriptions": {"hunyuan": "第二期的介绍"}, "issues": []}), env=env)
+        call(REPORT, "set-actions", "--file", write(tmp, "a-2.json", {"brief": "第二期"}), env=env)
+        published = call(REPORT, "publish", env=env)
+        _, _, page = page_json(published["file"])
+        check("工作台上两期都在，最新的是第 2 期；两份报告各是各的文件",
+              [p["date"] for p in page["periods"]] == [DATE, DATE + "-2"] and page["latest"]["no"] == 2
+              and (Path(env["GEO_DATA_ROOT"]) / "pages" / ("report-%s.html" % DATE)).exists()
+              and (Path(env["GEO_DATA_ROOT"]) / "pages" / ("report-%s-2.html" % DATE)).exists(), [p["date"] for p in page["periods"]])
+        third = call(RUN, "start", "--fresh", env=env)
+        check("--fresh 也是开新的一期，编号接着往下排", third["newPeriod"] == DATE + "-3", third)
+        wait_all(env, DATE + "-3")
 
         call(STATE, "set-questions", "--file", write(tmp, "q2.json", [q for q in questions if q["id"] != "q01"]), env=env)
-        scored = call(SCORE, "score", "--date", DATE, env=env)
-        summary = json.loads((run_dir / "summary.json").read_text(encoding="utf-8"))
+        latest = DATE + "-3"  # 删题只影响最新一期，以前各期按当时的问题算
+        scored = call(SCORE, "score", "--date", latest, env=env)
+        summary = json.loads((run_dir.parent / latest / "summary.json").read_text(encoding="utf-8"))
         check("删掉 q01 后重新算分：这一期不再算它，问题数和回答数跟着变",
               "q01" not in summary["mention"]["byQuestion"] and "q01" not in summary["cells"] and summary["expected"] == 27
               and scored["mention"]["valid"] < 48, (sorted(summary["mention"]["byQuestion"]), summary["expected"]))
-        call(SCORE, "set-judgement", "--date", DATE, "--file", write(tmp, "j2.json", {"descriptions": {"hunyuan": "新的介绍"}, "issues": []}), env=env)
-        built = call(REPORT, "publish", "--date", DATE, env=env)
-        _, _, data = page_json(built["reportFiles"][0])
+        call(SCORE, "set-judgement", "--date", latest, "--file", write(tmp, "j2.json", {"descriptions": {"hunyuan": "新的介绍"}, "issues": []}), env=env)
+        built = call(REPORT, "publish", "--date", latest, env=env)
+        _, _, data = page_json(next(f for f in built["reportFiles"] if f.endswith(latest + ".html")))
         check("报告里的问题清单也没有 q01，和监测设置一致", "q01" not in [q["id"] for q in data["questions"]], [q["id"] for q in data["questions"]])
 
 

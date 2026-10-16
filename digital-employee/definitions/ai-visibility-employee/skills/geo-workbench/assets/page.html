@@ -707,7 +707,8 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     return id;
   }
   function ratio(bucket) { return (bucket ? bucket.hits : 0) + '/' + (bucket ? bucket.valid : 0); }
-  function cnDate(date) { var p = String(date || '').split('-'); return p.length === 3 ? Number(p[1]) + ' 月 ' + Number(p[2]) + ' 日' : String(date || ''); }
+  /* 期次编号是日期，同一天的第二期起是 2026-10-16-2 这样，显示成“10 月 16 日（第 2 次）” */
+  function cnDate(date) { var p = String(date || '').split('-'); return p.length >= 3 ? Number(p[1]) + ' 月 ' + Number(p[2]) + ' 日' + (p[3] ? '（第 ' + Number(p[3]) + ' 次）' : '') : String(date || ''); }
   function shortDate(date) { return String(date || '').slice(5); }
   function updatedAt() { var at = String(DATA.generatedAt || ''); return cnDate(at.slice(0, 10)) + ' ' + at.slice(11, 16); }
   /* 问题的短编号：q03 显示成 Q3，b01 显示成 B1。商家跟员工说“把 Q3 换掉”时用。 */

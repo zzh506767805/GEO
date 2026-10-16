@@ -39,10 +39,12 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_ru
 
 只想重跑个别问题（例如商家改了某道题）：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --only q03,q07`，带店名的题也一样写编号（比如 `b01`）。改过原文的题会重新问，没改的不会。带 `--only` 时，重问的题算进最近一期，不另开一期；最近一期在 7 天以前时脚本会拦下，这时问商家要不要现在整轮重新体检（开新的一期），不要就等下一次体检按新问题问。之后照常 `wait`、`score`，改的是带店名的题时还要重新核对（第四步）。
 
-**接着上一次，和重新测一次，是两回事：**
+**每一轮整轮提问都是新的一期：**
 
-- 不带 `--fresh` 的 `start` 是“接着上一次”：这一天已经有回答的题不会重新问。同一天再执行，输出里 `started` 是 0，`next` 会说明用的是已有的回答。
-- 商家说“重新体检”“重新测一下”，要的是重新问一遍：`python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_run.py" start --fresh`。上一次的回答、算分和核对会挪进这一天目录下的 `old-<时间>/` 留底，然后全部问题一起重新问，接着照常等待、算分、读全文、核对。还有查询在运行时不能重新测，先等它们返回。
+- `start`（不带 `--only`）开新的一期，同一天、问题没变也一样。同一天的第二期编号是 `2026-10-16-2` 这样，以前各期的报告都留着，工作台左边按期列出来。商家说“重新体检”“再出一期”“重新测一下”，都这样做。
+- 今天这一期还没问完（会话断过）时，`start` 接着问完这一期，不另开。确实要另开一期，加 `--fresh`。
+- 还有查询在运行时不能开新的一期，先等它们返回。
+
 - 商家删掉的题不用重跑：重新 `score`，最新一期就不再算它（输出的 `notes` 会列出来）。以前各期按当时问的题算，不变。
 
 ## 第二步：算分
@@ -186,5 +188,5 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-check/scripts/geo_sc
 
 - 第一次体检（商家刚确认）：按 `geo-weekly` 的“第一份报告”走完，汇报结果并问他要不要开启每周体检。
 - 每周体检：按 `geo-weekly` 的“每周出周报”走完，发周报。
-- 商家临时要求重新体检（用 `--fresh`，见第一步）：同样按 `geo-weekly` 重写小结和建议、`publish`，然后用两三句话说结果（没点名时多少个回答提到了他、和上一期比怎么样），给 `publish` 输出的 `reportUrl`。不用发完整周报。
+- 商家临时要求重新体检（开新的一期，见第一步）：同样按 `geo-weekly` 重写小结和建议、`publish`，然后用两三句话说结果（没点名时多少个回答提到了他、和上一期比怎么样），给 `publish` 输出的 `reportUrl`。不用发完整周报。
 

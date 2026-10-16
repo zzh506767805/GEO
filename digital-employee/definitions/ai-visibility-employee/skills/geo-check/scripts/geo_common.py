@@ -30,6 +30,8 @@ _BEIJING = dt.timezone(dt.timedelta(hours=8))
 # 各平台正文里夹带的引用、图片、卡片占位符，展示和匹配前先去掉。
 _ANSWER_MARKS = re.compile(r"\[\]\(@replace=\d+\)|\[citation:\d+\]|\[img:\d+\]|\[applet_-?\d+\]|\[rich_media:\d+\]|\u200b")
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# 一期体检的编号：当天的第一期就是日期，同一天再体检一次是 日期-2、日期-3……按字符串排序就是先后顺序（到 -9 为止）
+_PERIOD_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})(?:-([2-9]))?$")
 
 
 class GeoError(Exception):
@@ -84,16 +86,35 @@ def parse_iso(value: str) -> dt.datetime:
 
 
 def check_date(value: str) -> str:
-    if not _DATE_RE.match(str(value or "")):
-        raise GeoError("日期格式应为 YYYY-MM-DD")
+    """一期体检的编号：日期，同一天的第二期起是 日期-2 这样。"""
+    if not _PERIOD_RE.match(str(value or "")):
+        raise GeoError("期次应为 YYYY-MM-DD，同一天的第二期起是 YYYY-MM-DD-2 这样")
     return value
 
 
+def period_day(period: str) -> str:
+    """期次是哪一天做的。"""
+    return period[:10]
+
+
+def new_period(day: str = "") -> str:
+    """开一期新的体检：这一天还没有体检就用日期，有了就排到下一个编号。"""
+    day = day or today()
+    taken = [p for p in list_run_dates() if period_day(p) == day]
+    if not taken:
+        return day
+    number = max(int(_PERIOD_RE.match(p).group(2) or 1) for p in taken) + 1
+    if number > 9:
+        raise GeoError("同一天最多做 9 期体检")
+    return "%s-%d" % (day, number)
+
+
 def list_run_dates() -> list:
+    """所有期次，按先后排。"""
     root = runs_dir()
     if not root.is_dir():
         return []
-    return sorted(p.name for p in root.iterdir() if p.is_dir() and _DATE_RE.match(p.name))
+    return sorted(p.name for p in root.iterdir() if p.is_dir() and _PERIOD_RE.match(p.name))
 
 
 def latest_run_date(before: str = "") -> str:
@@ -103,13 +124,11 @@ def latest_run_date(before: str = "") -> str:
 
 
 def resolve_date(value: str = "") -> str:
-    """命令没传日期时：有当天的体检就用当天，否则用最近一次。"""
+    """命令没传期次时：用最近一期；一期都没有就用今天。"""
     if value:
         return check_date(value)
     dates = list_run_dates()
-    if today() in dates or not dates:
-        return today()
-    return dates[-1]
+    return dates[-1] if dates else today()
 
 
 PERIOD_STAGES = ("asking", "scoring", "reading", "judging", "wrapup", "done")
@@ -123,7 +142,8 @@ def period_stage(date: str) -> dict:
     """
     folder = run_dir(date)
     items = list(((read_json(folder / "queries.json", {}) or {}).get("items") or {}).values())
-    flag = "" if date == today() else " --date " + date
+    # 不带 --date 时，start 只接着做今天的最新一期（否则开新的一期），其余命令用最新一期。不是这种情况就把期次写明
+    flag = "" if date == latest_run_date() and period_day(date) == today() else " --date " + date
     stage, hint = "done", ""
     phase_rows = {kind: [i for i in items if i.get("kind") == kind] for kind in ("open", "brand")}
     asked = {kind: [i for i in rows if i.get("status") != "error"] for kind, rows in phase_rows.items()}

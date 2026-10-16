@@ -889,14 +889,18 @@ def embed_json(data: dict) -> str:
     return text
 
 
-def render_html(data: dict) -> str:
+def _template_text() -> str:
     try:
         template = TEMPLATE.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         raise gc.GeoError("工作台模板读取失败") from exc
     if template.count(PLACEHOLDER) != 1:
         raise gc.GeoError("工作台模板不完整")
-    return template.replace(PLACEHOLDER, embed_json(data))
+    return template
+
+
+def render_html(data: dict) -> str:
+    return _template_text().replace(PLACEHOLDER, embed_json(data))
 
 
 def report_link(url: str, day: str) -> str:
@@ -931,18 +935,30 @@ def _linkable(dates: list = None) -> str:
 
 
 DATA_BLOCK = re.compile(r'(<script type="application/json" id="geo-data">)(.*?)(</script>)', re.S)
-GENERATED_FILE = ".generated.json"  # 每个网页上次由脚本写出时的指纹，用来认出员工改过的页面
+GENERATED_FILE = ".generated.json"  # 脚本写出每个网页时，标准模板的指纹
 
 
 def _fingerprint(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
 
+def _shell(text: str) -> str:
+    """网页去掉数据之后剩下的样子。"""
+    return DATA_BLOCK.sub(lambda m: m.group(1) + m.group(3), text)
+
+
 def _edited(name: str, current: str, record: dict) -> bool:
-    """员工改过这个页面没有。还没有记录的老页面：以前用过这家店自己的模板（template/page.html）的算改过，其余按标准模板重写。"""
-    if name in record:
-        return _fingerprint(current) != record[name]
-    return (gc.data_root() / "template" / "page.html").is_file()
+    """员工改过这个页面没有：去掉数据以后，和写出它的那一版标准模板不一样，就是改过。
+    只看样子不看数据，所以改过的页面同步多少次都认得出来；标准模板升级了，没改过的页面照样认得出来，跟着升级。"""
+    template = _template_text()
+    known = {_fingerprint(_shell(template.replace(PLACEHOLDER, "")))}
+    if record.get(name):
+        known.add(record[name])
+    if (gc.data_root() / "template" / "page.html").is_file() and not record.get(name):
+        return True  # 以前用过这家店自己的模板，升级后第一次同步：算改过
+    if record.get(name) == _fingerprint(current):
+        return False  # 上一版脚本记的是整页的指纹，整页没动过就是没改过
+    return _fingerprint(_shell(current)) not in known
 
 
 def _merge_data(old_block: str, data: dict) -> dict:
@@ -981,9 +997,9 @@ def _write_page(name: str, data: dict) -> Path:
         text = DATA_BLOCK.sub(lambda m: m.group(1) + embed_json(merged) + m.group(3), current)
     else:
         text = render_html(data)
+        record[name] = _fingerprint(_shell(text))  # 只在按标准模板写出时记，员工改过的页面不记
+        gc.write_json(record_path, record)
     target.write_text(text, encoding="utf-8")
-    record[name] = _fingerprint(text)
-    gc.write_json(record_path, record)
     return target
 
 
