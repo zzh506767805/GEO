@@ -942,22 +942,28 @@ def _fingerprint(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
 
 
+# 61d9a0e 之前，脚本写出页面时没有记下用的是哪一版模板（记的是整页的指纹，员工改过的页面也这样记）。
+# 这些是那以前各版标准模板去掉数据后的指纹，用来认出没改过的老页面，让它们跟着升级。
+LEGACY_TEMPLATE_SHELLS = frozenset((
+    "0b88a4f9cbb1875f", "1a48b92e455e5c1e", "320d617b990b235b", "37c8e6ff027b434b", "3cf30fd2a457a834", "427518f295f93fb2",
+    "4f1fe5bc2f79ccde", "51f73989622b0521", "6af1e88e28daa7d0", "749592bce72e61c5", "7bd75ff2700a5387", "83c117198b6e42f3",
+    "92f0ef3f07c1cdbf", "954edffe41de12d4", "97e27a7407a16089", "9bc6143e4d0479cc", "a129bd588db197d5", "a475b3deff415652",
+    "b55ad0883fad3e7e", "d1ade229e5992805", "d34a1ad631f7dd9e", "dc5f1c8c1c7abb4d", "f47a12e0d87d2141",
+))
+
+
 def _shell(text: str) -> str:
     """网页去掉数据之后剩下的样子。"""
     return DATA_BLOCK.sub(lambda m: m.group(1) + m.group(3), text)
 
 
 def _edited(name: str, current: str, record: dict) -> bool:
-    """员工改过这个页面没有：去掉数据以后，和写出它的那一版标准模板不一样，就是改过。
-    只看样子不看数据，所以改过的页面同步多少次都认得出来；标准模板升级了，没改过的页面照样认得出来，跟着升级。"""
-    template = _template_text()
-    known = {_fingerprint(_shell(template.replace(PLACEHOLDER, "")))}
+    """员工改过这个页面没有：去掉数据以后的样子，不是任何一版标准模板（包括写出它的那一版），就是改过。
+    只看样子不看数据，所以改过的页面同步多少次都认得出来；没改过的页面跟着标准模板升级。
+    认不出来的一律当成改过：只换数据，员工的改动不会被冲掉，最多是这一页暂时用不上新样式。"""
+    known = LEGACY_TEMPLATE_SHELLS | {_fingerprint(_shell(_template_text().replace(PLACEHOLDER, "")))}
     if record.get(name):
-        known.add(record[name])
-    if (gc.data_root() / "template" / "page.html").is_file() and not record.get(name):
-        return True  # 以前用过这家店自己的模板，升级后第一次同步：算改过
-    if record.get(name) == _fingerprint(current):
-        return False  # 上一版脚本记的是整页的指纹，整页没动过就是没改过
+        known = known | {record[name]}
     return _fingerprint(_shell(current)) not in known
 
 

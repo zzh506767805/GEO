@@ -10,6 +10,7 @@
 并重新生成 示例/麦的日尝/ 里的工作台和第一期报告。
 本机有 node 时，再用 page_smoke.cjs 把各种状态下的工作台和报告都渲染一遍。
 """
+import hashlib
 import json
 import os
 import re
@@ -903,6 +904,34 @@ def test_edited_page():
         page.write_text(page.read_text(encoding="utf-8").replace("<style>", "<style>/* 旧模板的样子 */", 1), encoding="utf-8")
         call(REPORT, "publish", env=env)
         check("以前用这家店自己模板生成的页面，升级后第一次同步也只换数据", "/* 旧模板的样子 */" in page.read_text(encoding="utf-8"))
+
+    # 61d9a0e 之前的老页面：记录是整页的指纹，员工改过的页面也这样记（线上星光之家碰到过）
+    with tempfile.TemporaryDirectory() as tmp:
+        env = base_env(tmp)
+        call(STATE, "init", "--segment", "local", "--brand", "示例小店", env=env)
+        call(STATE, "set-facts", "--file", write(tmp, "f.json", dict(SYNTHETIC_FACTS, **{"from": "backend"})), env=env)
+        page = Path(call(REPORT, "publish", env=env)["file"])
+        record_file = Path(env["GEO_DATA_ROOT"]) / "pages" / ".generated.json"
+        whole = lambda text: hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]  # noqa: E731
+        edited = page.read_text(encoding="utf-8").replace("<style>", "<style>/* 升级前就改过 */", 1)
+        page.write_text(edited, encoding="utf-8")
+        record_file.write_text(json.dumps({page.name: whole(edited)}), encoding="utf-8")
+        call(STATE, "set-rivals", "--file", write(tmp, "r4.json", [{"name": "甲记面包"}]), env=env)
+        call(REPORT, "publish", env=env)
+        check("升级前改过、记录是整页指纹的页面：升级后同步，改动还在", "/* 升级前就改过 */" in page.read_text(encoding="utf-8"))
+        legacy = subprocess.run(["git", "show", "3c92769:digital-employee/definitions/ai-visibility-employee/skills/geo-workbench/assets/page.html"],
+                                cwd=str(ROOT), capture_output=True, text=True)
+        if legacy.returncode:
+            print("跳过  老版标准模板生成的页面能跟着升级（这里没有 git 历史）")
+        else:
+            block = re.search(r'<script type="application/json" id="geo-data">(.*?)</script>', page.read_text(encoding="utf-8"), re.S).group(1)
+            old_page = legacy.stdout.replace("__GEO_DATA__", block)
+            for label, record in (("没有记录", {}), ("记录是整页指纹", {page.name: whole(old_page)})):
+                page.write_text(old_page, encoding="utf-8")
+                record_file.write_text(json.dumps(record), encoding="utf-8")
+                call(REPORT, "publish", env=env)
+                check("老版标准模板生成、没改过的页面（%s）：同步时换成现在的标准模板" % label,
+                      page.read_text(encoding="utf-8").split('id="geo-data">')[0] == TEMPLATE.read_text(encoding="utf-8").split('id="geo-data">')[0])
 
 
 def test_no_silent_caps():
