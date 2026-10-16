@@ -436,3 +436,41 @@ def brand_aliases(facts: dict) -> list:
 def contains_any(text: str, names) -> bool:
     low = str(text or "").lower()
     return any(str(name).lower() in low for name in names if name)
+
+
+# 很多店共用的平台域名。链接的域名对上了说明不了是哪家店（有赞的商品页都在 detail.youzan.com 下），
+# 所以这些平台上的商品页不算“你自己的”。
+SHARED_HOSTS = ("youzan.com", "youzanyun.com", "taobao.com", "tmall.com", "jd.com", "pinduoduo.com", "yangkeduo.com",
+                "1688.com", "weidian.com", "douyin.com", "iesdouyin.com", "xiaohongshu.com", "xhslink.com",
+                "dianping.com", "meituan.com", "weixin.qq.com", "qq.com", "baidu.com", "amap.com")
+
+
+def host_is(host: str, domain: str) -> bool:
+    """host 是 domain 本身或它的子域名。不用“包含”，免得 ab.com 认成 b.com。"""
+    host, domain = str(host or "").lower(), str(domain or "").lower().lstrip(".")
+    return bool(domain) and (host == domain or host.endswith("." + domain))
+
+
+def is_shared_host(host: str) -> bool:
+    return any(host_is(host, d) for d in SHARED_HOSTS)
+
+
+def own_hosts(facts: dict) -> list:
+    """本店自己的域名：登记的独立域名和店铺链接的域名，去掉共用平台的。"""
+    from urllib.parse import urlparse
+    channels = (facts or {}).get("channels") or {}
+    shop_url = str(((facts or {}).get("buyEntry") or {}).get("shopUrl") or "")
+    hosts = list(channels.get("ownHosts") or []) + [urlparse(shop_url if "://" in shop_url else "https://" + shop_url).netloc.lower()]
+    return [h for h in hosts if h and not is_shared_host(h)]
+
+
+def own_keys(facts: dict) -> list:
+    """登记过的本店内容编号（如抖音作品编号）。抖音的引用不带作者，只能靠它认。"""
+    return [k for k in ((facts or {}).get("channels") or {}).get("ownContentKeys") or [] if k]
+
+
+def has_key(text: str, keys) -> bool:
+    """编号要完整出现，前后不能紧挨着字母或数字，免得 12345678 认成 912345678。"""
+    low = str(text or "").lower()
+    return any(re.search(r"(?<![0-9a-z])" + re.escape(str(k).lower()) + r"(?![0-9a-z])", low) for k in keys if k)
+

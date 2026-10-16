@@ -221,20 +221,18 @@ def classify_ref(ref: dict, facts: dict, aliases: list, related: dict = None) ->
     source = gc.clean_text(ref.get("source"))
     channels = facts.get("channels") or {}
     official = gc.clean_text(channels.get("wechatOfficial"))
-    own_hosts = [h for h in channels.get("ownHosts") or [] if h]
-    shop_host = urlparse(str((facts.get("buyEntry") or {}).get("shopUrl") or "")).netloc.lower()
-    if shop_host:
-        own_hosts.append(shop_host)
+    # 有赞、淘宝、抖音这类共用平台的域名认不出是哪家店，own_hosts 里不含它们
+    own_hosts = gc.own_hosts(facts)
     url = str(ref.get("url") or "")
     # 抖音等平台的引用不带作者，只能靠建档时记下的“本店内容编号”来认。
-    own_keys = [k for k in channels.get("ownContentKeys") or [] if k]
+    own_keys = gc.own_keys(facts)
     # 员工替商家做的官网：正式链接本身和它下面的页面都算（official-site-2 这种名字相近的不算）；绑了独立域名的，这个域名下的页面都算
     site_url = _bare_url(channels.get("siteUrl"))
     site_domain = str(channels.get("siteDomain") or "").lower()
     relation = ""
     if ((kind == "微信公众号" and official and source == official)
-            or any(h and h in host for h in own_hosts)
-            or any(key in url for key in own_keys)
+            or any(gc.host_is(host, h) for h in own_hosts)
+            or gc.has_key(url, own_keys)
             or (site_url and (_bare_url(url) + "/").startswith(site_url + "/"))
             or (site_domain and (host == site_domain or host.endswith("." + site_domain)))):
         relation = "own"
@@ -267,10 +265,12 @@ def analyse_answer(answer: dict, profile: dict, aliases: list, related: dict) ->
     low = text.lower()
     refs = [classify_ref(ref, facts, aliases, related) for ref in ((answer.get("references") or {}).get("list")) or []]
     entry = facts.get("buyEntry") or {}
-    shop_host = urlparse(str(entry.get("shopUrl") or "")).netloc.lower()
+    hosts, keys = gc.own_hosts(facts), gc.own_keys(facts)
     buy_entry = bool(
         (entry.get("miniProgram") and entry["miniProgram"].lower() in low)
-        or (shop_host and (shop_host in low or any(shop_host in r["url"].lower() for r in refs)))
+        or any(h in low for h in hosts) or gc.has_key(low, keys)
+        or any(gc.host_is(ref_host(r), h) for r in refs for h in hosts)
+        or any(gc.has_key(r["url"], keys) for r in refs)
     )
     return {"mentioned": first_pos(low, aliases) >= 0, "refs": refs, "buyEntry": buy_entry, "text": text}
 
@@ -377,7 +377,7 @@ def build_summary(date: str) -> dict:
         },
         "sources": {
             "all": _ratio(src_all, len(cited)),
-            "byProvider": {p: _ratio(c, sum(c.values()), 6) for p, c in src_by_provider.items()},
+            "byProvider": {p: _ratio(c, sum(c.values()), 40) for p, c in src_by_provider.items()},  # 全部列出，工作台上可以滑动看长尾
         },
         # 同类店各几次：和“提到了谁”用同一份员工读出来的店名，口径一致；还没读完时都是 0
         "rivals": sorted(({"name": r["name"], "count": shop_counts.get(r["name"], {}).get("count", 0) if not pending else 0,
