@@ -459,20 +459,13 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .dmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 12px; color: var(--ink-3); }
 .dinfo { margin-top: 16px; border-radius: 10px; padding: 12px 14px; background: var(--subtle); font-size: 13px; line-height: 1.7; }
 .dinfo dd { color: var(--ink-2); }
-/* 来历（为什么写、建议发在哪）默认收起，抽屉里先看到的是成品 */
-.dmore { margin-top: 12px; font-size: 13px; }
-.dmore > summary { display: inline-flex; align-items: center; gap: 2px; color: var(--ink-2); cursor: pointer; list-style: none; }
-.dmore > summary::-webkit-details-marker { display: none; }
-.dmore > summary svg { color: var(--ink-3); transition: transform .15s; }
-.dmore[open] > summary svg { transform: rotate(90deg); }
-.dmore > summary:hover { color: var(--ink); }
-.dmore .dinfo { margin-top: 8px; }
-/* 公众号：排版预览直接铺在抽屉里，上面只留一行状态 */
-.drawer-body.embed { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
-.drawer-body.embed > .dmeta, .drawer-body.embed > .dmore { flex: none; padding: 0 24px; }
-.drawer-body.embed > .dmeta { padding-top: 12px; }
-.drawer-body.embed > .dmore { padding-bottom: 4px; }
-.drawer-body.embed .preview-frame { margin-top: 12px; border-top: 1px solid var(--line); }
+.drawer-body > .dinfo:first-child { margin-top: 0; }
+/* 公众号：排版预览嵌在抽屉里，带手机框。预览页 700 宽以上才画手机框，所以给它 760 宽、居中，两边的空白裁掉 */
+.drawer-body.embed { display: flex; flex-direction: column; overflow: hidden; padding: 16px 0 0; }
+.drawer-body.embed > .dinfo { flex: none; margin: 0 24px; }
+.phone-stage { position: relative; flex: 1; min-height: 0; margin-top: 12px; overflow: hidden; background: #f5f5f5; }
+.phone-stage .preview-frame { position: absolute; top: 0; left: 50%; width: 760px; height: 100%; margin-left: -380px; background: #f5f5f5; }
+@media (max-width: 480px) { .phone-stage .preview-frame { left: 0; width: 100%; margin-left: 0; } }
 /* 小红书：按笔记的样子画，一张手机宽的卡片。还没有配图，封面是占位，写着该配什么图 */
 .xhs { max-width: 340px; margin: 18px auto 0; overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: 0 6px 24px rgba(31, 35, 40, .08); color: #333; }
 .xhs-author { display: flex; align-items: center; padding: 10px 14px; }
@@ -1184,28 +1177,22 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     close.setAttribute('aria-label', '关闭');
     close.appendChild(icon('x', 16));
     add(panel, add(el('div', 'sheet-head'), add(el('h3'), el('span', 'who', ['第 ' + item.no + ' 篇', item.typeName || ''].filter(Boolean).join(' · ')), item.title), close));
-    var day = cnDate(String(item.createdAt || '').slice(0, 10));
-    var body = add(el('div', 'drawer-body'), add(el('div', 'dmeta'), statusText(item.status),
-      day ? el('span', '', day + '写') : null,
-      item.origin === 'asked' ? el('span', '', '你点名要的') : null,
-      item.forQuestion ? el('span', '', '为 ' + qno(item.forQuestion) + ' 写的') : null,
-      (item.channels || []).length ? el('span', '', '放在' + item.channels.join('、')) : null));
+    var body = el('div', 'drawer-body');
     var xhs = item.type === 'xhs' && item.body;
     var info = el('dl', 'kv dinfo');
     kv(info, '为什么写', item.reason);
     kv(info, '建议发在', item.whereToPost);
     if (!xhs) { kv(info, '发的时候', item.tip); }  /* 小红书的配图建议写在封面位置上 */
-    if (info.children.length) {
-      body.appendChild(add(el('details', 'dmore'), add(el('summary', '', info.children.length > 2 ? '为什么写、怎么发' : '为什么写这篇'), icon('chev', 14)), info));
-    }
+    if (info.children.length) { body.appendChild(info); }
     var embed = item.previewUrl && sameSite(item.previewUrl);
     var size = item.bodyChars ? ' · ' + item.bodyChars + ' 字' : '';
     if (embed) {
+      /* 预览页够宽（700 以上）才画手机框，窄了就铺满。这里给它 760 宽、居中、两边裁掉，手机框就留在抽屉中间 */
       body.className = 'drawer-body embed';
       var frame = el('iframe', 'preview-frame');
       frame.title = item.title || '排版预览';
       frame.src = item.previewUrl;
-      body.appendChild(frame);
+      body.appendChild(add(el('div', 'phone-stage'), frame));
     } else if (xhs) {
       body.appendChild(xhsNote(item));
     } else if (item.body) {

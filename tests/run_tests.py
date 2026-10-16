@@ -1120,9 +1120,9 @@ def test_template():
     check("报告嵌在工作台里打开：模板里有内嵌的入口、内嵌的标记和打不开时的退路",
           "rpt-frame" in html and "#embed" in html and "单独打开这份报告" in html and "report-ready" in html)
     draft = html.split("function openDraft(item)")[1].split("function siteCard")[0]
-    check("稿子抽屉里先看到成品：公众号排版预览嵌在抽屉里，小红书画成笔记、封面占位写着配图建议，来历收起",
-          "preview-frame" in draft and "sameSite(item.previewUrl)" in draft and "xhsNote(item)" in draft
-          and "'dmore'" in draft and "item.tip" in html.split("function xhsNote(item)")[1].split("function copyLabel")[0])
+    check("稿子抽屉：公众号排版预览带手机框嵌在抽屉里，小红书画成笔记、封面占位写着配图建议，不挂状态和来历的小标签",
+          "preview-frame" in draft and "phone-stage" in draft and "sameSite(item.previewUrl)" in draft and "xhsNote(item)" in draft
+          and "statusText" not in draft and "你点名要的" not in draft and "item.tip" in html.split("function xhsNote(item)")[1].split("function copyLabel")[0])
 
 
 def test_demo_fixture():
