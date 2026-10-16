@@ -589,9 +589,9 @@ def _site_title(facts: dict) -> str:
 
 def _shop_cited(facts: dict) -> dict:
     """最近一期里，AI 引用了几次商城自己的页面。"""
-    host = urlparse(str((facts.get("buyEntry") or {}).get("shopUrl") or "")).netloc.lower()
+    hosts = gc.own_hosts(facts)
     dates = _scored_dates()
-    if not host or not dates:
+    if not hosts or not dates:
         return {}
     folder = gc.run_dir(dates[-1])
     count = 0
@@ -599,7 +599,7 @@ def _shop_cited(facts: dict) -> dict:
         raw = gc.read_json(folder / "raw" / (key + ".json")) or {}
         for answer in (raw.get("result") or {}).get("answers") or []:
             for ref in (answer.get("references") or {}).get("list") or []:
-                if urlparse(str(ref.get("url") or "")).netloc.lower() == host:
+                if any(gc.host_is(urlparse(str(ref.get("url") or "")).netloc, h) for h in hosts):
                     count += 1
     return {"date": dates[-1], "count": count}
 
