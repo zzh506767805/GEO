@@ -453,6 +453,8 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 @media (prefers-reduced-motion: reduce) { .sheet.drawer .sheet-panel { animation: none; } }
 .sheet.drawer .sheet-head { padding: 18px 24px 14px; }
 .sheet.drawer .sheet-head h3 { font-size: 18px; }
+/* 标题栏里“在浏览器里打开”和关闭两个圆图标挨着放 */
+.sheet.drawer .sheet-head .sheet-x + .sheet-x { margin-left: 8px; }
 .drawer-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 24px 32px; }
 .drawer-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 24px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--canvas); }
 .drawer-foot .btn { margin: 0; }
@@ -461,9 +463,10 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .dinfo dd { color: var(--ink-2); }
 .drawer-body > .dinfo:first-child { margin-top: 0; }
 /* 公众号：排版预览嵌在抽屉里，带手机框。预览页 700 宽以上才画手机框，所以给它 760 宽、居中，两边的空白裁掉 */
-.drawer-body.embed { display: flex; flex-direction: column; overflow: hidden; padding: 16px 0 0; }
-.drawer-body.embed > .dinfo { flex: none; margin: 0 24px; }
-.phone-stage { position: relative; flex: 1; min-height: 0; margin-top: 12px; overflow: hidden; background: #f5f5f5; }
+.drawer-body.embed { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.drawer-body.embed > .dinfo { flex: none; margin: 16px 24px 0; }
+.phone-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #f5f5f5; }
+.drawer-body.embed > .dinfo + .phone-stage { margin-top: 12px; }
 .phone-stage .preview-frame { position: absolute; top: 0; left: 50%; width: 760px; height: 100%; margin-left: -380px; background: #f5f5f5; }
 @media (max-width: 480px) { .phone-stage .preview-frame { left: 0; width: 100%; margin-left: 0; } }
 /* 小红书：按笔记的样子画，一张手机宽的卡片。还没有配图，封面是占位，写着该配什么图 */
@@ -1176,11 +1179,19 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     var close = button('sheet-x', null, closeSheet);
     close.setAttribute('aria-label', '关闭');
     close.appendChild(icon('x', 16));
-    add(panel, add(el('div', 'sheet-head'), add(el('h3'), el('span', 'who', ['第 ' + item.no + ' 篇', item.typeName || ''].filter(Boolean).join(' · ')), item.title), close));
     var body = el('div', 'drawer-body');
     var xhs = item.type === 'xhs' && item.body;
     var embed = item.previewUrl && sameSite(item.previewUrl);
     var size = item.bodyChars ? ' · ' + item.bodyChars + ' 字' : '';
+    /* 公众号排版预览直接铺在抽屉里，这时“在浏览器里打开”做成标题栏上关闭旁边的小图标，底部不留操作栏，预览多占一行 */
+    var headOpen = null;
+    if (embed) {
+      headOpen = button('sheet-x', null, function () { openOutside(item.previewUrl, item.title); });
+      headOpen.setAttribute('aria-label', '在浏览器里打开');
+      headOpen.title = '在浏览器里打开';
+      headOpen.appendChild(icon('ext', 16));
+    }
+    add(panel, add(el('div', 'sheet-head'), add(el('h3'), el('span', 'who', ['第 ' + item.no + ' 篇', item.typeName || ''].filter(Boolean).join(' · ')), item.title), headOpen, close));
     if (embed) {
       /* 预览页够宽（700 以上）才画手机框，窄了就铺满。这里给它 760 宽、居中、两边裁掉，手机框就留在抽屉中间 */
       body.className = 'drawer-body embed';
@@ -1199,8 +1210,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     panel.appendChild(body);
     var foot = el('div', 'drawer-foot');
     if (item.previewUrl && !embed) { foot.appendChild(button('btn primary', '看排版预览', function () { openPreview(item.previewUrl, item.title); })); }
-    if (item.body) { foot.appendChild(button(item.previewUrl && !embed ? 'btn' : 'btn primary', copyLabel(item), function () { copy(contentPlain(item), '已复制，可以直接粘贴去发'); })); }
-    if (embed) { foot.appendChild(button(item.body ? 'btn' : 'btn primary', '在浏览器里打开', function () { openOutside(item.previewUrl, item.title); })); }
+    if (item.body && !embed) { foot.appendChild(button(item.previewUrl ? 'btn' : 'btn primary', copyLabel(item), function () { copy(contentPlain(item), '已复制，可以直接粘贴去发'); })); }
     if (foot.children.length) { panel.appendChild(foot); }
     sheet.hidden = false;
     document.body.style.overflow = 'hidden';
