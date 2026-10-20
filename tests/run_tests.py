@@ -188,6 +188,8 @@ def test_synthetic():
         check("商家确认之前不能开启每周体检", "确认" in early.get("error", ""), early)
         consent = call(STATE, "confirm-monitoring", env=env)
         check("监测方向确认与第三方账号确认分开", consent["firstCheckPending"] is False and consent["confirmed"] is False, consent)
+        check("确认监测方向时明说商家已同意、下一步去跑体检（不让模型把 confirmed: false 当成没确认）",
+              consent["monitoringConfirmed"] is True and consent["monitoringConfirmedAt"] and "geo-check" in consent["next"], consent)
         check("工作台页签配置保留对话和真实工作台链接", first["tabConfiguration"]["tabs"][0]["tabKey"] == "conversation"
               and first["tabConfiguration"]["tabs"][1]["tabUrl"] == first["pageUrl"] + "#/overview", first["tabConfiguration"])
 

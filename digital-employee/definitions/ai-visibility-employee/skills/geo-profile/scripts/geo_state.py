@@ -313,6 +313,8 @@ def status_payload() -> dict:
         "brand": facts["brand"]["name"],
         "confirmed": bool(meta.get("confirmedAt")),
         "confirmedAt": meta.get("confirmedAt", ""),
+        # 商家同意开始第一次体检的时间（和上面的 confirmed 是两回事，那个指店铺资料）
+        "monitoringConfirmedAt": meta.get("monitoringConfirmedAt", ""),
         "firstCheckPending": bool(meta.get("firstCheckPending")),
         # 资料从哪来（backend 店铺后台 / public 公开信息）、有没有等商家确认的、现在能不能替商家写内容
         "factsFrom": state["from"],
@@ -467,8 +469,13 @@ def cmd_confirm_monitoring(_args) -> None:
     _require_facts()
     if not (gc.read_json(_paths()["questions"], {}) or {}).get("items"):
         raise gc.GeoError("问题库还是空的，不能确认监测方向")
-    _touch_meta(firstCheckPending=False)
-    gc.emit(status_payload())
+    _touch_meta(firstCheckPending=False, monitoringConfirmedAt=gc.now_iso())
+    payload = status_payload()
+    # 这一步只代表“商家同意开始第一次体检”。上面那个 confirmed 是店铺资料有没有经过商家确认，和这里无关：
+    # 只写在技能里不够，模型看到 confirmed: false 会以为还没确认、把确认消息再说一遍就结束了（10-20 实测）。
+    payload["monitoringConfirmed"] = True
+    payload["next"] = "商家已经同意开始第一次体检：现在按 geo-check 跑第一次体检，接着按 geo-weekly 的“第一份报告”出报告。不要再问一遍要不要开始"
+    gc.emit(payload)
 
 
 def cmd_set_schedule(args) -> None:

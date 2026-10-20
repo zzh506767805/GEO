@@ -198,6 +198,7 @@ python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-workbench/scripts/ge
 python3 "$YOUZAN_AGENT_SESSION_WORKSPACE/.claude/skills/geo-profile/scripts/geo_state.py" confirm-monitoring
 ```
 
+  输出里 `monitoringConfirmed` 为 true、`next` 写着去跑第一次体检，就照着做，不要再问一遍要不要开始。输出里的 `confirmed` 指店铺资料有没有经过商家确认，和这一步无关，不要因为它是 false 就停。
   然后按 `geo-check` 跑第一次体检，接着按 `geo-weekly` 的“第一份报告”走第 4 步。
 - 资料是从公开信息整理的，商家同时说了“资料没问题”：再执行一次 `confirm`，之后才能替他写内容。
 
