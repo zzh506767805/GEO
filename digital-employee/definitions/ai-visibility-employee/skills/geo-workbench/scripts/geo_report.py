@@ -1144,6 +1144,12 @@ def cmd_publish(args) -> None:
         return
     synced = gc.mark_published()
     hint = "这是第一次开通工作台，请先按 geo-workbench 的 references/tabs.md 调用 claw-admin-request 固定工作台，再把 pageUrl 发给商家。" if first_time else "工作台和报告已同步。"
+    if first_time and (gc.read_json(gc.profile_dir() / "meta.json", {}) or {}).get("firstCheckPending"):
+        # 初始化时员工一路调工具，到问“要不要开始”那一步常常只弹卡片、一个字不写（10-20 实测两次）。
+        # 写在 geo-profile 里离动作太远，在这里当场提醒一次。
+        hint += ("固定页签、建好提醒之后，按 geo-profile 第 3 步请商家确认：在同一次回复里先写文字"
+                 "（识别到的店铺、这家店的特点、三个顾客会怎么问 AI 的例子、工作台链接），紧接着再调用交互卡片问要不要开始。"
+                 "不要只弹卡片。")
     latest = gc.latest_run_date()
     period = gc.period_stage(latest) if latest else {}
     if period and period["stage"] in ("scoring", "reading", "judging", "wrapup"):

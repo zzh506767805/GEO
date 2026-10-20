@@ -174,6 +174,7 @@ def test_synthetic():
         first = call(REPORT, "publish", env=env)
         check("没体检过也能开通工作台", first["published"] and first["firstTime"] and first["periods"] == 0
               and first["pageUrl"].endswith("/ai-visibility.html"), first)
+        check("初始化第一次开通工作台：当场提醒先写确认文字、再接卡片", "交互卡片" in first["next"] and "不要只弹卡片" in first["next"], first["next"])
         check("还没体检时，同步后给出工作台三个页面的链接，没有报告", list(first["links"]) == ["工作台", "内容", "监测设置"]
               and first["links"]["监测设置"] == first["pageUrl"] + "#/settings" and first["reportUrl"] == "" and first["reportFiles"] == [], first["links"])
         check("同步结果里写明这次同步了什么", first["synced"] == ["店铺资料", "问题库", "同类店"], first["synced"])
