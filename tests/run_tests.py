@@ -1243,6 +1243,12 @@ def test_pages_render():
         check("工作台能渲染，每一期的报告都在工作台里打开：%s" % label, ok, item["errors"][:3] or (routes, item.get("frames")))
     check("外链真的点到了：工作台 %d 个、报告 %d 个，在客户端里都交给客户端打开，被拦下时都弹出了可复制的链接" % (clicks["workbench"], clicks["report"]),
           clicks["workbench"] > 0 and clicks["report"] > 0, clicks)
+    # 报告里“去工作台看稿子”和稿子标题：嵌着时请工作台自己切过去。以前用 target=_top 让最外层跳，网页版客户端点了没反应
+    go = sum(int(item.get("goClicks") or 0) for item in report if item["kind"] == "report")
+    deep = [item.get("deepDrawer") for item in report if item["kind"] == "workbench"]
+    handled = [item.get("goHandled") for item in report if item["kind"] == "workbench"]
+    check("报告里去工作台的链接真的点到了 %d 个，都请工作台切过去；工作台能直接打开某一篇，也接得住报告的请求" % go,
+          go > 0 and True in deep and True in handled and False not in deep and False not in handled, (go, deep, handled))
 
 
 def test_douyin_and_sources():

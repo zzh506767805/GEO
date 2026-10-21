@@ -62,6 +62,10 @@ function check(file) {
       result.errors.push('新窗口被拦下时点了 ' + blocked.linkClicks + ' 个外链，只有 ' + blocked.copySheets + ' 次弹出了可复制的链接');
     }
     result.linkClicks = inHost.linkClicks;
+    // 报告里点稿子标题会到 #/content/<编号>：要直接打开那一篇
+    if (result.deepDrawer === false) { result.errors.push('#/content/<编号> 没有打开那一篇的稿子'); }
+    // 嵌着的报告请工作台切页面（go 消息）：要回个话，并且真的切过去
+    if (result.goHandled === false) { result.errors.push('报告请工作台切到内容页，工作台没有切过去'); }
     return result;
   }
   // 报告：单独打开一遍，嵌在工作台里再来一遍（地址带 #embed，可以直接到某一节）
@@ -74,7 +78,10 @@ function check(file) {
   // 嵌在工作台里的报告拿不到客户端的接口：点外链要交给外面的工作台去开
   const asked = inside.posted.filter((geo) => geo === 'open-link').length;
   if (asked !== inside.linkClicks) { errors.push('嵌在工作台里点了 ' + inside.linkClicks + ' 个外链，只有 ' + asked + ' 个交给了工作台'); }
-  return { file, kind, pages: 1, routes: [], embedded: !inside.head, linkClicks: inside.linkClicks, errors };
+  // 去工作台别的页面的链接（看稿子、稿子标题）：嵌着时要请工作台切过去，不能靠让最外层跳（网页版客户端会拦下）
+  if (inside.goAsked !== inside.goClicks) { errors.push('嵌在工作台里点了 ' + inside.goClicks + ' 个去工作台的链接，只有 ' + inside.goAsked + ' 个请工作台切过去'); }
+  if (inside.topLinks) { errors.push('还有 ' + inside.topLinks + ' 个链接用 target=_top 让最外层跳'); }
+  return { file, kind, pages: 1, routes: [], embedded: !inside.head, linkClicks: inside.linkClicks, goClicks: inside.goClicks, errors };
 }
 
 function render(file, kind, dataText, codeText, startHash, opts = {}) {
@@ -120,7 +127,7 @@ function render(file, kind, dataText, codeText, startHash, opts = {}) {
   const links = [];
   walk(elements.app, (node) => { if (node.tagName === 'A' && /^#\//.test(node.href || '')) { links.push(node.href); } });
   const routes = Array.from(new Set(links.map((href) => href.replace(/^#\//, '').split('?')[0])));
-  let pages = 0, linkClicks = 0, copySheets = 0, linkHostOpens = 0;
+  let pages = 0, linkClicks = 0, copySheets = 0, linkHostOpens = 0, goClicks = 0, goAsked = 0;
   const visit = (hash) => {
     try {
       if (kind === 'workbench') {
@@ -139,9 +146,15 @@ function render(file, kind, dataText, codeText, startHash, opts = {}) {
         walk(elements.app, (node) => { if (node.tagName === 'A' && typeof node.onclick === 'function' && /^https:/.test(node.href || '')) { anchors.push(node); } });
         anchors.slice(0, 50).forEach((node) => {
           elements.sheet.hidden = true;
-          linkClicks += 1;
-          const before = hostOpens.length;
+          const before = hostOpens.length, sent = posted.length;
           node.onclick({ target: node, preventDefault() {} });
+          if (/#\//.test(node.href)) {
+            // 去工作台别的页面的链接，不是外链
+            goClicks += 1;
+            if (posted.slice(sent).indexOf('go') >= 0) { goAsked += 1; }
+            return;
+          }
+          linkClicks += 1;
           if (hostOpens.length > before) { linkHostOpens += 1; }
           if (!elements.sheet.hidden && /复制链接/.test(ownText(elements.sheet))) { copySheets += 1; }
         });
@@ -158,9 +171,12 @@ function render(file, kind, dataText, codeText, startHash, opts = {}) {
   if (kind === 'report') {
     // 报告脚本一运行就渲染好了；这里只检查内容并把按钮点一遍
     visit(startHash);
-    let head = '';
-    walk(elements.app, (node) => { if (/\brpt-head\b/.test(node.className || '')) { head = node.textContent; } });
-    return { errors, head, posted, linkClicks };
+    let head = '', topLinks = 0;
+    walk(elements.app, (node) => {
+      if (/\brpt-head\b/.test(node.className || '')) { head = node.textContent; }
+      if (node.tagName === 'A' && node.target === '_top') { topLinks += 1; }
+    });
+    return { errors, head, posted, linkClicks, goClicks, goAsked, topLinks };
   }
   if (!routes.length) { errors.push('侧边栏里没有任何页面链接'); }
   const frames = [];
@@ -180,7 +196,33 @@ function render(file, kind, dataText, codeText, startHash, opts = {}) {
     }
   });
   visit('#/not-a-page');
-  return { file, kind, pages, routes, frames, homeText, sparkBars: Math.max(sparkBars, 0), errors, linkClicks, copySheets, linkHostOpens };
+  // 报告里点稿子标题会到 #/content/<编号>：到内容页，并直接打开那一篇
+  let deepDrawer = null;
+  const first = (JSON.parse(dataText).contents || []).filter((c) => c.no)[0];
+  if (first) {
+    elements.sheet.hidden = true;
+    location.hash = '#/content/' + first.no;
+    listeners.hashchange();
+    deepDrawer = !elements.sheet.hidden && /\bdrawer\b/.test(elements.sheet.className) && ownText(elements.sheet).indexOf(first.title) >= 0;
+    elements.sheet.hidden = true;
+  }
+  // 嵌着的报告请工作台切到内容页（go 消息）：只接自己嵌的那一期报告发来的
+  let goHandled = null;
+  const reportRoute = routes.filter((r) => /^report\//.test(r))[0];
+  if (reportRoute && typeof listeners.message === 'function') {
+    location.hash = '#/' + reportRoute;
+    listeners.hashchange();
+    let frame = null;
+    walk(elements.app, (node) => { if (node.tagName === 'IFRAME') { frame = node; } });
+    const replies = [];
+    const inner = { postMessage: (message) => { replies.push(message && message.geo); } };
+    if (frame) { frame.contentWindow = inner; }
+    listeners.message({ data: { geo: 'go', id: 'x', to: 'content' }, source: { postMessage() {} } });
+    const ignoredStranger = location.hash === '#/' + reportRoute;
+    listeners.message({ data: { geo: 'go', id: 'y', to: 'content' }, source: inner });
+    goHandled = ignoredStranger && location.hash === '#/content' && replies.indexOf('go-done') >= 0;
+  }
+  return { file, kind, pages, routes, frames, homeText, sparkBars: Math.max(sparkBars, 0), errors, linkClicks, copySheets, linkHostOpens, deepDrawer, goHandled };
 }
 
 const files = process.argv.slice(2);

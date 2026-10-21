@@ -400,6 +400,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, summary:focus-visib
 .gap-row:first-of-type { border-top: 0; padding-top: 0; }
 .gap-row:last-child { padding-bottom: 0; }
 .gap-row .tag { flex: none; margin-top: 2px; }
+.gap-row .gap-title { font-weight: 600; }
 
 /* ───────── 监测设置 ───────── */
 .rowlist { margin: 0; padding: 0; list-style: none; }
@@ -670,10 +671,20 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     asking[id] = setTimeout(function () { if (asking[id]) { delete asking[id]; showLink(url, title); } }, 1500);
     try { window.parent.postMessage({ geo: 'open-link', id: id, url: url }, '*'); } catch (error) { clearTimeout(asking[id]); delete asking[id]; showLink(url, title); }
   }
+  /* 报告：去工作台的别的页面（看稿子、打开某一篇），请工作台自己切过去（go 消息，工作台回 go-done） */
+  function askWorkbenchGo(target, href) {
+    var id = 'L' + (++askCount);
+    function fallback() {
+      /* 工作台没回音，多半是还没换新模板的工作台：照旧让最外层跳。电脑版客户端里能跳过去，网页版里跳不过去，左边的导航也能到 */
+      try { window.open(href, '_top'); } catch (error) { /* 同上 */ }
+    }
+    asking[id] = setTimeout(function () { if (asking[id]) { delete asking[id]; fallback(); } }, 1500);
+    try { window.parent.postMessage({ geo: 'go', id: id, to: target }, '*'); } catch (error) { clearTimeout(asking[id]); delete asking[id]; fallback(); }
+  }
   var askCount = 0;
   function onAskAnswered(event) {
     var data = event && event.data;
-    if (!data || data.geo !== 'open-link-done' || !asking[data.id]) { return; }
+    if (!data || (data.geo !== 'open-link-done' && data.geo !== 'go-done') || !asking[data.id]) { return; }
     clearTimeout(asking[data.id]);
     delete asking[data.id];
   }
@@ -723,12 +734,13 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     sheet.hidden = false;
     document.body.style.overflow = 'hidden';
   }
-  /* 去工作台的某个页面。在报告里要带上工作台的地址；拿不到地址时退成普通文字 */
+  /* 去工作台的某个页面。在报告里要带上工作台的地址；拿不到地址时退成普通文字。
+     嵌在工作台里时请工作台自己切过去。不用 target=_top 让最外层跳：网页版客户端不让嵌着的页面这样跳，点了没反应 */
   function nav(text, target, cls) {
     if (KIND === 'report' && !BASE) { return el('span', cls || '', text); }
     var a = el('a', cls || '', text);
     a.href = BASE + '#/' + target;
-    if (EMBED) { a.target = '_top'; }  /* 嵌在工作台里时，去工作台的别的页面要让外面那一层跳，不是在小窗口里跳 */
+    if (EMBED) { a.onclick = function (event) { if (event && event.preventDefault) { event.preventDefault(); } askWorkbenchGo(target, a.href); }; }
     return a;
   }
   function pill(kind, text) { return el('span', 'pill ' + kind, text); }
@@ -1409,8 +1421,39 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       add(content, demoStrip());
       PAGES[page](content);
       document.title = navTitle(page) + ' · ' + (DATA.store.name || '本店') + ' · AI 曝光工作台';
+      if (page === 'content' && parts[1]) { openContentNo(parts[1]); }
     }
     window.scrollTo(0, 0);
+  }
+  /* 地址是 #/content/3 时：到内容页，直接打开第 3 篇（报告里点稿子标题会到这里）。
+     打开后地址退回 #/content，关掉以后再点同一篇还能打开 */
+  function openContentNo(no) {
+    var item = null;
+    (DATA.contents || []).forEach(function (c) { if (String(c.no) === String(no)) { item = c; } });
+    try { history.replaceState(null, '', '#/content'); } catch (error) { /* 地址里留着编号也不影响 */ }
+    if (item) { openDraft(item); }
+  }
+  /* 切到工作台的某个页面（报告请工作台切页面时用） */
+  function goTo(to) {
+    var hash = '#/' + to;
+    if (location.hash === hash) { route(); } else { location.hash = hash; }
+  }
+  /* 以前生成的报告里，去工作台的链接用 target=_top 让最外层跳，网页版客户端会拦下，点了没反应。
+     报告和工作台在同一个网站，工作台能直接接管报告里的点击，改成自己切页面。新报告发 go 消息，不靠这一步 */
+  function adoptOldLinks(frame) {
+    var doc = null;
+    try { doc = frame.contentDocument; } catch (error) { doc = null; }
+    if (!doc || typeof doc.addEventListener !== 'function') { return; }
+    doc.addEventListener('click', function (event) {
+      var node = event.target;
+      while (node && node.tagName !== 'A') { node = node.parentNode; }
+      if (!node || node.getAttribute('target') !== '_top') { return; }
+      var m = /#\/(.+)$/.exec(node.getAttribute('href') || '');
+      if (!m || !hasPage(m[1].split('/')[0])) { return; }
+      event.preventDefault();
+      event.stopPropagation();
+      goTo(m[1]);
+    }, true);
   }
   /* 在工作台里看某一期的报告：把那一期的报告文件嵌进内容区。报告文件是独立的，也可以单独打开。 */
   function pageReport(period, section) {
@@ -1427,6 +1470,7 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     var frame = el('iframe', 'rpt-frame');
     reportFrame = frame;
     frame.title = '第 ' + period.no + ' 期体检报告';
+    frame.onload = function () { adoptOldLinks(frame); };
     frame.src = file + '#embed' + (section ? '/' + section : '');
     /* 报告显示出来以后会打个招呼。等了几秒还没动静，就在上面给一个单独打开的入口，免得商家对着空白发呆 */
     var hint = el('div', 'frame-hint');
@@ -1443,6 +1487,14 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
       if (!reportFrame || event.source !== reportFrame.contentWindow || !httpsUrl(data.url)) { return; }
       try { event.source.postMessage({ geo: 'open-link-done', id: data.id }, '*'); } catch (error) { /* 报告收不到回音，会自己把链接给商家 */ }
       openOutside(data.url, '');
+      return;
+    }
+    if (data && data.geo === 'go') {
+      /* 嵌在工作台里的报告请工作台切页面（看稿子、打开某一篇）：只接这一期报告发来的、工作台里有的页面 */
+      var to = String(data.to || '');
+      if (!reportFrame || event.source !== reportFrame.contentWindow || !/^[a-z]+(\/\d{1,6})?$/.test(to) || !hasPage(to.split('/')[0])) { return; }
+      try { event.source.postMessage({ geo: 'go-done', id: data.id }, '*'); } catch (error) { /* 报告收不到回音也没关系，下面已经切过去了 */ }
+      goTo(to);
       return;
     }
     if (!data || data.geo !== 'report-ready') { return; }
@@ -1854,8 +1906,10 @@ mark { border-radius: 4px; padding: 0 3px; background: var(--brand-soft); color:
     if (written.length) {
       var box = card('这一期替你写的内容', written.length + ' 篇', nav('去工作台看稿子', 'content', 'more'));
       /* 报告生成后不再更新，这里不写状态（确认、发布都是之后的事），现在的状态在工作台上看 */
+      /* 标题能点：到工作台的内容页，直接打开这一篇 */
       written.forEach(function (item) {
-        box.appendChild(add(el('div', 'gap-row'), el('span', 'tag', item.typeName), el('b', '', item.title)));
+        var title = item.no ? nav(item.title, 'content/' + item.no, 'gap-title') : el('b', '', item.title);
+        box.appendChild(add(el('div', 'gap-row'), el('span', 'tag', item.typeName), title));
       });
       root.appendChild(box);
     }
