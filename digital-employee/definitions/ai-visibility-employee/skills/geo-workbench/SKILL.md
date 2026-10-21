@@ -12,7 +12,7 @@ description: 商家的“AI 曝光工作台”和体检报告这些页面：同�
 
 页面都是只读的：商家在上面看，回到对话里跟你说；你改数据，再同步。
 
-商家要页面换个样子、加一块东西、加一页，你直接改网页文件（工作台是 `ai-visibility-employee/pages/ai-visibility.html`），改完 `publish`。怎么改由你发挥，建议保持白底、少放说明文字；商家想要别的样子，照他说的改。同步时脚本只把页面里的数据块（`<script type="application/json" id="geo-data">` 里那一段）换成最新的，你改的都保留：
+商家要页面换个样子、加一块东西、加一页，你直接改网页文件（工作台是 `ai-visibility-employee/pages/ai-visibility.html`），改完 `publish`。怎么改由你发挥，建议保持白底、少放说明文字。同步时脚本只把页面里的数据块（`<script type="application/json" id="geo-data">` 里那一段）换成最新的，你改的都保留：
 
 - 数据块要留着，且只能有一处。页面上的数从这里读，就会跟着每期更新；你直接写在页面上的字不会自己更新，下期要更新得你再改。
 - 数据块里脚本没有的字段、导航 `nav` 里你加的页面，同步时都保留。
